@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GradeTracker — Teacher Home</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #ffffff; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 220px; 
+      background: linear-gradient(to bottom, #1a237e, #283593); 
+      color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    .sidebar .top { padding: 24px 0 0 0; }
+    .sidebar .nav { list-style: none; padding: 0; margin: 0; }
+    .sidebar .nav li { 
+      padding: 16px 32px; cursor: pointer; 
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+    }
+    .sidebar .nav li.active, .sidebar .nav li:hover { 
+      background: rgba(255,255,255,0.1); 
+      border-left: 4px solid #64b5f6;
+    }
+    .sidebar .bottom { padding: 24px 0 24px 0; text-align: center; }
+    .main {
+      margin-left: 220px; padding: 32px;
+    }
+    .header {
+      display: flex; justify-content: flex-end; align-items: center; background: #fff; padding: 16px 32px; border-bottom: 1px solid #eee;
+    }
+    .account-menu { position: relative; }
+    .account-btn {
+      background: #1976d2; color: white; border: none; 
+      border-radius: 50%; width: 40px; height: 40px; 
+      cursor: pointer; font-size: 18px;
+      transition: transform 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .account-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .account-dropdown {
+      display: none; position: absolute; right: 0; top: 48px; background: #fff; border: 1px solid #ccc; border-radius: 6px; min-width: 160px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .account-dropdown.show { display: block; }
+    .account-dropdown button {
+      width: 100%; background: none; border: none; padding: 12px 16px; text-align: left; cursor: pointer;
+    }
+    .account-dropdown button:hover { background: #f5f5f5; }
+    h2 {
+      font-size: 1.8em;
+      color: #1a237e;
+      margin-bottom: 24px;
+      position: relative;
+      padding-bottom: 10px;
+    }
+    h2:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 3px;
+      background: #1976d2;
+    }
+    .classroom-tabs {
+      display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px;
+    }
+    .class-tab {
+      background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); width: 320px; min-height: 140px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;
+      cursor: pointer; transition: box-shadow 0.2s;
+    }
+    .class-tab:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.13); }
+    .class-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; }
+    .class-section { color: #888; font-size: 0.95em; }
+    .add-class-btn {
+      margin-bottom: 24px; padding: 10px 20px; background: #1976d2; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;
+    }
+    .add-class-btn:hover { background: #1565c0; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="top">
+       <ul class="nav">
+         <li class="active" onclick="goHome()">Home</li>
+         <li onclick="goSettings()">Settings</li>
+       </ul>
+    </div>
+    <div class="bottom">
+      <span style="cursor:pointer;" onclick="showAbout()"><i style="font-size: 16px; margin-right: 5px;">ⓘ</i> About</span>
+    </div>
+  </div>
+  <div class="main">
+    <div class="header">
+      <div class="account-menu">
+        <button class="account-btn" onclick="toggleAccountMenu()">
+          <span id="accountInitial">T</span>
+        </button>
+        <div class="account-dropdown" id="accountDropdown">
+          <div style="padding: 12px 16px; border-bottom: 1px solid #eee;">
+            <div style="font-weight: bold; margin-bottom: 4px;" id="userFullName">User Name</div>
+            <div style="font-size: 0.85em; color: #666;" id="userEmail">user@example.com</div>
+          </div>
+          <button onclick="logout()">Log Out</button>
+        </div>
+      </div>
+    </div>
+    <h2>My Subjects</h2>
+     <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
+     <div class="classroom-tabs" id="classroomTabs">
+       Loading...
+     </div>
+     <!-- Chatbot Toggle Button -->
+     <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+     <!-- Chatbot Sidebar -->
+     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
+       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+         <div style="font-weight:600;">Assistant</div>
+         <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+       </div>
+       <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
+         <div style="color:#666;">How can I help you plan classes and grades today?</div>
+       </div>
+       <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
+         <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
+       </div>
+     </div>
+   </div>
+  
+  <!-- About Modal -->
+  <div id="aboutModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="font-size: 1.5em; font-weight: bold;">About GradeScope Lite</div>
+        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAbout()">&times;</button>
+      </div>
+      <div style="line-height: 1.6;">
+        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
+        <p><strong>Version:</strong> V1.0</p>
+        <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
+        <p><strong>Main Dev:</strong> Jack Dylan Gallentes</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Class Modal -->
+  <div id="addClassModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="font-size: 1.5em; font-weight: bold;">Add New Class</div>
+        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAddClassModal()">&times;</button>
+      </div>
+      <div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Subject</label>
+          <input type="text" id="className" placeholder="Enter subject name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Grade Level</label>
+          <input type="text" id="gradeLevel" placeholder="Enter grade level" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Section</label>
+          <input type="text" id="section" placeholder="Enter section" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button style="padding: 10px 16px; background: #f5f5f5; color: #333; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="closeAddClassModal()">Cancel</button>
+          <button style="padding: 10px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="confirmAddClass()">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const role = localStorage.getItem('role');
+    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+      window.location.href = 'homepage2.html';
+    }
+    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
+      window.location.href = 'homepage1.html';
+    }
+    if (!role) {
+      window.location.href = 'login.html';
+    }
+    
+    // --- Routing: Only allow teachers ---
+    if (role !== 'teacher') {
+      window.location.href = 'homepage1.html';
+    }
+
+    // --- Account Initial and User Info ---
+    const user = JSON.parse(localStorage.getItem('user')) || { name: "Teacher", email: "teacher@example.com" };
+    document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'T';
+    document.getElementById('userFullName').textContent = user.name || 'Teacher';
+    document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
+    
+    // Fetch user data for dropdown
+    fetch('/api/me', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    })
+      .then(res => res.json())
+      .then(userData => {
+        // Store user data in localStorage for future use
+        localStorage.setItem('fullName', userData.fullName);
+        localStorage.setItem('email', userData.email);
+        
+        document.getElementById('userFullName').textContent = userData.fullName || user.name || 'User Name';
+        document.getElementById('userEmail').textContent = userData.email || user.email || 'user@example.com';
+        document.getElementById('accountInitial').textContent = (userData.fullName && userData.fullName[0]) || (user.name && user.name[0]) || 'T';
+      })
+      .catch(err => {
+        console.error('Error fetching user data:', err);
+        // Use localStorage as fallback
+        document.getElementById('userFullName').textContent = localStorage.getItem('fullName') || user.name || 'User Name';
+        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || 'user@example.com';
+      });
+
+    function goHome() { location.reload(); }
+    function goSettings() { window.location.href = "settings.html"; }
+    function logout() {
+      // Clear all user data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('fullName');
+      localStorage.removeItem('email');
+      
+      // Redirect to login page
+      window.location.href = "login.html";
+    }
+    
+    // About Modal Functions
+    function showAbout() { 
+      document.getElementById('aboutModal').style.display = 'block';
+    }
+    
+    function closeAbout() {
+      document.getElementById('aboutModal').style.display = 'none';
+    }
+    
+    // Add Class Modal Functions
+    function showAddClassModal() {
+      document.getElementById('addClassModal').style.display = 'block';
+    }
+    
+    function closeAddClassModal() {
+      document.getElementById('addClassModal').style.display = 'none';
+      // Clear form fields
+      document.getElementById('className').value = '';
+      document.getElementById('gradeLevel').value = '';
+      document.getElementById('section').value = '';
+    }
+    
+    function confirmAddClass() {
+      const className = document.getElementById('className').value.trim();
+      const gradeLevel = document.getElementById('gradeLevel').value.trim();
+      const section = document.getElementById('section').value.trim();
+      
+      if (!className || !gradeLevel || !section) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      // Send data to server
+      fetch('/api/subjects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+          title: className,
+          gradeLevel: gradeLevel,
+          section: section
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to create class');
+        return res.json();
+      })
+      .then(data => {
+        alert('Class created successfully!');
+        closeAddClassModal();
+        location.reload(); // Refresh to show new class
+      })
+      .catch(err => {
+        alert('Error creating class: ' + err.message);
+      });
+    }
+
+    function toggleAccountMenu() {
+      document.getElementById('accountDropdown').classList.toggle('show');
+    }
+    
+    window.onclick = function(event) {
+      if (!event.target.matches('.account-btn')) {
+        document.getElementById('accountDropdown').classList.remove('show');
+      }
+      
+      // Close modals when clicking outside
+      if (event.target.id === 'aboutModal') {
+        closeAbout();
+      }
+      if (event.target.id === 'addClassModal') {
+        closeAddClassModal();
+      }
+    }
+
+    // --- Fetch subjects from backend ---
+    function renderSubjects(subjects) {
+      const container = document.getElementById('classroomTabs');
+      container.innerHTML = "";
+      if (!subjects.length) {
+        container.innerHTML = "<div>No subjects found.</div>";
+        return;
+      }
+      subjects.forEach(subj => {
+        const div = document.createElement('div');
+        div.className = "class-tab";
+        div.innerHTML = `<div class="class-title">${subj.title}</div>
+                         <div class="class-section">${subj.grade_level || subj.gradeLevel || 'Grade 10'} - ${subj.section}</div>`;
+        div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(subj.title); };
+        container.appendChild(div);
+      });
+    }
+
+     fetch('/api/classes', {
+       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+     })
+       .then(res => {
+         if (!res.ok) {
+           if (res.status === 401) {
+             localStorage.removeItem('token');
+             localStorage.removeItem('role');
+             window.location.href = 'login.html';
+             return;
+           }
+           throw new Error('Failed to load subjects');
+         }
+         return res.json();
+       })
+       .then(subjects => {
+         if (subjects) renderSubjects(subjects);
+       })
+       .catch(err => {
+         console.error('Error loading subjects:', err);
+         document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No subjects found. Click "Add Class" to create your first subject.</div>';
+       });
+
+     // Chatbot toggle logic
+     const sidebar = document.getElementById('chatbotSidebar');
+     document.getElementById('chatbotToggle').addEventListener('click', () => {
+       sidebar.style.right = sidebar.style.right === '0px' ? '-360px' : '0px';
+     });
+     document.getElementById('closeChatbot').addEventListener('click', () => {
+       sidebar.style.right = '-360px';
+     });
+     document.getElementById('sendChat').addEventListener('click', () => {
+       const input = document.getElementById('chatInput');
+       const text = input.value.trim();
+       if (!text) return;
+       const log = document.getElementById('chatLog');
+       const me = document.createElement('div');
+       me.textContent = text;
+       log.appendChild(me);
+       input.value = '';
+       // Placeholder reply
+       const bot = document.createElement('div');
+       bot.style.color = '#666';
+       bot.textContent = 'Thanks! I will keep that in mind.';
+       log.appendChild(bot);
+       log.scrollTop = log.scrollHeight;
+     });
+   </script>
+</body>
+</html>

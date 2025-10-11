@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login — GradeScope Lite</title>
+  <script>
+    // Minimal guard: don't redirect away from login when not authenticated
+    localStorage.getItem('token');
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    
+    .auth-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      margin: 20px;
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .auth-header h1 {
+      color: #424242;
+      font-size: 28px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    
+    .auth-header p {
+      color: #757575;
+      font-size: 16px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #3c4043;
+      font-weight: 500;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+    }
+    
+    .btn-login {
+      width: 100%;
+      background: #424242;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-login:hover {
+      background: #212121;
+    }
+    
+    .btn-login:disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
+    }
+    
+    .auth-footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .auth-footer a {
+      color: #424242;
+      text-decoration: none;
+    }
+    
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .error-message {
+      background: #fce8e6;
+      color: #d93025;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .success-message {
+      background: #e6f4ea;
+      color: #137333;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #1a73e8;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>GradeScope Lite</h1>
+      <p>Sign in to your account</p>
+    </div>
+    
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="success-message" class="success-message" style="display: none;"></div>
+    
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      
+      
+      <button type="submit" class="btn-login" id="login-btn">
+        Sign In
+      </button>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+      </div>
+    </form>
+    
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="signup.html" onclick="window.location.href='signup.html'; return false;">Sign up</a></p>
+    </div>
+  </div>
+
+  <script>
+    const role = localStorage.getItem('role');
+    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+      window.location.href = 'homepage2.html';
+    }
+    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
+      window.location.href = 'homepage1.html';
+    }
+    if (!role) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showError('Please fill in all fields');
+        return;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError('Please enter a valid email address');
+        return;
+      }
+      
+      setLoading(true);
+      hideMessages();
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password })
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          // Store token and user info
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('role', data.role); // Standardize as 'role'
+          localStorage.setItem('user', JSON.stringify({
+            name: data.name,
+            userId: data.userId,
+            role: data.role
+          }));
+
+          showSuccess('Login successful! Redirecting...');
+
+          // Redirect based on role
+          setTimeout(() => {
+            if (data.role === 'student') {
+              window.location.href = 'homepage1.html';
+            } else if (data.role === 'teacher') {
+              window.location.href = 'homepage2.html';
+            } else {
+              window.location.href = 'homepage1.html'; // fallback
+            }
+          }, 1000);
+        } else {
+          showError(data.message || 'Login failed');
+        }
+      } catch (error) {
+        showError('Network error. Please try again.');
+        console.error('Login error:', error);
+      } finally {
+        setLoading(false);
+      }
+    });
+    
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+    
+    function showSuccess(message) {
+      const successDiv = document.getElementById('success-message');
+      successDiv.textContent = message;
+      successDiv.style.display = 'block';
+    }
+    
+    function hideMessages() {
+      document.getElementById('error-message').style.display = 'none';
+      document.getElementById('success-message').style.display = 'none';
+    }
+    
+    function setLoading(loading) {
+      const btn = document.getElementById('login-btn');
+      const loadingDiv = document.getElementById('loading');
+      
+      if (loading) {
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+        loadingDiv.style.display = 'block';
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+        loadingDiv.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

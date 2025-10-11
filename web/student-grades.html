@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Grades — GradeTracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f5f5f5; 
+      margin: 0; 
+      padding: 0;
+    }
+    .header { 
+      background: #3f51b5; 
+      color: white;
+      padding: 16px 32px; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h2 {
+      margin: 0;
+    }
+    .main { 
+      padding: 32px; 
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .tab {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-weight: bold;
+    }
+    .tab.active {
+      background-color: #3f51b5;
+      color: white;
+    }
+    .tab:hover:not(.active) {
+      background-color: #e0e0e0;
+    }
+    .quarter-tabs {
+      display: flex;
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .quarter-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .quarter-tab.active {
+      background-color: #7986cb;
+      color: white;
+    }
+    .quarter-tab:hover:not(.active) {
+      background-color: #e0e0e0;
+    }
+    .tab-content {
+      display: none;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .tab-content.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .category-header {
+      background-color: #e8eaf6;
+      font-weight: bold;
+      padding: 10px 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .grade-summary {
+      background-color: #e8f5e9;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .logout-btn {
+      background-color: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .logout-btn:hover {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .back-btn {
+      background-color: #7986cb;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background-color 0.3s;
+    }
+    .back-btn:hover {
+      background-color: #5c6bc0;
+    }
+    @media (max-width: 768px) {
+      .tabs, .quarter-tabs {
+        flex-direction: column;
+      }
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2 id="subjectTitle">Subject Grades</h2>
+    <div>
+      <span id="studentName"></span>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+  
+  <div class="main">
+    <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
+    
+    <div class="quarter-tabs" id="quarterTabs">
+      <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
+      <div class="quarter-tab" data-quarter="2">Quarter 2</div>
+      <div class="quarter-tab" data-quarter="3">Quarter 3</div>
+      <div class="quarter-tab" data-quarter="4">Quarter 4</div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="graded">Graded Components</div>
+      <div class="tab" data-tab="assessment">Assessment</div>
+    </div>
+    
+    <div id="gradedContent" class="tab-content active">
+      <!-- Performance Tasks Section -->
+      <div class="category-header">
+        <span>Performance Tasks (<span id="ptWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Name of Performance Task</th>
+            <th>Topic(s) Involved</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody id="ptTable">
+          <tr><td colspan="6">No data available</td></tr>
+        </tbody>
+      </table>
+      
+      <!-- Written Works Section -->
+      <div class="category-header">
+        <span>Written Works (<span id="wwWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Status</th>
+            <th>Topic(s)</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody id="wwTable">
+          <tr><td colspan="6">No data available</td></tr>
+        </tbody>
+      </table>
+      
+      <!-- Periodical Exam Section -->
+      <div class="category-header">
+        <span>Periodical Exam (<span id="peWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Topics</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody id="peTable">
+          <tr><td colspan="4">No data available</td></tr>
+        </tbody>
+      </table>
+      
+      <div class="grade-summary">
+        Grade of Student: <span id="finalGrade">N/A</span>
+        <p><em>This grade is not final unless all data of all tasks is taken into account.</em></p>
+      </div>
+    </div>
+    
+    <div id="assessmentContent" class="tab-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Topic(s) of Task</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody id="assessmentTable">
+          <tr><td colspan="5">No data available</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const userName = localStorage.getItem('name');
+    
+    if (!token || (role !== 'student' && role !== 'parent')) {
+      window.location.href = 'login.html';
+    }
+    
+    document.getElementById('studentName').textContent = userName;
+    
+    // Get subject ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectId = urlParams.get('id');
+    const subjectTitle = urlParams.get('title');
+    
+    if (!subjectId) {
+      window.location.href = 'homepage1.html';
+    }
+    
+    document.getElementById('subjectTitle').textContent = subjectTitle || 'Subject Grades';
+    
+    // Tab switching
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        const tabName = tab.getAttribute('data-tab');
+        document.getElementById(tabName + 'Content').classList.add('active');
+      });
+    });
+    
+    // Quarter switching
+    const quarterTabs = document.querySelectorAll('.quarter-tab');
+    let currentQuarter = 1;
+    
+    quarterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        quarterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentQuarter = tab.getAttribute('data-quarter');
+        loadGradeData(currentQuarter);
+      });
+    });
+    
+    // Load grade data for the selected quarter
+    function loadGradeData(quarter) {
+      // Fetch categories to get weights
+      fetch(`/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(categories => {
+        // Set weights for each category
+        categories.forEach(category => {
+          if (category.name === 'Performance Task') {
+            document.getElementById('ptWeight').textContent = category.weight;
+          } else if (category.name === 'Written Works') {
+            document.getElementById('wwWeight').textContent = category.weight;
+          } else if (category.name === 'Periodical Exam') {
+            document.getElementById('peWeight').textContent = category.weight;
+          }
+        });
+        
+        // Fetch grade items
+        return fetch(`/api/subjects/${subjectId}/items?quarter=${quarter}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      })
+      .then(res => res.json())
+      .then(items => {
+        // Group items by category
+        const ptItems = items.filter(item => item.category_name === 'Performance Task');
+        const wwItems = items.filter(item => item.category_name === 'Written Works');
+        const peItems = items.filter(item => item.category_name === 'Periodical Exam');
+        const assessmentItems = items.filter(item => !item.included_in_final);
+        
+        // Populate tables
+        populateTable('ptTable', ptItems, renderPTRow);
+        populateTable('wwTable', wwItems, renderWWRow);
+        populateTable('peTable', peItems, renderPERow);
+        populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
+        
+        // Calculate final grade
+        calculateFinalGrade(ptItems, wwItems, peItems);
+      })
+      .catch(error => {
+        console.error('Error loading grade data:', error);
+      });
+    }
+    
+    function populateTable(tableId, items, renderRowFunc) {
+      const tableBody = document.getElementById(tableId);
+      if (items.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6">No data available</td></tr>';
+        return;
+      }
+      
+      tableBody.innerHTML = '';
+      items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = renderRowFunc(item, index + 1);
+        tableBody.appendChild(row);
+      });
+    }
+    
+    function renderPTRow(item, index) {
+      return `
+        <td>${index}</td>
+        <td>${item.title}</td>
+        <td>${item.topic || 'N/A'}</td>
+        <td>${item.score || 'N/A'}</td>
+        <td>${item.max_score}</td>
+        <td>${item.comments || ''}</td>
+      `;
+    }
+    
+    function renderWWRow(item, index) {
+      return `
+        <td>${index}</td>
+        <td>${item.item_type || 'N/A'}</td>
+        <td>${item.topic || 'N/A'}</td>
+        <td>${item.score || 'N/A'}</td>
+        <td>${item.max_score}</td>
+        <td>${item.comments || ''}</td>
+      `;
+    }
+    
+    function renderPERow(item) {
+      return `
+        <td>${item.topic || 'N/A'}</td>
+        <td>${item.score || 'N/A'}</td>
+        <td>${item.max_score}</td>
+        <td>${item.comments || ''}</td>
+      `;
+    }
+    
+    function renderAssessmentRow(item, index) {
+      return `
+        <td>${index}</td>
+        <td>${item.topic || 'N/A'}</td>
+        <td>${item.score || 'N/A'}</td>
+        <td>${item.max_score}</td>
+        <td>${item.comments || ''}</td>
+      `;
+    }
+    
+    function calculateFinalGrade(ptItems, wwItems, peItems) {
+      const ptWeight = parseFloat(document.getElementById('ptWeight').textContent) / 100;
+      const wwWeight = parseFloat(document.getElementById('wwWeight').textContent) / 100;
+      const peWeight = parseFloat(document.getElementById('peWeight').textContent) / 100;
+      
+      let ptTotal = 0, ptMax = 0;
+      let wwTotal = 0, wwMax = 0;
+      let peTotal = 0, peMax = 0;
+      
+      ptItems.forEach(item => {
+        if (item.score) {
+          ptTotal += parseFloat(item.score);
+          ptMax += parseFloat(item.max_score);
+        }
+      });
+      
+      wwItems.forEach(item => {
+        if (item.score) {
+          wwTotal += parseFloat(item.score);
+          wwMax += parseFloat(item.max_score);
+        }
+      });
+      
+      peItems.forEach(item => {
+        if (item.score) {
+          peTotal += parseFloat(item.score);
+          peMax += parseFloat(item.max_score);
+        }
+      });
+      
+      let finalGrade = 0;
+      
+      if (ptMax > 0) finalGrade += (ptTotal / ptMax) * ptWeight * 100;
+      if (wwMax > 0) finalGrade += (wwTotal / wwMax) * wwWeight * 100;
+      if (peMax > 0) finalGrade += (peTotal / peMax) * peWeight * 100;
+      
+      document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
+    }
+    
+    // Navigation functions
+    function goBack() {
+      window.location.href = 'homepage1.html';
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('name');
+      window.location.href = 'login.html';
+    }
+    
+    // Load initial data
+    loadGradeData(1);
+  </script>
+</body>
+</html>

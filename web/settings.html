@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GradeTracker — Settings</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #ffffff; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 220px; 
+      background: linear-gradient(to bottom, #1a237e, #283593); 
+      color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    .sidebar .top { padding: 24px 0 0 0; }
+    .sidebar .nav { list-style: none; padding: 0; margin: 0; }
+    .sidebar .nav li { 
+      padding: 16px 32px; cursor: pointer; 
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+    }
+    .sidebar .nav li.active, .sidebar .nav li:hover { 
+      background: rgba(255,255,255,0.1); 
+      border-left: 4px solid #64b5f6;
+    }
+    .sidebar .bottom { padding: 24px 0 24px 0; text-align: center; }
+    .main {
+      margin-left: 220px; padding: 32px;
+    }
+    .header {
+      display: flex; justify-content: flex-end; align-items: center; background: #fff; padding: 16px 32px; border-bottom: 1px solid #eee;
+    }
+    .account-menu { position: relative; }
+    .account-btn {
+      background: #1976d2; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px;
+    }
+    .account-dropdown {
+      display: none; position: absolute; right: 0; top: 48px; background: #fff; border: 1px solid #ccc; border-radius: 6px; min-width: 200px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .account-dropdown.show { display: block; }
+    .account-dropdown .user-info {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .account-dropdown .full-name {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .account-dropdown .email {
+      font-size: 0.85em;
+      color: #666;
+    }
+    .account-dropdown button {
+      width: 100%; background: none; border: none; padding: 12px 16px; text-align: left; cursor: pointer;
+    }
+    .account-dropdown button:hover { background: #f5f5f5; }
+    
+    .settings-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 24px;
+      margin-top: 24px;
+    }
+    
+    .settings-title {
+      font-size: 1.5em;
+      margin-bottom: 24px;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+    }
+    
+    .settings-section {
+      margin-bottom: 32px;
+    }
+    
+    .settings-section-title {
+      font-size: 1.2em;
+      margin-bottom: 16px;
+      color: #444;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    
+    .form-group input:focus, .form-group select:focus {
+      border-color: #1976d2;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+    }
+    
+    .btn {
+      padding: 10px 16px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+    
+    .btn:hover {
+      background: #1565c0;
+    }
+    
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-danger {
+      background: #e53935;
+    }
+    
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #1976d2;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-label {
+      font-weight: bold;
+    }
+    
+    .setting-description {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 4px;
+    }
+    
+    /* About modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 24px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .modal-title {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    
+    .close-modal {
+      font-size: 1.5em;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    
+    .modal-body {
+      line-height: 1.6;
+    }
+    
+    /* Add Class Modal */
+    .add-class-modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .add-class-modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 24px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .add-class-form-group {
+      margin-bottom: 16px;
+    }
+    
+    .add-class-form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    
+    .add-class-form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    
+    .add-class-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+      }
+      .sidebar .nav {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .sidebar .nav li {
+        padding: 12px 16px;
+      }
+      .main {
+        margin-left: 0;
+        padding: 16px;
+      }
+      .header {
+        padding: 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="top">
+      <ul class="nav">
+        <li onclick="window.location.href='homepage1.html'">Home</li>
+        <li class="active">Settings</li>
+        <li id="aboutBtn">About</li>
+      </ul>
+    </div>
+    <div class="bottom">
+      <div>GradeTracker v1.0</div>
+    </div>
+  </div>
+  
+  <div class="main">
+    <div class="header">
+      <div class="account-menu">
+        <button class="account-btn" id="accountBtn">👤</button>
+        <div class="account-dropdown" id="accountDropdown">
+          <div class="user-info">
+            <div class="full-name" id="userFullName">User Name</div>
+            <div class="email" id="userEmail">user@example.com</div>
+          </div>
+          <button id="logoutBtn">Log Out</button>
+        </div>
+      </div>
+    </div>
+    
+    <h1>Settings</h1>
+    
+    <div class="settings-container">
+      <div class="settings-title">Account Settings</div>
+      
+      <div class="settings-section">
+        <div class="settings-section-title">Profile Information</div>
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" placeholder="First Name">
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" placeholder="Last Name">
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="Email Address">
+        </div>
+        <button class="btn" id="saveProfileBtn">Save Changes</button>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-section-title">Password</div>
+        <div class="form-group">
+          <label for="currentPassword">Current Password</label>
+          <input type="password" id="currentPassword" placeholder="Current Password">
+        </div>
+        <div class="form-group">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" placeholder="New Password">
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm New Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm New Password">
+        </div>
+        <button class="btn" id="changePasswordBtn">Change Password</button>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-section-title">Notifications</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Email Notifications</div>
+            <div class="setting-description">Receive email notifications for grade updates</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Grade Alerts</div>
+            <div class="setting-description">Get notified when new grades are posted</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-section-title">Danger Zone</div>
+        <p>Once you delete your account, there is no going back. Please be certain.</p>
+        <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- About Modal -->
+  <div id="aboutModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">About GradeScope Lite</div>
+        <button class="close-modal" id="closeAboutModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
+        <p><strong>Version:</strong> V1.0</p>
+        <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
+        <p><strong>Main Dev:</strong> Jack Dylan Gallentes</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Class Modal (for teachers) -->
+  <div id="addClassModal" class="add-class-modal">
+    <div class="add-class-modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add New Class</div>
+        <button class="close-modal" id="closeAddClassModal">&times;</button>
+      </div>
+      <div>
+        <div class="add-class-form-group">
+          <label for="className">Name of Subject</label>
+          <input type="text" id="className" placeholder="Enter subject name">
+        </div>
+        <div class="add-class-form-group">
+          <label for="gradeLevel">Grade Level</label>
+          <input type="text" id="gradeLevel" placeholder="Enter grade level">
+        </div>
+        <div class="add-class-form-group">
+          <label for="section">Section</label>
+          <input type="text" id="section" placeholder="Enter section">
+        </div>
+        <div class="add-class-buttons">
+          <button class="btn btn-secondary" id="cancelAddClass">Cancel</button>
+          <button class="btn" id="confirmAddClass">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Check authentication
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      window.location.href = 'login.html';
+    }
+    
+    // Account dropdown
+    const accountBtn = document.getElementById('accountBtn');
+    const accountDropdown = document.getElementById('accountDropdown');
+    const userFullName = document.getElementById('userFullName');
+    const userEmail = document.getElementById('userEmail');
+    
+    // Set initial values from localStorage
+    userFullName.textContent = localStorage.getItem('fullName') || 'User Name';
+    userEmail.textContent = localStorage.getItem('email') || 'user@example.com';
+    
+    // Load user data
+    function loadUserData() {
+      fetch('/api/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch user data');
+          return res.json();
+        })
+        .then(user => {
+          userFullName.textContent = user.fullName || 'User Name';
+          userEmail.textContent = user.email || 'user@example.com';
+          
+          // Populate form fields
+          document.getElementById('firstName').value = user.firstName || '';
+          document.getElementById('lastName').value = user.lastName || '';
+          document.getElementById('email').value = user.email || '';
+          
+          // Store in localStorage for other pages
+          localStorage.setItem('fullName', user.fullName);
+          localStorage.setItem('email', user.email);
+        })
+        .catch(err => console.error('Error fetching user data:', err));
+    }
+    
+    // Load user data on page load
+    loadUserData();
+    
+    accountBtn.addEventListener('click', () => {
+      accountDropdown.classList.toggle('show');
+    });
+    
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (event) => {
+      if (!event.target.matches('.account-btn') && !accountDropdown.contains(event.target)) {
+        accountDropdown.classList.remove('show');
+      }
+    });
+    
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      // Clear all user data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('fullName');
+      localStorage.removeItem('email');
+      
+      // Redirect to login page
+      window.location.href = 'login.html';
+    });
+    
+    // About modal
+    const aboutBtn = document.getElementById('aboutBtn');
+    const aboutModal = document.getElementById('aboutModal');
+    const closeAboutModal = document.getElementById('closeAboutModal');
+    
+    aboutBtn.addEventListener('click', () => {
+      aboutModal.style.display = 'block';
+    });
+    
+    closeAboutModal.addEventListener('click', () => {
+      aboutModal.style.display = 'none';
+    });
+    
+    // Add Class modal (for teachers only)
+    const addClassModal = document.getElementById('addClassModal');
+    const closeAddClassModal = document.getElementById('closeAddClassModal');
+    const cancelAddClass = document.getElementById('cancelAddClass');
+    const confirmAddClass = document.getElementById('confirmAddClass');
+    
+    // Show Add Class button only for teachers
+    if (role === 'teacher') {
+      // Create Add Class button
+      const addClassBtn = document.createElement('button');
+      addClassBtn.textContent = 'Add Class';
+      addClassBtn.className = 'btn';
+      addClassBtn.style.marginTop = '24px';
+      
+      // Insert before settings container
+      const settingsContainer = document.querySelector('.settings-container');
+      settingsContainer.parentNode.insertBefore(addClassBtn, settingsContainer);
+      
+      // Add event listener
+      addClassBtn.addEventListener('click', () => {
+        addClassModal.style.display = 'block';
+      });
+    }
+    
+    closeAddClassModal.addEventListener('click', () => {
+      addClassModal.style.display = 'none';
+    });
+    
+    cancelAddClass.addEventListener('click', () => {
+      addClassModal.style.display = 'none';
+    });
+    
+    confirmAddClass.addEventListener('click', () => {
+      const className = document.getElementById('className').value;
+      const gradeLevel = document.getElementById('gradeLevel').value;
+      const section = document.getElementById('section').value;
+      
+      if (!className || !gradeLevel || !section) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      // Send API request to create class
+      fetch('/api/classes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          title: className,
+          grade_level: gradeLevel,
+          section: section
+        })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to create class');
+          return res.json();
+        })
+        .then(data => {
+          alert('Class created successfully!');
+          addClassModal.style.display = 'none';
+          // Clear form fields
+          document.getElementById('className').value = '';
+          document.getElementById('gradeLevel').value = '';
+          document.getElementById('section').value = '';
+        })
+        .catch(err => {
+          alert('Error creating class: ' + err.message);
+        });
+    });
+    
+    // Form submission handlers
+    document.getElementById('saveProfileBtn').addEventListener('click', () => {
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const email = document.getElementById('email').value;
+      
+      if (!firstName || !lastName) {
+        alert('Please fill in first name and last name fields');
+        return;
+      }
+      
+      // Send API request to update profile
+      fetch('/api/me/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName
+        })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to update profile');
+          return res.json();
+        })
+        .then(data => {
+          alert('Profile updated successfully!');
+          // Update displayed name and email
+          userFullName.textContent = data.fullName;
+          userEmail.textContent = email;
+          
+          // Update localStorage
+          localStorage.setItem('fullName', data.fullName);
+          
+          // Update dropdown in all open pages
+          window.dispatchEvent(new CustomEvent('user-profile-updated', {
+            detail: { fullName: data.fullName }
+          }));
+        })
+        .catch(err => {
+          alert('Error updating profile: ' + err.message);
+        });
+    });
+    
+    document.getElementById('changePasswordBtn').addEventListener('click', () => {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Please fill in all password fields');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+      }
+      
+      // Send API request to change password
+      fetch('/api/user/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to change password');
+          return res.json();
+        })
+        .then(data => {
+          alert('Password changed successfully!');
+          // Clear password fields
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        })
+        .catch(err => {
+          alert('Error changing password: ' + err.message);
+        });
+    });
+    
+    document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+      const confirmed = confirm('Are you sure you want to delete your account? This action cannot be undone.');
+      
+      if (confirmed) {
+        // Send API request to delete account
+        fetch('/api/user', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to delete account');
+            return res.json();
+          })
+          .then(data => {
+            alert('Account deleted successfully!');
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            window.location.href = 'login.html';
+          })
+          .catch(err => {
+            alert('Error deleting account: ' + err.message);
+          });
+      }
+    });
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === aboutModal) {
+        aboutModal.style.display = 'none';
+      }
+      if (event.target === addClassModal) {
+        addClassModal.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

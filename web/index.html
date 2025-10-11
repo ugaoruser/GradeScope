@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GradeScope Lite — Classroom</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="access-control.js"></script>
+  <script>
+    // Redirect to login page immediately
+    window.location.href = 'login.html';
+  </script>
+  <style>
+    /* Google Classroom inspired styling */
+    :root {
+      --google-blue: #1a73e8;
+      --google-green: #34a853;
+      --google-yellow: #fbbc04;
+      --google-red: #ea4335;
+      --google-gray: #5f6368;
+      --google-light-gray: #f8f9fa;
+      --google-border: #dadce0;
+      --google-text: #3c4043;
+      --google-text-secondary: #5f6368;
+    }
+
+    body {
+      background: var(--google-light-gray);
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background: white;
+      border-bottom: 1px solid var(--google-border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--google-blue);
+      font-size: 20px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--google-blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: var(--google-light-gray);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--google-blue);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--google-text);
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: var(--google-text-secondary);
+      text-transform: capitalize;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--google-text-secondary);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: var(--google-border);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .welcome-section {
+      margin-bottom: 32px;
+    }
+
+    .welcome-title {
+      font-size: 32px;
+      font-weight: 400;
+      color: var(--google-text);
+      margin-bottom: 8px;
+    }
+
+    .welcome-subtitle {
+      font-size: 16px;
+      color: var(--google-text-secondary);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .dashboard-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid var(--google-border);
+      transition: box-shadow 0.2s;
+    }
+
+    .dashboard-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--google-text);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: white;
+    }
+
+    .icon-blue { background: var(--google-blue); }
+    .icon-green { background: var(--google-green); }
+    .icon-yellow { background: var(--google-yellow); }
+    .icon-red { background: var(--google-red); }
+
+    .card-content {
+      color: var(--google-text-secondary);
+      line-height: 1.5;
+    }
+
+    .action-btn {
+      background: var(--google-blue);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 12px;
+      transition: background-color 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #1557b0;
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: var(--google-blue);
+      border: 1px solid var(--google-blue);
+    }
+
+    .action-btn.secondary:hover {
+      background: var(--google-light-gray);
+    }
+
+    /* Role-specific content */
+    .student-content, .teacher-content, .parent-content, .admin-content {
+      display: none;
+    }
+
+    .role-student .student-content,
+    .role-teacher .teacher-content,
+    .role-parent .parent-content,
+    .role-admin .admin-content {
+      display: block;
+    }
+
+    /* Grades table styling */
+    .grades-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .grades-table th,
+    .grades-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--google-border);
+    }
+
+    .grades-table th {
+      background: var(--google-light-gray);
+      font-weight: 500;
+      color: var(--google-text);
+    }
+
+    .grades-table tr:hover {
+      background: var(--google-light-gray);
+    }
+
+    /* Modal styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: white;
+      margin: 5% auto;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--google-text);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--google-text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: var(--google-text);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--google-border);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--google-blue);
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--google-blue);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--google-text);
+      border: 1px solid var(--google-border);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Dashboard specific styles */
+    .grade-summary, .teacher-stats, .child-summary, .admin-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-item, .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .summary-item:last-child, .stat-item:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: 500;
+      color: var(--google-text-secondary);
+    }
+
+    .value {
+      font-weight: 600;
+      color: var(--google-blue);
+    }
+
+    .assignment-item, .activity-item, .message-item, .event-item {
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fafafa;
+    }
+
+    .assignment-title, .activity-text, .message-text, .event-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .assignment-due, .activity-time, .message-time, .event-date {
+      font-size: 12px;
+      color: var(--google-text-secondary);
+    }
+
+    .assignment-status {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .assignment-status.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .progress-chart {
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .subject-progress, .recent-grades {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .subject-item, .grade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .grade {
+      font-weight: 600;
+      color: var(--google-blue);
+    }
+
+    .performance-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chart-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-label {
+      min-width: 80px;
+      font-size: 12px;
+    }
+
+    .bar-fill {
+      height: 20px;
+      background: var(--google-blue);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .child-info h4 {
+      margin: 0 0 8px 0;
+      color: var(--google-text);
+    }
+
+    .child-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .message-from {
+      font-weight: 500;
+      color: var(--google-blue);
+      margin-bottom: 4px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .quick-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--google-border);
+      border-radius: 6px;
+      background: white;
+      color: var(--google-text);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      background: var(--google-light-gray);
+      border-color: var(--google-blue);
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--google-blue);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--google-text-secondary);
+      display: block;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .header {
+        padding: 12px 16px;
+      }
+      
+      .main-container {
+        padding: 16px;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .welcome-title {
+        font-size: 24px;
+      }
+
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="#" class="logo">
+        <div class="logo-icon">GT</div>
+        GradeScope Lite
+      </a>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-details">
+          <div class="user-name" id="user-name">User</div>
+          <div class="user-role" id="user-role">Role</div>
+        </div>
+      </div>
+      <button class="logout-btn" id="logout-btn" title="Logout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1 class="welcome-title" id="welcome-title">Welcome to GradeScope Lite</h1>
+      <p class="welcome-subtitle" id="welcome-subtitle">Your classroom management dashboard</p>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Student Content -->
+      <div class="student-content">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">My Grades</div>
+            <div class="card-icon icon-blue">📊</div>
+          </div>
+          <div class="card-content">
+            <div id="student-grades-summary">
+              <div class="grade-summary">
+                <div class="summary-item">
+                  <span class="label">Overall Average:</span>
+                  <span class="value" id="student-average">--</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Total Subjects:</span>
+                  <span class="value" id="student-subjects">--</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Recent Grades:</span>
+                  <span class="value" id="student-recent">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="action-btn" onclick="viewGrades()">View All Grades</button>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Assignments</div>
+            <div class="card-icon icon-green">📝</div>
+          </div>
+          <div class="card-content">
+            <div id="student-assignments">
+              <div class="assignment-item">
+                <div class="assignment-title">Math Quiz 3</div>
+                <div class="assignment-due">Due: Dec 15, 2024</div>
+                <div class="assignment-status pending">Pending</div>
+              </div>
+              <div class="assignment-item">
+                <div class="assignment-title">Science Lab Report</div>
+                <div class="assignment-due">Due: Dec 18, 2024</div>
+                <div class="assignment-status pending">Pending</div>
+              </div>
+            </div>
+          </div>
+          <button class="action-btn secondary" onclick="viewAssignments()">View All Assignments</button>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Academic Progress</div>
+            <div class="card-icon icon-yellow">📈</div>
+          </div>
+          <div class="card-content">
+            <div class="progress-chart">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%"></div>
+              </div>
+              <div class="progress-text">85% Overall Progress</div>
+            </div>
+            <div class="subject-progress">
+              <div class="subject-item">
+                <span>Mathematics</span>
+                <span class="grade">88%</span>
+              </div>
+              <div class="subject-item">
+                <span>Science</span>
+                <span class="grade">92%</span>
+              </div>
+              <div class="subject-item">
+                <span>English</span>
+                <span class="grade">85%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teacher Content -->
+      <div class="teacher-content">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Grade Management</div>
+            <div class="card-icon icon-blue">📊</div>
+          </div>
+          <div class="card-content">
+            <div class="teacher-stats">
+              <div class="stat-item">
+                <span class="stat-number">24</span>
+                <span class="stat-label">Students</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">156</span>
+                <span class="stat-label">Grades Entered</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">87%</span>
+                <span class="stat-label">Class Average</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="action-btn" onclick="openGradeModal()">Add Grade</button>
+            <a href="teacher-grades.html" class="action-btn">Manage Grades</a>
+          </div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Recent Activity</div>
+            <div class="card-icon icon-green">📝</div>
+          </div>
+          <div class="card-content">
+            <div class="activity-list">
+              <div class="activity-item">
+                <span class="activity-text">Graded Math Quiz for 24 students</span>
+                <span class="activity-time">2 hours ago</span>
+              </div>
+              <div class="activity-item">
+                <span class="activity-text">Added comments for low scores</span>
+                <span class="activity-time">4 hours ago</span>
+              </div>
+              <div class="activity-item">
+                <span class="activity-text">Updated Science Lab grades</span>
+                <span class="activity-time">1 day ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Class Performance</div>
+            <div class="card-icon icon-yellow">📈</div>
+          </div>
+          <div class="card-content">
+            <div class="performance-chart">
+              <div class="chart-bar">
+                <div class="bar-label">A+ (90-100)</div>
+                <div class="bar-fill" style="width: 35%">8</div>
+              </div>
+              <div class="chart-bar">
+                <div class="bar-label">A (80-89)</div>
+                <div class="bar-fill" style="width: 45%">12</div>
+              </div>
+              <div class="chart-bar">
+                <div class="bar-label">B (70-79)</div>
+                <div class="bar-fill" style="width: 25%">4</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent Content -->
+      <div class="parent-content">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Child's Progress</div>
+            <div class="card-icon icon-blue">👨‍👩‍👧‍👦</div>
+          </div>
+          <div class="card-content">
+            <div class="child-summary">
+              <div class="child-info">
+                <h4>John Doe</h4>
+                <div class="child-stats">
+                  <div class="stat">
+                    <span class="label">Overall Average:</span>
+                    <span class="value">88%</span>
+                  </div>
+                  <div class="stat">
+                    <span class="label">Attendance:</span>
+                    <span class="value">95%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="recent-grades">
+                <div class="grade-item">
+                  <span>Mathematics</span>
+                  <span class="grade">92%</span>
+                </div>
+                <div class="grade-item">
+                  <span>Science</span>
+                  <span class="grade">88%</span>
+                </div>
+                <div class="grade-item">
+                  <span>English</span>
+                  <span class="grade">85%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="action-btn" onclick="viewChildProgress()">View Full Progress</button>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Teacher Messages</div>
+            <div class="card-icon icon-green">💬</div>
+          </div>
+          <div class="card-content">
+            <div class="message-list">
+              <div class="message-item">
+                <div class="message-from">Mr. Johnson (Math)</div>
+                <div class="message-text">John is doing excellent work in mathematics!</div>
+                <div class="message-time">2 days ago</div>
+              </div>
+              <div class="message-item">
+                <div class="message-from">Ms. Wilson (English)</div>
+                <div class="message-text">Please encourage John to participate more in class discussions.</div>
+                <div class="message-time">1 week ago</div>
+              </div>
+            </div>
+          </div>
+          <button class="action-btn secondary" onclick="viewCommunication()">View All Messages</button>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Upcoming Events</div>
+            <div class="card-icon icon-yellow">📅</div>
+          </div>
+          <div class="card-content">
+            <div class="event-list">
+              <div class="event-item">
+                <div class="event-title">Parent-Teacher Conference</div>
+                <div class="event-date">Dec 20, 2024</div>
+              </div>
+              <div class="event-item">
+                <div class="event-title">Math Test</div>
+                <div class="event-date">Dec 22, 2024</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Content -->
+      <div class="admin-content">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">System Overview</div>
+            <div class="card-icon icon-blue">📊</div>
+          </div>
+          <div class="card-content">
+            <div class="admin-stats">
+              <div class="stat-row">
+                <div class="stat-item">
+                  <span class="stat-number">156</span>
+                  <span class="stat-label">Total Students</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">24</span>
+                  <span class="stat-label">Teachers</span>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-item">
+                  <span class="stat-number">8</span>
+                  <span class="stat-label">Subjects</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">89%</span>
+                  <span class="stat-label">System Uptime</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="action-btn" onclick="manageSubjects()">Manage System</button>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Recent Activity</div>
+            <div class="card-icon icon-green">📝</div>
+          </div>
+          <div class="card-content">
+            <div class="admin-activity">
+              <div class="activity-item">
+                <span class="activity-text">New student enrolled: Jane Smith</span>
+                <span class="activity-time">1 hour ago</span>
+              </div>
+              <div class="activity-item">
+                <span class="activity-text">Teacher account created: Ms. Davis</span>
+                <span class="activity-time">3 hours ago</span>
+              </div>
+              <div class="activity-item">
+                <span class="activity-text">Subject "Physics" added to system</span>
+                <span class="activity-time">1 day ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-title">Quick Actions</div>
+            <div class="card-icon icon-yellow">⚡</div>
+          </div>
+          <div class="card-content">
+            <div class="quick-actions">
+              <button class="quick-btn" onclick="manageUsers()">Add User</button>
+              <button class="quick-btn" onclick="manageSubjects()">Add Subject</button>
+              <button class="quick-btn" onclick="viewReports()">Generate Report</button>
+              <button class="quick-btn" onclick="viewReports()">System Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grades Section (for all roles) -->
+    <div class="dashboard-card" id="grades-section" style="display: none;">
+      <div class="card-header">
+        <div class="card-title">Grades</div>
+        <button class="action-btn" onclick="closeGradesSection()">Close</button>
+      </div>
+      <div class="card-content">
+        <table class="grades-table" id="grades-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Subject</th>
+              <th>Grade</th>
+              <th>Quarter</th>
+              <th>Remarks</th>
+              <th id="actions-header" style="display: none;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="grades-body">
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--google-text-secondary);">
+                No grades available
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Grade Modal -->
+  <div id="grade-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Add Grade</h3>
+        <button class="close-btn" onclick="closeGradeModal()">&times;</button>
+      </div>
+      <form id="grade-form">
+        <div class="form-group">
+          <label for="student-name">Student Name</label>
+          <input type="text" id="student-name" name="studentName" required>
+        </div>
+        <div class="form-group">
+          <label for="subject">Subject</label>
+          <select id="subject" name="subject" required>
+            <option value="">Select Subject</option>
+            <option value="math">Mathematics</option>
+            <option value="science">Science</option>
+            <option value="english">English</option>
+            <option value="history">History</option>
+            <option value="art">Art</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="grade">Grade</label>
+          <input type="number" id="grade" name="grade" min="0" max="100" required>
+        </div>
+        <div class="form-group">
+          <label for="quarter">Quarter</label>
+          <select id="quarter" name="quarter" required>
+            <option value="1">Quarter 1</option>
+            <option value="2">Quarter 2</option>
+            <option value="3">Quarter 3</option>
+            <option value="4">Quarter 4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="remarks">Remarks</label>
+          <textarea id="remarks" name="remarks" rows="3" placeholder="Add comments for low scores..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeGradeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Grade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js">
+    const role = localStorage.getItem('role');
+    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+      window.location.href = 'homepage2.html';
+    }
+    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
+      window.location.href = 'homepage1.html';
+    }
+    if (!role) {
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

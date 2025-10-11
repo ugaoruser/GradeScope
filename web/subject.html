@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Subject — GradeTracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
+    .header { background: #fff; padding: 16px 32px; border-bottom: 1px solid #eee; }
+    .main { padding: 32px; }
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .student-table th, .student-table td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .student-table th {
+      background: #f8f8f8;
+      font-weight: bold;
+    }
+    .student-table tr:hover {
+      background-color: #f5f5f5;
+    }
+    .student-grade { 
+      color: #1976d2; 
+      font-weight: bold;
+    }
+    .info-msg { margin-top: 32px; color: #888; }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: #1976d2;
+      color: white;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2 id="subjectTitle">Subject</h2>
+    <div id="accessCodeDisplay" style="display: none; background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #2e7d32;">
+      Access Code: <span id="accessCodeValue"></span>
+    </div>
+  </div>
+  <div class="main">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div id="studentContainer">
+      <table class="student-table" id="studentTable">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Grade</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentTableBody">
+          <tr>
+            <td colspan="3">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="info-msg" id="infoMsg"></div>
+  </div>
+  <script>
+    // --- Routing: Only allow logged-in users ---
+    const role = localStorage.getItem('role');
+    if (!role) window.location.href = 'login.html';
+
+    // --- Get subject from URL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const subject = urlParams.get('subject') || "Subject";
+    document.getElementById('subjectTitle').textContent = subject;
+
+    // Show access code for teachers
+    if (role === 'teacher') {
+      // Fetch subject details to get access code
+      fetch(`/api/subjects?title=${encodeURIComponent(subject)}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      })
+        .then(res => res.json())
+        .then(subjects => {
+          if (subjects.length > 0 && subjects[0].code) {
+            document.getElementById('accessCodeValue').textContent = subjects[0].code;
+            document.getElementById('accessCodeDisplay').style.display = 'block';
+          }
+        })
+        .catch(err => console.error('Error fetching subject details:', err));
+    }
+
+    function goBack() {
+      if (role === 'student') {
+        window.location.href = 'homepage1.html';
+      } else {
+        window.location.href = 'homepage2.html';
+      }
+    }
+
+    // --- Fetch students/grades for this subject ---
+    function renderForStudent(data) {
+      // Redirect to detailed student grades page always
+      const urlParams = new URLSearchParams(window.location.search);
+      const subjectTitle = urlParams.get('subject') || 'Subject';
+      window.location.href = `student-grades.html?title=${encodeURIComponent(subjectTitle)}`;
+    }
+
+    function renderForTeacher(students) {
+      const tableBody = document.getElementById('studentTableBody');
+      tableBody.innerHTML = "";
+      if (!students.length) {
+        tableBody.innerHTML = "<tr><td colspan='3'>No students enrolled in this subject.</td></tr>";
+        return;
+      }
+      students.forEach(stu => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${stu.name}</td>
+          <td><span class="student-grade">${stu.grade}</span></td>
+          <td><button onclick="viewDetails('${stu.id}')">View Details</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function viewDetails(studentId) {
+      // Navigate to detailed view
+      window.location.href = `student-grades.html?id=${studentId}&subject=${encodeURIComponent(subject)}`;
+    }
+
+    // --- Fetch data from backend ---
+    if (role === 'student') {
+      renderForStudent({});
+    } else if (role === 'teacher') {
+      fetch(`/api/subject/students?subject=${encodeURIComponent(subject)}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to load students');
+          return res.json();
+        })
+        .then(students => renderForTeacher(students))
+        .catch(err => {
+          document.getElementById('studentGrid').innerHTML = 'Error loading students.';
+          document.getElementById('infoMsg').textContent = err.message;
+        });
+    } else {
+      document.getElementById('studentGrid').innerHTML = '';
+      document.getElementById('infoMsg').textContent = 'Unknown role.';
+    }
+  </script>
+  <script>
+    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+      window.location.href = 'homepage2.html';
+    }
+    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
+      window.location.href = 'homepage1.html';
+    }
+    if (!role) {
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
