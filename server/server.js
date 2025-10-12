@@ -11,6 +11,15 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import cors from 'cors';
+
+app.use(cors({
+  origin: [
+    'https://ugaoruser.github.io', // your GitHub Pages domain
+    'http://localhost:5500'       // for local testing
+  ],
+  credentials: true,
+}));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1027,6 +1036,6 @@ app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, async (req, 
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
