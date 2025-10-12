@@ -7,6 +7,7 @@ import mysql from "mysql2/promise";
 import cors from "cors";
 import path from "path";
 import bodyParser from "body-parser";
+import pool from './db.js'; 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";

@@ -1,15 +1,5 @@
-import mysql from 'mysql2/promise';
+import pool from './db.js';
 import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || 'MySQLRoot123',
-  database: process.env.DB_NAME || 'grade_tracker'
-});
 
 const users = [
   { email: 'student1@example.com', password: 'password123', full_name: 'Student One', role_id: 1 },
