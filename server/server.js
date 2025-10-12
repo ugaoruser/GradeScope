@@ -13,6 +13,13 @@ import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// CORS
 app.use(cors({
   origin: [
     'https://ugaoruser.github.io', // your GitHub Pages domain
@@ -23,13 +30,6 @@ app.use(cors({
   credentials: true,
 }));
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// CORS
 const allowed = (process.env.CORS_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
 app.use(cors({ origin: allowed.length ? allowed : true }));
 
