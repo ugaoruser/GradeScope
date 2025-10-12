@@ -12,7 +12,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import cors from 'cors';
 
 app.use(cors({
   origin: [
