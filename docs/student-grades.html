@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Grades — GradeTracker</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -308,7 +309,7 @@
     // Load grade data for the selected quarter
     function loadGradeData(quarter) {
       // Fetch categories to get weights
-      fetch(`/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
+      fetch(`${API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -325,7 +326,7 @@
         });
         
         // Fetch grade items
-        return fetch(`/api/subjects/${subjectId}/items?quarter=${quarter}`, {
+        return fetch(`${API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       })

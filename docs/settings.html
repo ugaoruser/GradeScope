@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>GradeTracker — Settings</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #ffffff; }
     .sidebar {
@@ -486,7 +487,7 @@
     
     // Load user data
     function loadUserData() {
-      fetch('/api/me', {
+      fetch('${API_BASE}/api/me', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
         .then(res => {
@@ -591,7 +592,7 @@
       }
       
       // Send API request to create class
-      fetch('/api/classes', {
+      fetch('${API_BASE}/api/classes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -632,7 +633,7 @@
       }
       
       // Send API request to update profile
-      fetch('/api/me/update', {
+      fetch('${API_BASE}/api/me/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -682,7 +683,7 @@
       }
       
       // Send API request to change password
-      fetch('/api/user/password', {
+      fetch('${API_BASE}/api/user/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -714,7 +715,7 @@
       
       if (confirmed) {
         // Send API request to delete account
-        fetch('/api/user', {
+        fetch('${API_BASE}/api/user', {
           method: 'DELETE',
           headers: {
             'Authorization': 'Bearer ' + token

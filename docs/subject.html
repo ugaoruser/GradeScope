@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Subject — GradeTracker</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
     .header { background: #fff; padding: 16px 32px; border-bottom: 1px solid #eee; }
@@ -86,7 +87,7 @@
     // Show access code for teachers
     if (role === 'teacher') {
       // Fetch subject details to get access code
-      fetch(`/api/subjects?title=${encodeURIComponent(subject)}`, {
+      fetch(`${API_BASE}/api/subjects?title=${encodeURIComponent(subject)}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       })
         .then(res => res.json())
@@ -142,7 +143,7 @@
     if (role === 'student') {
       renderForStudent({});
     } else if (role === 'teacher') {
-      fetch(`/api/subject/students?subject=${encodeURIComponent(subject)}`, {
+      fetch(`${API_BASE}/api/subject/students?subject=${encodeURIComponent(subject)}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       })
         .then(res => {

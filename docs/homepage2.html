@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>GradeTracker — Teacher Home</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <style>
     body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #ffffff; }
     .sidebar {
@@ -200,7 +201,7 @@
     document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
     
     // Fetch user data for dropdown
-    fetch('/api/me', {
+    fetch('${API_BASE}/api/me', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => res.json())
@@ -266,7 +267,7 @@
       }
       
       // Send data to server
-      fetch('/api/subjects', {
+      fetch('${API_BASE}/api/subjects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -328,7 +329,7 @@
       });
     }
 
-     fetch('/api/classes', {
+     fetch('${API_BASE}/api/classes', {
        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
      })
        .then(res => {

@@ -18,6 +18,7 @@
     }
   </script>
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <style>
     body {
       background: #ffffff;
@@ -327,7 +328,7 @@
       hideMessages();
       
       try {
-        const response = await fetch('/api/signup', {
+        const response = await fetch('${API_BASE}/api/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

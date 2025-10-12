@@ -2,6 +2,7 @@
  * FeedbackChatbot - AI assistant for generating personalized student feedback
  * Helps teachers provide consistent, quality feedback based on student performance
  */
+
 class FeedbackChatbot {
   constructor() {
     // Feedback templates for different performance levels
