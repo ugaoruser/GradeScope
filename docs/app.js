@@ -1,4 +1,6 @@
 // Improved page loading without visible buffer
+const API_BASE = 'https://gradescope-a4hw.onrender.com'
+
 const role = localStorage.getItem('role');
 if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
   window.location.href = 'homepage2.html';
@@ -18,7 +20,7 @@ function checkAuthentication() {
     window.location.href = 'login.html';
     return;
   }
-  fetch('/api/me', {
+  fetch('${API_BASE}/api/me', {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -63,7 +65,7 @@ function checkAuthentication() {
   }
   
   // Verify token with server
-  fetch('/api/me', {
+  fetch('${API_BASE}/api/me', {
     headers: {
       'Authorization': `Bearer ${token}`
     }

@@ -199,6 +199,7 @@
   </div>
   
   <script>
+    const API_BASE = 'https://gradescope-a4hw.onrender.com';
     const role = localStorage.getItem('role');
     if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
       window.location.href = 'homepage2.html';
@@ -220,7 +221,7 @@
     document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'A';
 
     // Fetch user data for dropdown
-    fetch('/api/me', {
+    fetch('${API_BASE}/api/me', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => res.json())
@@ -301,7 +302,7 @@
     
     // Uncomment below to load actual classes
     /*
-    fetch('/api/classes', {
+    fetch('${API_BASE}/api/classes', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => {
@@ -339,7 +340,7 @@
       const accessCode = document.getElementById('joinCode').value.trim();
       if (!accessCode) { alert('Access code is required'); return; }
       try {
-        const resp = await fetch('/api/subjects/join', {
+        const resp = await fetch('${API_BASE}/api/subjects/join', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
           body: JSON.stringify({ accessCode })

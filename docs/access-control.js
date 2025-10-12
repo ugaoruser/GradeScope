@@ -4,6 +4,9 @@
  */
 
 // Define permission levels for different roles
+
+const API_BASE = 'https://gradescope-a4hw.onrender.com';
+
 const PERMISSIONS = {
   student: {
     viewOwnGrades: true,
@@ -132,7 +135,7 @@ async function verifyAuthentication() {
   if (!token) return false;
   
   try {
-    const response = await fetch('/api/me', {
+    const response = await fetch('${API_BASE}/api/me', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
