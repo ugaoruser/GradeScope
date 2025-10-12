@@ -19,6 +19,8 @@ app.use(cors({
     'https://ugaoruser.github.io', // your GitHub Pages domain
     'http://localhost:5500'       // for local testing
   ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Context-Type', 'Authorization'],
   credentials: true,
 }));
 
