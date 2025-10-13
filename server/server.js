@@ -1069,3 +1069,10 @@ app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, async (req, 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// TEMPORARY route to generate a new bcrypt hash for testing
+app.get("/api/hash/:password", async (req, res) => {
+  const bcrypt = require("bcrypt");
+  const hash = await bcrypt.hash(req.params.password, 12);
+  res.send({ password: req.params.password, hash });
+});
