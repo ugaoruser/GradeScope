@@ -208,7 +208,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
 
     // ✅ Fetch user and role name
-    const [rows] = await pool.query(`
+    const [rows] = await db.query(`
       SELECT u.*, r.name AS role
       FROM users u
       JOIN roles r ON u.role_id = r.id
