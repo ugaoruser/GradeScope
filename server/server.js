@@ -1071,7 +1071,6 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // TEMPORARY route to generate a new bcrypt hash for testing
-import bcrypt from "bcrypt";
 app.get("/api/hash/:password", async (req, res) => {
   try {
     const hash = await bcrypt.hash(req.params.password, 12);
