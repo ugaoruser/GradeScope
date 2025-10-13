@@ -1,1 +1,1 @@
-const API_BASE = 'https://gradescope-a4hw.onrender.com'
+window.API_BASE = 'https://gradescope-a4hw.onrender.com'

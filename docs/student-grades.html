@@ -309,7 +309,7 @@
     // Load grade data for the selected quarter
     function loadGradeData(quarter) {
       // Fetch categories to get weights
-      fetch(`${API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -326,7 +326,7 @@
         });
         
         // Fetch grade items
-        return fetch(`${API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}`, {
+        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       })

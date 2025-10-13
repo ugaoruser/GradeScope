@@ -201,7 +201,7 @@
     document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
     
     // Fetch user data for dropdown
-    fetch('${API_BASE}/api/me', {
+    fetch('${window.API_BASE}/api/me', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => res.json())
@@ -267,7 +267,7 @@
       }
       
       // Send data to server
-      fetch('${API_BASE}/api/subjects', {
+      fetch('${window.API_BASE}/api/subjects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +329,7 @@
       });
     }
 
-     fetch('${API_BASE}/api/classes', {
+     fetch('${window.API_BASE}/api/classes', {
        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
      })
        .then(res => {

@@ -48,7 +48,7 @@ DB_PASSWORD=your_mysql_password
 DB_NAME=grade_tracker
 DB_PORT=3306
 JWT_SECRET=your_jwt_secret_key
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://localhost:3000
 ```
 
 ### 4. Start the Server
@@ -57,7 +57,7 @@ cd server
 npm start
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `https://localhost:3000`
 
 ## Usage
 

@@ -20,7 +20,7 @@ function checkAuthentication() {
     window.location.href = 'login.html';
     return;
   }
-  fetch('${API_BASE}/api/me', {
+  fetch('${window.API_BASE}/api/me', {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -65,7 +65,7 @@ function checkAuthentication() {
   }
   
   // Verify token with server
-  fetch('${API_BASE}/api/me', {
+  fetch('${window.API_BASE}/api/me', {
     headers: {
       'Authorization': `Bearer ${token}`
     }

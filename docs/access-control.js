@@ -135,7 +135,7 @@ async function verifyAuthentication() {
   if (!token) return false;
   
   try {
-    const response = await fetch('${API_BASE}/api/me', {
+    const response = await fetch('${window.API_BASE}/api/me', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

@@ -487,7 +487,7 @@
     
     // Load user data
     function loadUserData() {
-      fetch('${API_BASE}/api/me', {
+      fetch('${window.API_BASE}/api/me', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
         .then(res => {
@@ -592,7 +592,7 @@
       }
       
       // Send API request to create class
-      fetch('${API_BASE}/api/classes', {
+      fetch('${window.API_BASE}/api/classes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -633,7 +633,7 @@
       }
       
       // Send API request to update profile
-      fetch('${API_BASE}/api/me/update', {
+      fetch('${window.API_BASE}/api/me/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -683,7 +683,7 @@
       }
       
       // Send API request to change password
-      fetch('${API_BASE}/api/user/password', {
+      fetch('${window.API_BASE}/api/user/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -715,7 +715,7 @@
       
       if (confirmed) {
         // Send API request to delete account
-        fetch('${API_BASE}/api/user', {
+        fetch('${window.API_BASE}/api/user', {
           method: 'DELETE',
           headers: {
             'Authorization': 'Bearer ' + token
