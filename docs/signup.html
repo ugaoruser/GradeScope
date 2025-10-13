@@ -191,11 +191,12 @@
       <h1>GradeScope Lite</h1>
       <p>Create your account</p>
     </div>
-    
+
     <div id="error-message" class="error-message" style="display: none;"></div>
     <div id="success-message" class="success-message" style="display: none;"></div>
-    
+
     <form id="signup-form">
+      <!-- First Name / Last Name -->
       <div class="form-row">
         <div class="form-group">
           <label for="firstName">First Name</label>
@@ -206,189 +207,122 @@
           <input type="text" id="lastName" name="lastName" required>
         </div>
       </div>
-      
+
+      <!-- Email / Password -->
       <div class="form-group">
         <label for="email">Email</label>
         <input type="email" id="email" name="email" required>
       </div>
-      
+
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
-        <div class="password-requirements" id="password-requirements">
-          <div class="requirement" id="req-length">• At least 8 characters</div>
-          <div class="requirement" id="req-uppercase">• One uppercase letter</div>
-          <div class="requirement" id="req-lowercase">• One lowercase letter</div>
-          <div class="requirement" id="req-number">• One number</div>
-        </div>
       </div>
-      
+
       <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
       </div>
-      
+
+      <!-- Role -->
       <div class="form-group">
         <label for="role">Role</label>
         <select id="role" name="role" required>
           <option value="">Select your role</option>
           <option value="student">Student</option>
           <option value="teacher">Teacher</option>
-          <option value="parent">Parent</option>
-          
         </select>
       </div>
-      
-      <button type="submit" class="btn-signup" id="signup-btn">
-        Create Account
-      </button>
-      
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-      </div>
+
+      <button type="submit" class="btn-signup" id="signup-btn">Create Account</button>
+      <div class="loading" id="loading"><div class="spinner"></div></div>
     </form>
-    
+
     <div class="auth-footer">
       <p>Already have an account? <a href="login.html">Log in</a></p>
     </div>
   </div>
 
   <script>
-    const role = localStorage.getItem('role');
-    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
-      window.location.href = 'homepage2.html';
-    }
-    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
-    if (!role) {
-      window.location.href = 'login.html';
-    }
-    // Password validation
-    function validatePassword(password) {
-      const requirements = {
-        length: password.length >= 8,
-        uppercase: /[A-Z]/.test(password),
-        lowercase: /[a-z]/.test(password),
-        number: /\d/.test(password)
-      };
-      
-      // Update requirement indicators
-      document.getElementById('req-length').className = `requirement ${requirements.length ? 'met' : 'unmet'}`;
-      document.getElementById('req-uppercase').className = `requirement ${requirements.uppercase ? 'met' : 'unmet'}`;
-      document.getElementById('req-lowercase').className = `requirement ${requirements.lowercase ? 'met' : 'unmet'}`;
-      document.getElementById('req-number').className = `requirement ${requirements.number ? 'met' : 'unmet'}`;
-      
-      return Object.values(requirements).every(req => req);
-    }
-    
-    // Email validation
     function validateEmail(email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-    
-    // Real-time password validation
-    document.getElementById('password').addEventListener('input', (e) => {
-      validatePassword(e.target.value);
-    });
-    
+
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const firstName = document.getElementById('firstName').value.trim();
       const lastName = document.getElementById('lastName').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
       const role = document.getElementById('role').value;
-      
-      // Validation
+
       if (!firstName || !lastName || !email || !password || !confirmPassword || !role) {
         showError('Please fill in all fields');
         return;
       }
-      
+
       if (!validateEmail(email)) {
-        showError('Please enter a valid email address');
+        showError('Please enter a valid email');
         return;
       }
-      
-      if (!validatePassword(password)) {
-        showError('Password does not meet requirements');
-        return;
-      }
-      
+
       if (password !== confirmPassword) {
         showError('Passwords do not match');
         return;
       }
-      
+
       setLoading(true);
       hideMessages();
-      
+
       try {
-        const response = await fetch('${window.API_BASE}/api/signup', {
+        const response = await fetch(`${window.API_BASE}/api/signup`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            email,
-            password,
-            role
-          })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ firstName, lastName, email, password, role })
         });
-        
+
         const data = await response.json();
-        
         if (response.ok) {
-          showSuccess('Account created successfully! Please sign in.');
-          setTimeout(() => {
-            window.location.href = 'login.html';
-          }, 500);
+          showSuccess('Account created successfully! Redirecting to login...');
+          setTimeout(() => { window.location.href = 'login.html'; }, 1000);
         } else {
           showError(data.message || 'Signup failed');
         }
-      } catch (error) {
+      } catch (err) {
         showError('Network error. Please try again.');
-        console.error('Signup error:', error);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     });
-    
-    function showError(message) {
-      const errorDiv = document.getElementById('error-message');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
+
+    function showError(msg) {
+      const div = document.getElementById('error-message');
+      div.textContent = msg;
+      div.style.display = 'block';
     }
-    
-    function showSuccess(message) {
-      const successDiv = document.getElementById('success-message');
-      successDiv.textContent = message;
-      successDiv.style.display = 'block';
+    function showSuccess(msg) {
+      const div = document.getElementById('success-message');
+      div.textContent = msg;
+      div.style.display = 'block';
     }
-    
     function hideMessages() {
       document.getElementById('error-message').style.display = 'none';
       document.getElementById('success-message').style.display = 'none';
     }
-    
     function setLoading(loading) {
       const btn = document.getElementById('signup-btn');
-      const loadingDiv = document.getElementById('loading');
-      
+      const loader = document.getElementById('loading');
       if (loading) {
         btn.disabled = true;
         btn.textContent = 'Creating Account...';
-        loadingDiv.style.display = 'block';
+        loader.style.display = 'block';
       } else {
         btn.disabled = false;
         btn.textContent = 'Create Account';
-        loadingDiv.style.display = 'none';
+        loader.style.display = 'none';
       }
     }
   </script>
