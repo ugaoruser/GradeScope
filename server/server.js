@@ -204,22 +204,31 @@ app.post("/api/signup", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("LOGIN attempt:", email, password); // 🧠 Check what frontend sends
     if (!email || !password) return res.status(400).json({ message: "Missing fields" });
 
     const user = await findUserByEmail(email);
+    console.log("USER found:", user); // 🧠 Check if user exists
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const ok = await bcrypt.compare(password, user.password_hash || "");
+    console.log("PASSWORD MATCH:", ok); // 🧠 See if bcrypt worked
+
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
-    // sign JWT
-    const token = jwt.sign({ userId: user.id, role: user.role, name: user.full_name }, process.env.JWT_SECRET || "secret", { expiresIn: "8h" });
-    res.json({ message: "Login successful", token, role: user.role, name: user.full_name, userId: user.id });
+    const token = jwt.sign(
+      { userId: user.id, role: user.role_id, name: user.full_name },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "8h" }
+    );
+
+    res.json({ message: "Login successful", token, role: user.role_id, name: user.full_name, userId: user.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // Protected route to get current user info
 app.get("/api/me", verifyToken, async (req, res) => {
