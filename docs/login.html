@@ -187,15 +187,19 @@
 
   <script>
     const role = localStorage.getItem('role');
-    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+
+    if (!window.location.pathname.endsWith('login.html')) {
+      if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
       window.location.href = 'homepage2.html';
+      }
+      if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
+        window.location.href = 'homepage1.html';
+      }
+      if (!role) {
+        window.location.href = 'login.html';
+      }
     }
-    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
-    if (!role) {
-      window.location.href = 'login.html';
-    }
+
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
