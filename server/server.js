@@ -204,30 +204,51 @@ app.post("/api/signup", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("LOGIN attempt:", email, password); // 🧠 Check what frontend sends
-    if (!email || !password) return res.status(400).json({ message: "Missing fields" });
+    if (!email || !password)
+      return res.status(400).json({ message: "Missing fields" });
 
-    const user = await findUserByEmail(email);
-    console.log("USER found:", user); // 🧠 Check if user exists
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    // ✅ Fetch user and role name
+    const [rows] = await pool.query(`
+      SELECT u.*, r.name AS role
+      FROM users u
+      JOIN roles r ON u.role_id = r.id
+      WHERE u.email = ?
+    `, [email]);
+    const user = rows[0];
+
+    if (!user) {
+      console.log("LOGIN: no user found for", email);
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    console.log("USER found:", user);
 
     const ok = await bcrypt.compare(password, user.password_hash || "");
-    console.log("PASSWORD MATCH:", ok); // 🧠 See if bcrypt worked
+    console.log("PASSWORD MATCH:", ok);
 
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
+    // ✅ Sign JWT with the actual string role
     const token = jwt.sign(
-      { userId: user.id, role: user.role_id, name: user.full_name },
+      { userId: user.id, role: user.role, name: user.full_name },
       process.env.JWT_SECRET || "secret",
       { expiresIn: "8h" }
     );
 
-    res.json({ message: "Login successful", token, role: user.role_id, name: user.full_name, userId: user.id });
+    // ✅ Return correct structure
+    res.json({
+      message: "Login successful",
+      token,
+      role: user.role,
+      name: user.full_name,
+      userId: user.id,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 // Protected route to get current user info
