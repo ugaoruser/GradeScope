@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import mysql from "mysql2/promise";
 import cors from "cors";
+import mysql from "mysql2/promise";
 import path from "path";
 import bodyParser from "body-parser";
 import pool from './db.js'; 
