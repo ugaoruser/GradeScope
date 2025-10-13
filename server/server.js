@@ -33,6 +33,7 @@ app.use(cors({
 const allowed = (process.env.CORS_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
 app.use(cors({ origin: allowed.length ? allowed : true }));
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "../web"))); // serve frontend
 
