@@ -185,7 +185,8 @@
     if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
       window.location.href = 'homepage1.html';
     }
-    if (!role) {
+    if (!role || !localStorage.getItem('token')) {
+      // User not logged in, redirect
       window.location.href = 'login.html';
     }
     
