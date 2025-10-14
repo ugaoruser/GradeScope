@@ -1059,7 +1059,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 .add-class-form-group input { 
 	width: 100%; 
 	padding: 10px; 
-	order: 1px solid #ddd; 
+	border: 1px solid #ddd; 
 	border-radius: 4px; 
 	font-size: 1em; 
 } 
