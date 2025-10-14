@@ -380,11 +380,11 @@ body.homepage1 {
   	background: #ffffff;
 }
 body.homepage1 .main {
-  	display: flex;
-  	flex-direction: column;
-  	align-items: center;
-  	justify-content: flex-start;
-  	min-height: 100vh;
+  	margin-left: var(--sidebar-width); /* keeps sidebar aligned */
+  	margin-top: 80px; /* space below header */
+  	padding: 20px;
+  	min-height: calc(100vh - 80px);
+  	display: block; /* no centering */
 }
 
 .sidebar { 
@@ -392,13 +392,14 @@ body.homepage1 .main {
 	left: 0; 
 	top: 0; 
 	bottom: 0; 
-	width: 220px; 
-	background: linear-gradient(to bottom, #1a237e, #283593);
+	width: var(--sidebar-width); 
+	background: linear-gradient(to bottom, var(--primary-deep), var(--primary));
 	color: #fff;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	box-shadow: 2px 0 50px rgba(0,0,0,0.1);
+	box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+	z-index: 100;
 }
 .sidebar .top { padding: 24px 0 0 0; }
 .sidebar .nav { list-style: none; padding: 0; margin: 0; }
@@ -414,18 +415,46 @@ body.homepage1 .main {
 }
 .sidebar .bottom { padding: 24px 0 24px 0; text-align: center; }
 
-.main { margin-left: 220px; padding: 32px; }
-
-.header { display: flex; 
-	justify-content: space-between; 
-	align-items: center; 
-	background: #fff; 
-	padding: 16px 32px; 
-	border-bottom: 1px solid #e0e0e0; 
-	box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+body.homepage1 .main { 
+	display: flex;
+	flex-direction: column;
+	margin-left: 240px;
+	min-height: 100vh;
+	padding-top: 80px;
 }
 
-.account-menu { position: relative; display: flex; align-items: center; gap: 12px; }
+body.homepag1 header.header { 
+	position: fixed;
+  	top: 0;
+  	left: var(--sidebar-width);
+  	right: 0;
+  	height: 70px;
+  	background: #fff;
+  	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  	display: flex;
+  	justify-content: space-between;
+  	align-items: center;
+  	padding: 0 20px;
+  	z-index: 200;
+}
+
+body.homepage1 .no-classes {
+  	display: flex;
+  	align-items: center;
+  	justify-content: center;
+  	height: 60vh;
+  	color: #666;
+  	text-align: center;
+  	font-size: 1.2rem;
+}
+
+.account-menu { 
+	position: relative; 
+	display: flex; 
+	align-items: center; 
+	gap: 12px; 
+}
+
 .account-btn { 
 	background: #1976d2; 
 	color: white; 
