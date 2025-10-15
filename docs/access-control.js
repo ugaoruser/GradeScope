@@ -5,7 +5,7 @@
 
 // Define permission levels for different roles
 
-const API_BASE = 'https://gradescope-a4hw.onrender.com';
+const API_BASE = `https://gradescope-a4hw.onrender.com`;
 
 const PERMISSIONS = {
   student: {
@@ -88,12 +88,12 @@ function enforcePageAccess() {
   
   // Role-specific page access
   if (currentPage.endsWith('teacher-grades.html') && role !== 'teacher' && role !== 'admin') {
-    window.location.href = 'index.html';
+    window.location.href = `index.html`;
     return false;
   }
   
   if (currentPage.endsWith('student-grades.html') && role !== 'student' && role !== 'parent' && role !== 'teacher' && role !== 'admin') {
-    window.location.href = 'index.html';
+    window.location.href = `index.html`;
     return false;
   }
   
