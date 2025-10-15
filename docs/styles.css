@@ -772,27 +772,27 @@ body.login-page .auth-header {
 	text-align: center; 
 	margin-bottom: 30px; 
 } 
-.auth-header h1 { 
+body.login-page .auth-header h1 { 
 	color: #424242; 
 	font-size: 28px; 
 	font-weight: 400; 
 	margin-bottom: 8px; 
 } 
-.auth-header p { 
+body.login-page .auth-header p { 
 	color: #757575; 
 	font-size: 16px; 
 }
 
-.form-group { 
+body.login-page .form-group { 
 	margin-bottom: 20px; 
 } 
-.form-group label { 
+body.login-page .form-group label { 
 	display: block; 
 	margin-bottom: 8px; 
 	color: #3c4043; 
 	font-weight: 500; 
 } 
-.form-group input, .form-group select { 
+body.login-page .form-group input, .form-group select { 
 	width: 100%; 
 	padding: 12px 16px; 
 	border: 1px solid #dadce0; 
@@ -800,12 +800,12 @@ body.login-page .auth-header {
 	font-size: 16px; 
 	transition: border-color 0.2s; 
 } 
-.form-group input:focus, .form-group select:focus { 
+body.login-page .form-group input:focus, .form-group select:focus { 
 	outline: none; 
 	border-color: #1a73e8; 
 	box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1); 
 }
-.btn-login { 
+body.login-page .btn-login { 
 	width: 100%; 
 	background: #424242; 
 	color: white; 
@@ -817,20 +817,20 @@ body.login-page .auth-header {
 	cursor: pointer; 
 	transition: background-color 0.2s; 
 } 
-.btn-login:hover { background: #212121; } 
-.btn-login:disabled { 
+body.login-page .btn-login:hover { background: #212121; } 
+body.login-page .btn-login:disabled { 
 	background: #bdbdbd; 
 	cursor: not-allowed; 
 } 
-.auth-footer { 
+body.login-page .auth-footer { 
 	text-align: center; 
 	margin-top: 20px; 
 } 
-.auth-footer a { 
+body.login-page .auth-footer a { 
 	color: #424242; 
 	text-decoration: none; 
 } 
-.auth-footer a:hover { text-decoration: underline; }
+body.login-page .auth-footer a:hover { text-decoration: underline; }
 .error-message { 
 	background: #fce8e6; 
 	color: #d93025; 
@@ -839,7 +839,7 @@ body.login-page .auth-header {
 	margin-bottom: 20px; 
 	font-size: 14px; 
 } 
-.success-message { 
+body.login-page .success-message { 
 	background: #e6f4ea; 
 	color: #137333; 
 	padding: 12px; 
@@ -847,12 +847,12 @@ body.login-page .auth-header {
 	margin-bottom: 20px; 
 	font-size: 14px; 
 } 
-.loading { 
+body.login-page .loading { 
 	display: none; 
 	text-align: center; 
 	margin-top: 10px; 
 } 
-.spinner { 
+body.login-page .spinner { 
 	border: 2px solid #f3f3f3; 
 	border-top: 2px solid #1a73e8; 
 	border-radius: 50%; 
@@ -880,7 +880,7 @@ body.settings-page .main {
   	padding: 40px;
 }
 
-.sidebar { 
+body.settings-page .sidebar { 
 	position: fixed; 
 	left: 0; 
 	top: 0; 
@@ -893,31 +893,31 @@ body.settings-page .main {
 	justify-content: space-between; 
 	box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
 } 
-.sidebar .top { padding: 24px 0 0 0; } 
-.sidebar .nav { 
+body.settings-page .sidebar .top { padding: 24px 0 0 0; } 
+body.settings-page .sidebar .nav { 
 	list-style: none; 
 	padding: 0; 
 	margin: 0; 
 } 
-.sidebar .nav li { 
+body.settings-page .sidebar .nav li { 
 	padding: 16px 32px; 
 	cursor: pointer; 
 	transition: all 0.3s ease; 
 	border-left: 4px solid transparent; 
 }
-.sidebar .nav li.active, .sidebar .nav li:hover { 
+body.settings-page .sidebar .nav li.active, .sidebar .nav li:hover { 
 	background: rgba(255,255,255,0.1); 
 	border-left: 4px solid #64b5f6; 
 } 
-.sidebar .bottom { 
+body.settings-page .sidebar .bottom { 
 	padding: 24px 0 24px 0; 
 	text-align: center; 
 } 
-.main { 
+body.settings-page .main { 
 	margin-left: 220px; 
 	padding: 32px; 
 } 
-.header { 
+body.settings-page .header { 
 	display: flex; 
 	justify-content: flex-end; 
 	align-items: center; 
@@ -925,8 +925,8 @@ body.settings-page .main {
 	padding: 16px 32px; 
 	border-bottom: 1px solid #eee; 
 } 
-.account-menu { position: relative; }
-.account-btn { 
+body.settings-page .account-menu { position: relative; }
+body.settings-page .account-btn { 
 	background: #1976d2; 
 	color: white; 
 	border: none; 
@@ -936,7 +936,7 @@ body.settings-page .main {
 	cursor: pointer; 
 	font-size: 18px; 
 } 
-.account-dropdown { 
+body.settings-page .account-dropdown { 
 	display: none; 
 	position: absolute; 
 	right: 0; 
@@ -948,20 +948,20 @@ body.settings-page .main {
 	box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
 	z-index: 10; 
 }
-.account-dropdown.show { display: block; } 
-.account-dropdown .user-info { 
+body.settings-page .account-dropdown.show { display: block; } 
+body.settings-page .account-dropdown .user-info { 
 	padding: 12px 16px; 
 	border-bottom: 1px solid #eee;
 } 
-.account-dropdown .full-name { 
+body.settings-page .account-dropdown .full-name { 
 	font-weight: bold; 
 	margin-bottom: 4px; 
 } 
-.account-dropdown .email { 
+body.settings-page .account-dropdown .email { 
 	font-size: 0.85em; 
 	color: #666; 
 } 
-.account-dropdown button { 
+body.settings-page .account-dropdown button { 
 	width: 100%; 
 	background: none; 
 	border: none; 
@@ -969,45 +969,45 @@ body.settings-page .main {
 	text-align: left; 
 	cursor: pointer; 
 } 
-.account-dropdown button:hover { background: #f5f5f5; } 
-.settings-container { 
+body.settings-page .account-dropdown button:hover { background: #f5f5f5; } 
+body.settings-page .settings-container { 
 	background: #fff; 
 	border-radius: 8px; 
 	box-shadow: 0 2px 8px rgba(0,0,0,0.07); 
 	padding: 24px; 
 	margin-top: 24px; 
 } 
-.settings-title { 
+body.settings-page .settings-title { 
 	font-size: 1.5em; 
 	margin-bottom: 24px; color: #333; 
 	border-bottom: 1px solid #eee; 
 	padding-bottom: 12px; 
 } 
-.settings-section { margin-bottom: 32px; } 
-.settings-section-title { 
+body.settings-page .settings-section { margin-bottom: 32px; } 
+body.settings-page .settings-section-title { 
 	font-size: 1.2em; 
 	margin-bottom: 16px; 
 	color: #444; 
 } 
-.form-group { margin-bottom: 16px; } 
-.form-group label { 
+body.settings-page .form-group { margin-bottom: 16px; } 
+body.settings-page .form-group label { 
 	display: block; 
 	margin-bottom: 8px; 
 	font-weight: bold; 
 } 
-.form-group input, .form-group select { 
+body.settings-page .form-group input, .form-group select { 
 	width: 100%; 
 	padding: 10px; 
 	border: 1px solid #ddd; 
 	border-radius: 4px; 
 	font-size: 1em; 
 }
-.form-group input:focus, .form-group select:focus { 
+body.settings-page .form-group input:focus, .form-group select:focus { 
 	border-color: #1976d2; 
 	outline: none; 
 	box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2); 
 } 
-.btn { 
+body.settings-page .btn { 
 	padding: 10px 16px; 
 	background: #1976d2; 
 	color: white;
@@ -1017,27 +1017,27 @@ body.settings-page .main {
 	font-size: 1em; 
 	transition: background 0.2s; 
 } 
-.btn:hover { background: #1565c0; } 
-.btn-secondary { 
+body.settings-page .btn:hover { background: #1565c0; } 
+body.settings-page .btn-secondary { 
 	background: #f5f5f5; 
 	color: #333; 
 	border: 1px solid #ddd; 
 } 
-.btn-secondary:hover { background: #e0e0e0; } 
-.btn-danger { background: #e53935; } 
-.btn-danger:hover { background: #d32f2f; } 
-.toggle-switch { 
+body.settings-page .btn-secondary:hover { background: #e0e0e0; } 
+body.settings-page .btn-danger { background: #e53935; } 
+body.settings-page .btn-danger:hover { background: #d32f2f; } 
+body.settings-page .toggle-switch { 
 	position: relative;
 	display: inline-block; 
 	width: 60px; 
 	height: 34px; 
 } 
-.toggle-switch input { 
+body.settings-page .toggle-switch input { 
 	opacity: 0; 
 	width: 0; 
 	height: 0; 
 } 
-.slider { 
+body.settings-page .slider { 
 	position: absolute; 
 	cursor: pointer; 
 	top: 0; 
@@ -1048,7 +1048,7 @@ body.settings-page .main {
 	transition: .4s; 
 	border-radius: 34px; 
 }
-.slider:before { 
+body.settings-page .slider:before { 
 	position: absolute; 
 	content: ""; 
 	height: 26px; 
@@ -1059,25 +1059,25 @@ body.settings-page .main {
 	transition: .4s; 
 	border-radius: 50%; 
 } 
-input:checked + .slider { background-color: #1976d2; } 
-input:checked + .slider:before { transform: translateX(26px); } 
-.setting-row { 
+body.settings-page input:checked + .slider { background-color: #1976d2; } 
+body.settings-page input:checked + .slider:before { transform: translateX(26px); } 
+body.settings-page .setting-row { 
 	display: flex; 
 	justify-content: space-between; 
 	align-items: center; 
 	padding: 12px 0; 
 	border-bottom: 1px solid #eee; 
 } 
-.setting-row:last-child { border-bottom: none; } 
-.setting-label { font-weight: bold; } 
-.setting-description { 
+body.settings-page .setting-row:last-child { border-bottom: none; } 
+body.settings-page .setting-label { font-weight: bold; } 
+body.settings-page .setting-description { 
 	color: #666; 
 	font-size: 0.9em; 
 	margin-top: 4px; 
 }
 
 /* About modal */ 
-.modal { 
+body.settings-page .modal { 
 	display: none; 
 	position: fixed; 
 	z-index: 100; 
@@ -1087,7 +1087,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 	height: 100%; 
 	background-color: rgba(0,0,0,0.5); 
 } 
-.modal-content { 
+body.settings-page .modal-content { 
 	background-color: #fff; 
 	margin: 10% auto; 
 	padding: 24px; 
@@ -1096,26 +1096,26 @@ input:checked + .slider:before { transform: translateX(26px); }
 	max-width: 500px; 
 	box-shadow: 0 4px 16px rgba(0,0,0,0.2); 
 } 
-.modal-header { 
+body.settings-page .modal-header { 
 	display: flex; 
 	justify-content: space-between; 
 	align-items: center; 
 	margin-bottom: 16px; 
 } 
-.modal-title { 
+body.settings-page .modal-title { 
 	font-size: 1.5em; 
 	font-weight: bold; 
 }
-.close-modal { 
+body.settings-page .close-modal { 
 	font-size: 1.5em; 
 	cursor: pointer; 
 	background: none; 
 	border: none; 
 } 
-.modal-body { line-height: 1.6; } 
+body.settings-page .modal-body { line-height: 1.6; } 
 
 /* Add Class Modal */
- .add-class-modal { 
+body.settings-page .add-class-modal { 
 	display: none; 
 	position: fixed; 
 	z-index: 100; 
@@ -1125,7 +1125,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 	height: 100%; 
 	background-color: rgba(0,0,0,0.5); 
 } 
-.add-class-modal-content { 
+body.settings-page .add-class-modal-content { 
 	background-color: #fff; 
 	margin: 10% auto; 
 	padding: 24px; 
@@ -1134,20 +1134,20 @@ input:checked + .slider:before { transform: translateX(26px); }
 	max-width: 500px; 
 	box-shadow: 0 4px 16px rgba(0,0,0,0.2); 
 } 
-.add-class-form-group { margin-bottom: 16px; } 
-.add-class-form-group label { 
+body.settings-page .add-class-form-group { margin-bottom: 16px; } 
+body.settings-page .add-class-form-group label { 
 	display: block; 
 	margin-bottom: 8px; 
 	font-weight: bold; 
 } 
-.add-class-form-group input { 
+body.settings-page .add-class-form-group input { 
 	width: 100%; 
 	padding: 10px; 
 	border: 1px solid #ddd; 
 	border-radius: 4px; 
 	font-size: 1em; 
 } 
-.add-class-buttons { 
+body.settings-page .add-class-buttons { 
 	display: flex; 
 	justify-content: flex-end; 
 	gap: 12px; 
@@ -1189,7 +1189,7 @@ body.signup-page .main {
   	height: 100vh;
 }
 
-.auth-container {
+body.signup-page .auth-container {
 	background: white; 
 	border-radius: 16px; 
 	padding: 40px; 
@@ -1198,28 +1198,28 @@ body.signup-page .main {
 	max-width: 450px;
 	margin: 20px; 
 } 
-.auth-header { 
+body.signup-page .auth-header { 
 	text-align: center; 
 	margin-bottom: 30px; 
 } 
-.auth-header h1 { 
+body.signup-page .auth-header h1 { 
 	color: #424242; 
 	font-size: 28px; 
 	font-weight: 400; 
 	margin-bottom: 8px; 
 } 
-.auth-header p { 
+body.signup-page .auth-header p { 
 	color: #5f6368; 
 	font-size: 16px;
 } 
-.form-group { margin-bottom: 20px; } 
-.form-group label { 
+body.signup-page .form-group { margin-bottom: 20px; } 
+body.signup-page .form-group label { 
 	display: block; 
 	margin-bottom: 8px; 
 	color: #3c4043; 
 	font-weight: 500; 
 } 
-.form-group input, .form-group select { 
+body.signup-page .form-group input, .form-group select { 
 	width: 100%; 
 	padding: 12px 16px; 
 	border: 1px solid #dadce0; 
@@ -1227,21 +1227,21 @@ body.signup-page .main {
 	font-size: 16px; 
 	transition: border-color 0.2s; 
 } 
-.form-group input:focus, .form-group select:focus { 
+body.signup-page .form-group input:focus, .form-group select:focus { 
 	outline: none; 
 	border-color: #1a73e8; 
 	box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1); 
 } 
-.form-row { 
+body.signup-page .form-row { 
 	display: flex; 
 	gap: 15px; 
 } 
 
-.form-row .form-group { 
+body.signup-page .form-row .form-group { 
 	flex: 1; 
 } 
 
-.btn-signup { 
+body.signup-page .btn-signup { 
 	width: 100%; 
 	background: #424242; 
 	color: white; 
@@ -1254,30 +1254,30 @@ body.signup-page .main {
 	transition: background-color 0.2s; 
 } 
 
-.btn-signup:hover { 
+body.signup-page .btn-signup:hover { 
 	background: #212121; 
 } 
 
-.btn-signup:disabled { 
+body.signup-page .btn-signup:disabled { 
 	background: #dadce0; 
 	cursor: not-allowed; 
 } 
 
-.auth-footer { 
+body.signup-page .auth-footer { 
 	text-align: center; 
 	margin-top: 20px; 
 } 
 
-.auth-footer a { 
+body.signup-page .auth-footer a { 
 	color: #424242; 
 	text-decoration: none; 
 } 
 
-.auth-footer a:hover { 
+body.signup-page .auth-footer a:hover { 
 	text-decoration: underline; 
 } 
 
-.error-message { 
+body.signup-page .error-message { 
 	background: #fce8e6; 
 	color: #d93025; 
 	padding: 12px; 
@@ -1286,7 +1286,7 @@ body.signup-page .main {
 	font-size: 14px; 
 } 
 
-.success-message { 
+body.signup-page .success-message { 
 	background: #e6f4ea; 
 	color: #137333; 
 	padding: 12px;
@@ -1295,13 +1295,13 @@ body.signup-page .main {
 	font-size: 14px; 
 } 
 
-.loading { 
+body.signup-page .loading { 
 	display: none; 
 	text-align: center; 
 	margin-top: 10px; 
 } 
 
-.spinner { 
+body.signup-page .spinner { 
 	border: 2px solid #f3f3f3; 
 	border-top: 2px solid #1a73e8; 
 	border-radius: 50%; 
@@ -1316,15 +1316,15 @@ body.signup-page .main {
 	100% { transform: rotate(360deg); }
 } 
 
-.password-requirements { 
+body.signup-page .password-requirements { 
 	font-size: 12px; 
 	color: #5f6368; 
 	margin-top: 5px; 
 } 
 
-.requirement { margin: 2px 0; } 
-.requirement.met { color: #137333; } 
-.requirement.unmet { color: #d93025; }
+body.signup-page .requirement { margin: 2px 0; } 
+body.signup-page .requirement.met { color: #137333; } 
+body.signup-page .requirement.unmet { color: #d93025; }
 
 
 /*----------------------- Student-Grades.html styles----------------------- */
@@ -1338,7 +1338,7 @@ body.student-grades-page .main {
   	min-height: 100vh;
   	padding: 20px;
 }
-.header { 
+body.student-grades-page .header { 
 	background: #3f51b5; 
 	color: white; 
 	padding: 16px 32px; 
@@ -1346,13 +1346,13 @@ body.student-grades-page .main {
 	justify-content: space-between; 
 	align-items: center; 
 } 
-.header h2 { margin: 0; } 
-.main { 
+body.student-grades-page .header h2 { margin: 0; } 
+body.student-grades-page .main { 
 	padding: 32px; 
 	max-width: 1200px; 
 	margin: 0 auto;
 } 
-.tabs { 
+body.student-grades-page .tabs { 
 	display: flex; 
 	margin-bottom: 20px; 
 	background: white; 
@@ -1360,20 +1360,20 @@ body.student-grades-page .main {
 	overflow: hidden; 
 	box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
 } 
-.tab { 
+body.student-grades-page .tab { 
 	padding: 15px 25px; 
 	cursor: pointer; 
 	transition: background-color 0.3s; 
 	font-weight: bold; 
 } 
-.tab.active { 
+body.student-grades-page .tab.active { 
 	background-color: #3f51b5; 
 	color: white; 
 } 
-.tab:hover:not(.active) { 
+body.student-grades-page .tab:hover:not(.active) { 
 	background-color: #e0e0e0; 
 } 
-.quarter-tabs { 
+body.student-grades-page .quarter-tabs { 
 	display: flex; 
 	margin-bottom: 20px; 
 	background: white; 
@@ -1381,17 +1381,17 @@ body.student-grades-page .main {
 	overflow: hidden; 
 	box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
 } 
-.quarter-tab { 
+body.student-grades-page .quarter-tab { 
 	padding: 10px 20px; 
 	cursor: pointer; 
 	transition: background-color 0.3s; 
 } 
-.quarter-tab.active { 
+body.student-grades-page .quarter-tab.active { 
 	background-color: #7986cb; 
 	color: white;
 } 
-.quarter-tab:hover:not(.active) { background-color: #e0e0e0; } 
-.tab-content { display: none; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } .tab-content.active { display: block; } table { width: 100%; border-collapse: collapse; margin-top: 20px; } th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; } th { background-color: #f8f8f8; font-weight: bold; } tr:hover { background-color: #f5f5f5; } .category-header { background-color: #e8eaf6; font-weight: bold; padding: 10px 15px; margin-top: 20px; border-radius: 4px; display: flex; justify-content: space-between; } .grade-summary { background-color: #e8f5e9; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; } .logout-btn { background-color: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; } .logout-btn:hover { background-color: rgba(255,255,255,0.3); } .back-btn { background-color: #7986cb; border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; transition: background-color 0.3s; } .back-btn:hover { background-color: #5c6bc0; } @media (max-width: 768px) { .tabs, .quarter-tabs { flex-direction: column; } th, td { padding: 8px 10px; } }
+body.student-grades-page .quarter-tab:hover:not(.active) { background-color: #e0e0e0; } 
+body.student-grades-page .tab-content { display: none; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } .tab-content.active { display: block; } table { width: 100%; border-collapse: collapse; margin-top: 20px; } th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; } th { background-color: #f8f8f8; font-weight: bold; } tr:hover { background-color: #f5f5f5; } .category-header { background-color: #e8eaf6; font-weight: bold; padding: 10px 15px; margin-top: 20px; border-radius: 4px; display: flex; justify-content: space-between; } .grade-summary { background-color: #e8f5e9; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; } .logout-btn { background-color: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; } .logout-btn:hover { background-color: rgba(255,255,255,0.3); } .back-btn { background-color: #7986cb; border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; transition: background-color 0.3s; } .back-btn:hover { background-color: #5c6bc0; } @media (max-width: 768px) { .tabs, .quarter-tabs { flex-direction: column; } th, td { padding: 8px 10px; } }
 
 /*--------------------------- Subject.html styles--------------------------- */
 body.subject-page {
@@ -1405,14 +1405,14 @@ body.subject-page .main {
   	min-height: 100vh;
   	padding: 30px;
 } 
-.header { 
+body.subject-page .header { 
 	background: #fff; 
 	padding: 16px 32px; 
 	border-bottom: 1px solid #eee; 
 } 
 
-.main { padding: 32px; } 
-.student-table { 
+body.subject-page .main { padding: 32px; } 
+body.subject-page .student-table { 
 	width: 100%; 
 	border-collapse: collapse; 
 	margin-top: 32px; 
@@ -1421,27 +1421,27 @@ body.subject-page .main {
 	border-radius: 8px; 
 	overflow: hidden; 
 } 
-.student-table th, .student-table td { 
+body.subject-page .student-table th, .student-table td { 
 	padding: 16px; 
 	text-align: left; 
 	border-bottom: 1px solid #eee; 
 } 
-.student-table th { 
+body.subject-page .student-table th { 
 	background: #f8f8f8; 
 	font-weight: bold; 
 } 
-.student-table tr:hover { 
+body.subject-page .student-table tr:hover { 
 	background-color: #f5f5f5; 
 } 
-.student-grade { 
+body.subject-page .student-grade { 
 	color: #1976d2; 
 	font-weight: bold; 
 } 
-.info-msg { 
+body.subject-page .info-msg { 
 	margin-top: 32px; 
 	color: #888; 
 } 
-.back-btn { 
+body.subject-page .back-btn { 
 	display: inline-block; 
 	margin-bottom: 20px; 
 	padding: 8px 16px; 
@@ -1464,13 +1464,13 @@ body.teacher-grades-page .main {
   padding: 20px;
 }
 
-.grade-management { padding: 20px; } 
-.quarter-tabs, .category-tabs { 
+body.teacher-grades-page .grade-management { padding: 20px; } 
+body.teacher-grades-page .quarter-tabs, .category-tabs { 
 	display: flex; 
 	margin-bottom: 20px; 
 	border-bottom: 1px solid var(--muted); 
 } 
-.tab-button { 
+body.teacher-grades-page .tab-button { 
 	padding: 10px 20px;
 	background: none;
 	border: none; 
@@ -1479,40 +1479,40 @@ body.teacher-grades-page .main {
 	border-bottom: 3px solid transparent; 
 	transition: all 0.3s; 
 } 
-	.tab-button.active { 
+	body.teacher-grades-page .tab-button.active { 
 		border-bottom: 3px solid var(--accent); 
 		font-weight: bold; 
 		color: var(--accent); 
 } 
-.tab-button:hover:not(.active) { 
+body.teacher-grades-page .tab-button:hover:not(.active) { 
 	border-bottom: 3px solid var(--accent-light); 
 } 
-.grade-table { 
+body.teacher-grades-page .grade-table { 
 	width: 100%; 
 	border-collapse: collapse; 
 	margin-bottom: 30px; 
 } 
 
-.grade-table th, .grade-table td {
+body.teacher-grades-page .grade-table th, .grade-table td {
 	padding: 12px 15px; 
 	text-align: left; 
 	border-bottom: 1px solid var(--muted); 
 } 
-.grade-table th { 
+body.teacher-grades-page .grade-table th { 
 	background-color: var(--bg); 
 	font-weight: bold; 
 } 
 
-.grade-table tr:hover { 
+body.teacher-grades-page .grade-table tr:hover { 
 	background-color: rgba(0, 0, 0, 0.02); 
 } 
 
-.action-buttons { 
+body.teacher-grades-page .action-buttons { 
 	display: flex;
 	gap: 10px;
 } 
 
-.btn-edit, .btn-delete { 
+body.teacher-grades-page .btn-edit, .btn-delete { 
 	padding: 5px 10px;
 	border: none; 
 	border-radius: 4px; 
@@ -1520,52 +1520,52 @@ body.teacher-grades-page .main {
 	font-size: 14px;
 } 
 
-.btn-edit { 
+body.teacher-grades-page .btn-edit { 
 	background-color: var(--accent-light); 
 	color: white; 
 } 
 
-.btn-delete { 
+body.teacher-grades-page .btn-delete { 
 	background-color: var(--danger); 
 	color: white; 
 } 
 
-.add-grade-form { 
+body.teacher-grades-page .add-grade-form { 
 	background-color: var(--card); 
 	padding: 20px; 
 	border-radius: 8px; 
 	margin-bottom: 30px; 
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
 } 
-.form-row { 
+body.teacher-grades-page .form-row { 
 	display: flex; 
 	gap: 15px; 
 	margin-bottom: 15px; 
 	flex-wrap: wrap; 
 } 
-.form-group { 
+body.teacher-grades-page .form-group { 
 	flex: 1; 
 	min-width: 200px; 
 } 
-.form-group label { 
+body.teacher-grades-page .form-group label { 
 	display: block; 
 	margin-bottom: 5px; 
 	font-weight: 500; 
 } 
-.form-group input, .form-group select, .form-group textarea { 
+body.teacher-grades-page .form-group input, .form-group select, .form-group textarea { 
 	width: 100%; 
 	padding: 8px 12px; 
 	border: 1px solid var(--muted); 
 	border-radius: 4px;
 	font-size: 14px; 
 } 
-.form-actions { 
+body.teacher-grades-page .form-actions { 
 	display: flex; 
 	justify-content: flex-end; 
 	gap: 10px; 
 	margin-top: 15px; 
 } 
-.btn-primary, .btn-secondary { 
+body.teacher-grades-page .btn-primary, .btn-secondary { 
 	padding: 8px 16px; 
 	border: none; 
 	border-radius: 4px; 
@@ -1574,18 +1574,18 @@ body.teacher-grades-page .main {
 	font-weight: 500;
 } 
 
-.btn-primary { 
+body.teacher-grades-page .btn-primary { 
 	background-color: var(--accent); 
 	color: white; 
 } 
 
-.btn-secondary { 
+body.teacher-grades-page .btn-secondary { 
 	background-color: var(--muted); 
 	color: var(--text); 
 } 
 
-.student-selector { margin-bottom: 20px; } 
-.student-selector select { 
+body.teacher-grades-page .student-selector { margin-bottom: 20px; } 
+body.teacher-grades-page .student-selector select { 
 	padding: 8px 12px; 
 	border: 1px solid var(--muted); 
 	border-radius: 4px; 
@@ -1594,7 +1594,7 @@ body.teacher-grades-page .main {
 } 
 
 /* Chatbot Assistant Styles */ 
-.chatbot-assistant { 
+body.teacher-grades-page .chatbot-assistant { 
 	background-color: var(--card); 
 	border-radius: 8px; 
 	margin-bottom: 30px; 
@@ -1602,7 +1602,7 @@ body.teacher-grades-page .main {
 	overflow: hidden; 
 } 
 
-.chatbot-header { 
+body.teacher-grades-page .chatbot-header { 
 	display: flex; 
 	justify-content: space-between; 
 	align-items: center; 
@@ -1611,12 +1611,12 @@ body.teacher-grades-page .main {
 	color: white; 
 } 
 
-.chatbot-header h3 { 
+body.teacher-grades-page .chatbot-header h3 { 
 	margin: 0; 
 	font-size: 18px; 
 } 
 
-.toggle-chatbot { 
+body.teacher-grades-page .toggle-chatbot { 
 	background: white; 
 	color: var(--accent); 
 	border: none; 
@@ -1626,34 +1626,34 @@ body.teacher-grades-page .main {
 	font-weight: 500; 
 } 
 
-.chatbot-content {
+body.teacher-grades-page .chatbot-content {
 	padding: 20px;
- } 
+} 
  
- .feedback-form, .feedback-results { 
+body.teacher-grades-page .feedback-form, .feedback-results { 
 	margin-bottom: 20px;
- } 
- .feedback-message, .feedback-suggestions { 
+} 
+body.teacher-grades-page .feedback-message, .feedback-suggestions { 
 	background-color: #f9f9f9; 
 	padding: 15px; 
 	border-radius: 4px; 
 	margin-bottom: 15px; 
 }  
-.feedback-message h4, .feedback-suggestions h4 { 
+body.teacher-grades-page .feedback-message h4, .feedback-suggestions h4 { 
 	margin-top: 0;
 	color: var(--accent); 
 } 
 
-#improvementSuggestions { 
+body.teacher-grades-page #improvementSuggestions { 
 	padding-left: 20px; 
 } 
 
-#improvementSuggestions li { 
+body.teacher-grades-page #improvementSuggestions li { 
 	margin-bottom: 5px; 
 } 
 
 /* Performance Visualization Styles */ 
-.performance-visualization { 
+body.teacher-grades-page .performance-visualization { 
 	background-color: var(--card); 
 	border-radius: 8px; 
 	margin-bottom: 30px; 
@@ -1661,69 +1661,69 @@ body.teacher-grades-page .main {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
 }
 
-.visualization-header { 
+body.teacher-grades-page .visualization-header { 
 	display: flex; 
 	justify-content: space-between; 
 	align-items: center; 
 	margin-bottom: 20px; 
 } 
 
-.visualization-controls { 
+body.teacher-grades-page .visualization-controls { 
 	display: flex; 
 	gap: 10px; 
 } 
 
-.visualization-controls select { 
+body.teacher-grades-page .visualization-controls select { 
 	padding: 8px 12px; 
 	border: 1px solid var(--muted); 
 	border-radius: 4px; 
 	font-size: 14px;
 } 
 
-.chart-container { 
+body.teacher-grades-page .chart-container { 
 	position: relative; 
 	height: 300px; 
 	margin-bottom: 20px; 
 } 
 
-.chart-legend { 
+body.teacher-grades-page .chart-legend { 
 	display: flex; 
 	justify-content: center; 
 	gap: 20px; 
 } 
 
-.legend-item { 
+body.teacher-grades-page .legend-item { 
 	display: flex; 
 	align-items: center; 
 	gap: 5px; 
 } 
 
-.legend-color { 
+body.teacher-grades-page .legend-color { 
 	width: 15px; 
 	height: 15px; 
 	border-radius: 3px;
 } 
 
-.form-group label { 
+body.teacher-grades-page .form-group label { 
 	display: block; 
 	margin-bottom: 5px; 
 	font-weight: bold; 
 } 
 
-.form-group input, .form-group select, .form-group textarea { 
+body.teacher-grades-page .form-group input, .form-group select, .form-group textarea { 
 	width: 100%; 
 	padding: 8px 12px; 
 	border: 1px solid var(--muted); 
 	border-radius: 4px; 
 } 
 
-.form-actions { 
+body.teacher-grades-page .form-actions { 
 	display: flex; 
 	justify-content: flex-end; 
 	gap: 10px; 
 	margin-top: 20px; 
 } 
-.btn-submit { 
+body.teacher-grades-page .btn-submit { 
 	background-color: var(--accent); 
 	color: white; 
 	padding: 10px 20px; 
@@ -1732,7 +1732,7 @@ body.teacher-grades-page .main {
 	cursor: pointer; 
 } 
 
-.btn-cancel { 
+body.teacher-grades-page .btn-cancel { 
 	background-color: var(--muted); 
 	color: var(--text); 
 	padding: 10px 20px; 
@@ -1740,41 +1740,41 @@ body.teacher-grades-page .main {
 	border-radius: 4px; 
 	cursor: pointer; 
 } 
-.student-selector { margin-bottom: 20px; } 
-.student-selector select { 
+body.teacher-grades-page .student-selector { margin-bottom: 20px; } 
+body.teacher-grades-page .student-selector select { 
 	padding: 10px; 
 	border-radius: 4px; 
 	border: 1px solid var(--muted); 
 	width: 300px; 
 } 
-.category-weight { 
+body.teacher-grades-page .category-weight { 
 	display: flex; 
 	align-items: center; 
 	margin-bottom: 10px; 
 } 
 
-.category-weight label { flex: 1; } 
-.category-weight input { 
+body.teacher-grades-page .category-weight label { flex: 1; } 
+body.teacher-grades-page .category-weight input { 
 	width: 80px; 
 	padding: 5px; 
 	border: 1px solid var(--muted); 
 	border-radius: 4px; 
 } 
 
-.weights-container { 
+body.teacher-grades-page .weights-container { 
 	background-color: var(--card); 
 	padding: 15px; 
 	border-radius: 8px; 
 	margin-bottom: 20px; 
 } 
 
-.weights-title { 
+body.teacher-grades-page .weights-title { 
 	font-weight: bold; 
 	margin-bottom: 10px; 
 } 
 
-.hidden { display: none; } 
-.back-button { 
+body.teacher-grades-page .hidden { display: none; } 
+body.teacher-grades-page .back-button { 
 	margin-bottom: 20px; 
 	padding: 10px 15px; 
 	background-color: var(--muted); 
