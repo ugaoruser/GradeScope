@@ -8,97 +8,45 @@
 </head>
 <body class="homepage2">
   <div class="sidebar">
-    <div class="top">
-       <ul class="nav">
-         <li class="active" onclick="goHome()">Home</li>
-         <li onclick="goSettings()">Settings</li>
-       </ul>
-    </div>
-    <div class="bottom">
-      <span style="cursor:pointer;" onclick="showAbout()"><i style="font-size: 16px; margin-right: 5px;">ⓘ</i> About</span>
-    </div>
+    ...
   </div>
   <div class="main">
-    <div class="header">
-      <div class="account-menu">
-        <button class="account-btn" onclick="toggleAccountMenu()">
-          <span id="accountInitial">T</span>
-        </button>
-        <div class="account-dropdown" id="accountDropdown">
-          <div style="padding: 12px 16px; border-bottom: 1px solid #eee;">
-            <div style="font-weight: bold; margin-bottom: 4px;" id="userFullName">User Name</div>
-            <div style="font-size: 0.85em; color: #666;" id="userEmail">user@example.com</div>
-          </div>
-          <button onclick="logout()">Log Out</button>
+    <header class="header">
+      <div class="header-title">Welcome</div>
+      <div class="account-menu"> ... same as student header ... </div>
+    </header>
+
+    <h2>My Classes</h2>
+    <div class="classroom-tabs" id="classroomTabs"></div>
+
+    <div id="classActionArea" class="class-action-area"></div>
+
+    <!-- Create Class Modal (teacher) -->
+    <div id="createModal" class="modal" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title">Create Class</div>
+          <button id="closeCreate" class="modal-close" aria-label="Close">&times;</button>
         </div>
-      </div>
-    </div>
-    <h2>My Subjects</h2>
-     <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
-     <div class="classroom-tabs" id="classroomTabs">
-       Loading...
-     </div>
-     <!-- Chatbot Toggle Button -->
-     <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
-     <!-- Chatbot Sidebar -->
-     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
-       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-         <div style="font-weight:600;">Assistant</div>
-         <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
-       </div>
-       <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
-         <div style="color:#666;">How can I help you plan classes and grades today?</div>
-       </div>
-       <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
-         <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
-         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
-       </div>
-     </div>
-   </div>
-  
-  <!-- About Modal -->
-  <div id="aboutModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <div style="font-size: 1.5em; font-weight: bold;">About GradeScope Lite</div>
-        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAbout()">&times;</button>
-      </div>
-      <div style="line-height: 1.6;">
-        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
-        <p><strong>Version:</strong> V1.0</p>
-        <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
-        <p><strong>Main Dev:</strong> Jack Dylan Gallentes</p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Add Class Modal -->
-  <div id="addClassModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <div style="font-size: 1.5em; font-weight: bold;">Add New Class</div>
-        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAddClassModal()">&times;</button>
-      </div>
-      <div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Subject</label>
-          <input type="text" id="className" placeholder="Enter subject name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        <div class="modal-body">
+          <label>Subject Name</label>
+          <input id="createSubject" placeholder="e.g., Mathematics">
+
+          <label>Class / Section</label>
+          <input id="createSection" placeholder="e.g., Section A">
+
+          <label>Access Code (auto-generated)</label>
+          <input id="createCode" readonly>
         </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Grade Level</label>
-          <input type="text" id="gradeLevel" placeholder="Enter grade level" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Section</label>
-          <input type="text" id="section" placeholder="Enter section" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-          <button style="padding: 10px 16px; background: #f5f5f5; color: #333; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="closeAddClassModal()">Cancel</button>
-          <button style="padding: 10px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="confirmAddClass()">Confirm</button>
+        <div class="modal-actions">
+          <button id="cancelCreate" class="btn-muted">Cancel</button>
+          <button id="confirmCreate" class="btn-primary">Create</button>
         </div>
       </div>
     </div>
   </div>
+</body>
+
   <script>
     const role = localStorage.getItem('role');
     if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
