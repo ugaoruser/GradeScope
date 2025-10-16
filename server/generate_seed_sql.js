@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt'; // not used; keeping for compatibility
 import mysql from 'mysql2/promise';
 
 const users = [
@@ -23,12 +23,12 @@ async function seed() {
     `DELETE FROM users WHERE email IN (${users.map(u => `'${u.email}'`).join(",")})`
   );
 
+  const commonHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2';
   for (const user of users) {
-    const hash = await bcrypt.hash(user.password, 12);
     await db.execute(
       `INSERT INTO users (first_name, last_name, email, password_hash, role_id)
        VALUES (?, ?, ?, ?, ?)`,
-      [user.firstName, user.lastName, user.email, hash, user.roleId]
+      [user.firstName, user.lastName, user.email, commonHash, user.roleId]
     );
   }
 

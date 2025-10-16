@@ -136,11 +136,11 @@ body {
 .class-tab:hover{ transform:translateY(-6px); box-shadow:0 10px 30px rgba(0,0,0,0.12); }
 
 /* Buttons for add/join */
-.add-class-btn, .join-class-btn {
-  padding:10px 18px; border-radius:8px; border:none; cursor:pointer;
-  color:#fff; background:var(--primary);
+.add-class-btn, .join-class-btn, .join-btn {
+  padding:14px 22px; border-radius:10px; border:none; cursor:pointer;
+  color:#fff; background:var(--primary); font-size:1.05rem; min-width:220px;
 }
-.add-class-btn:hover, .join-class-btn:hover { background: var(--primary-600); }
+.add-class-btn:hover, .join-class-btn:hover, .join-btn:hover { background: var(--primary-600); }
 
 /* Modal base (use aria-hidden or .show) */
 .modal{
@@ -154,6 +154,7 @@ body {
 }
 .modal-header{ padding:14px 18px; display:flex; justify-content:space-between; align-items:center; background:var(--primary); color:#fff; }
 .modal-title{ font-weight:700; font-size:1.05rem; }
+.modal-close{ background:none; border:none; color:#fff; font-size:2rem; line-height:1; cursor:pointer; }
 .modal-body{ padding:18px; display:flex; flex-direction:column; gap:12px; }
 .modal-actions{ padding:12px 18px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #eef4fb; }
 
@@ -203,8 +204,9 @@ body.homepage2{
 }
 
 /* Apply sidebar bg/color per role */
-body.homepage1 .sidebar { background: var(--sidebar-bg); }
-body.homepage2 .sidebar { background: var(--sidebar-bg); }
+/* Use the same sidebar color for homepage1 and settings (blue) */
+body.homepage1 .sidebar { background: linear-gradient(to bottom, #1a237e, #283593); }
+body.homepage2 .sidebar { background: linear-gradient(to bottom, #1a237e, #283593); }
 
 /* Apply role color to primary components */
 body.homepage1 .add-class-btn,
@@ -230,6 +232,12 @@ body.login-page, body.signup-page {
 .signup-page .auth-container {
   background:#fff; border-radius:12px; padding:36px; box-shadow:var(--shadow-md); width:100%; max-width:430px;
 }
+.login-page .auth-header, .signup-page .auth-header { text-align:center; margin-bottom: 20px; }
+.login-page .auth-footer, .signup-page .auth-footer { text-align:center; margin-top: 16px; }
+.login-page .error-message, .signup-page .error-message { text-align:center; }
+.login-page .success-message, .signup-page .success-message { text-align:center; }
+.btn-login, .btn-signup { width:100%; padding:14px; border-radius:10px; font-size:18px; font-weight:600; background:#424242; color:#fff; border:none; }
+.btn-login:hover, .btn-signup:hover { background:#212121; }
 
 /* Index (landing) page */
 body.index-page { display:flex; align-items:center; justify-content:center; }

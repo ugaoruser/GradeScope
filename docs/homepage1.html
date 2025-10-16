@@ -15,6 +15,7 @@
       </ul>
     </div>
     <div class="bottom">
+      <div class="small">GradeTracker v1.0</div>
       <span class="about-trigger" onclick="showAbout()"><i class="info-icon">ⓘ</i> About</span>
     </div>
   </div>
@@ -73,7 +74,6 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- About modal remains (styles moved to CSS) -->
@@ -88,7 +88,7 @@
       </div>
     </div>
   </div>
-
+  </body>
   
   <script>
     const role = localStorage.getItem('role');
@@ -105,7 +105,7 @@
     document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'A';
 
     // Fetch user data for dropdown
-    fetch('${window.API_BASE}/api/me', {
+    fetch(`${window.API_BASE}/api/me`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => res.json())
@@ -247,5 +247,4 @@
       }
     });
   </script>
-</body>
 </html>

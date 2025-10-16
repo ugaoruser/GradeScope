@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
 </head>
-<body class="homepage2">
+ <body class="homepage2">
   <div class="sidebar">
     ...
   </div>
@@ -27,8 +27,7 @@
         <div class="modal-header">
           <div class="modal-title">Create Class</div>
           <button id="closeCreate" class="modal-close" aria-label="Close">&times;</button>
-        </div>
-      </div>
+             </div>
     </div>
     <h2>My Subjects</h2>
      <div class="classroom-tabs" id="classroomTabs">
@@ -92,9 +91,8 @@
   </div>
 </body>
 
-  <script>
-    const role = localStorage.getItem('role');
-    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
+<script>
+  if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
       window.location.href = 'homepage2.html';
     }
     if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
@@ -117,9 +115,9 @@
     document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
     
     // Fetch user data for dropdown
-    fetch('${window.API_BASE}/api/me', {
+    fetch(`${window.API_BASE}/api/me`), {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-    })
+    }
       .then(res => res.json())
       .then(userData => {
         // Store user data in localStorage for future use
@@ -292,6 +290,5 @@
        log.appendChild(bot);
        log.scrollTop = log.scrollHeight;
      });
-   </script>
-</body>
+    </script>
 </html>

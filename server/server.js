@@ -467,14 +467,8 @@ app.post("/api/subjects", verifyToken, async (req, res) => {
       const [teacherRows] = await db.query(`SELECT email, full_name FROM users WHERE id = ?`, [req.user.userId]);
       const teacher = teacherRows[0];
       const smtpHost = process.env.SMTP_HOST;
-      if (smtpHost) {
-        const nodemailer = (await import('nodemailer')).default;
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-          secure: !!process.env.SMTP_SECURE,
-          auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-        });
+      // Email sending disabled per requirements
+      if (false) {
         await transporter.sendMail({
           from: process.env.MAIL_FROM || 'no-reply@gradetracker.local',
           to: teacher?.email,
@@ -482,7 +476,7 @@ app.post("/api/subjects", verifyToken, async (req, res) => {
           text: `Hello ${teacher?.full_name || 'Teacher'},\n\nYour class "${title}" has been created.\nAccess Code: ${accessCode}\nSection: ${section}\n\nShare this code with students to join the class.`,
         });
       } else {
-        console.log(`Access code for class ${title}: ${accessCode} (SMTP not configured)`);
+        // Email disabled
       }
     } catch (mailErr) {
       console.warn('Failed to send access code email:', mailErr);

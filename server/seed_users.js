@@ -2,22 +2,23 @@ import pool from './db.js';
 import bcrypt from 'bcryptjs';
 
 const users = [
-  { email: 'student1@example.com', password: 'password123', full_name: 'Student One', role_id: 1 },
-  { email: 'teacher1@example.com', password: 'password123', full_name: 'Teacher One', role_id: 2 },
-  { email: 'parent1@example.com',  password: 'password123', full_name: 'Parent One',  role_id: 3 },
-  { email: 'admin1@example.com',   password: 'password123', full_name: 'Admin One',   role_id: 4 }
+  { first_name: 'John', last_name: 'Doe', email: 'john.doe@school.edu', role_id: 1 },
+  { first_name: 'Jane', last_name: 'Smith', email: 'jane.smith@school.edu', role_id: 1 },
+  { first_name: 'Mike', last_name: 'Johnson', email: 'mike.johnson@school.edu', role_id: 2 },
+  { first_name: 'Sarah', last_name: 'Wilson', email: 'sarah.wilson@school.edu', role_id: 2 },
+  { first_name: 'Robert', last_name: 'Brown', email: 'robert.brown@school.edu', role_id: 3 }
 ];
 
 async function seed() {
   try {
+    // Use the same bcrypt hash (password123) for all demo users (matches John Doe)
+    const commonHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2';
     for (let u of users) {
-      const hashed = await bcrypt.hash(u.password, 10);
-
       await pool.query(
-        `INSERT INTO users (email, password_hash, full_name, role_id)
-         VALUES (?, ?, ?, ?)
+        `INSERT INTO users (first_name, last_name, email, password_hash, role_id)
+         VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE email = email`,
-        [u.email, hashed, u.full_name, u.role_id]
+        [u.first_name, u.last_name, u.email, commonHash, u.role_id]
       );
     }
 
