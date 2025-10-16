@@ -21,19 +21,6 @@
   </div>
   
   <div class="main">
-    <div class="header">
-      <div class="account-menu">
-        <button class="account-btn" id="accountBtn">👤</button>
-        <div class="account-dropdown" id="accountDropdown">
-          <div class="user-info">
-            <div class="full-name" id="userFullName">User Name</div>
-            <div class="email" id="userEmail">user@example.com</div>
-          </div>
-          <button id="logoutBtn">Log Out</button>
-        </div>
-      </div>
-    </div>
-    
     <h1>Settings</h1>
     
     <div class="settings-container">
@@ -42,63 +29,17 @@
       <div class="settings-section">
         <div class="settings-section-title">Profile Information</div>
         <div class="form-group">
-          <label for="firstName">First Name</label>
-          <input type="text" id="firstName" placeholder="First Name">
+          <label>First Name</label>
+          <div id="displayFirstName"></div>
         </div>
         <div class="form-group">
-          <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" placeholder="Last Name">
-        </div>
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="Email Address">
-        </div>
-        <button class="btn" id="saveProfileBtn">Save Changes</button>
-      </div>
-      
-      <div class="settings-section">
-        <div class="settings-section-title">Password</div>
-        <div class="form-group">
-          <label for="currentPassword">Current Password</label>
-          <input type="password" id="currentPassword" placeholder="Current Password">
-        </div>
-        <div class="form-group">
-          <label for="newPassword">New Password</label>
-          <input type="password" id="newPassword" placeholder="New Password">
-        </div>
-        <div class="form-group">
-          <label for="confirmPassword">Confirm New Password</label>
-          <input type="password" id="confirmPassword" placeholder="Confirm New Password">
-        </div>
-        <button class="btn" id="changePasswordBtn">Change Password</button>
-      </div>
-      
-      <div class="settings-section">
-        <div class="settings-section-title">Notifications</div>
-        <div class="setting-row">
-          <div>
-            <div class="setting-label">Email Notifications</div>
-            <div class="setting-description">Receive email notifications for grade updates</div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="setting-row">
-          <div>
-            <div class="setting-label">Grade Alerts</div>
-            <div class="setting-description">Get notified when new grades are posted</div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" checked>
-            <span class="slider"></span>
-          </label>
+          <label>Last Name</label>
+          <div id="displayLastName"></div>
         </div>
       </div>
       
       <div class="settings-section">
-        <div class="settings-section-title">Danger Zone</div>
+        <div class="settings-section-title"><strong>Danger Zone</strong></div>
         <p>Once you delete your account, there is no going back. Please be certain.</p>
         <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
       </div>
@@ -121,143 +62,30 @@
     </div>
   </div>
   
-  <!-- Add Class Modal (for teachers) -->
-  <div id="addClassModal" class="add-class-modal">
-    <div class="add-class-modal-content">
-      <div class="modal-header">
-        <div class="modal-title">Add New Class</div>
-        <button class="close-modal" id="closeAddClassModal">&times;</button>
-      </div>
-      <div>
-        <div class="add-class-form-group">
-          <label for="className">Name of Subject</label>
-          <input type="text" id="className" placeholder="Enter subject name">
-        </div>
-        <div class="add-class-form-group">
-          <label for="gradeLevel">Grade Level</label>
-          <input type="text" id="gradeLevel" placeholder="Enter grade level">
-        </div>
-        <div class="add-class-form-group">
-          <label for="section">Section</label>
-          <input type="text" id="section" placeholder="Enter section">
-        </div>
-        <div class="add-class-buttons">
-          <button class="btn btn-secondary" id="cancelAddClass">Cancel</button>
-          <button class="btn" id="confirmAddClass">Confirm</button>
-        </div>
-      </div>
-    </div>
-  </div>
   
   <script>
-    // Check authentication
+    // Auth
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    
-    if (!token || !role) {
-      window.location.href = 'login.html';
-    }
-    
-    // Account dropdown
-    const accountBtn = document.getElementById('accountBtn');
-    const accountDropdown = document.getElementById('accountDropdown');
-    const userFullName = document.getElementById('userFullName');
-    const userEmail = document.getElementById('userEmail');
-    
-    // Set initial values from localStorage
-    userFullName.textContent = localStorage.getItem('fullName') || 'User Name';
-    userEmail.textContent = localStorage.getItem('email') || 'user@example.com';
-    
-    // Load user data
-    function loadUserData() {
-      fetch(`${window.API_BASE}/api/me`, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to fetch user data');
-          return res.json();
-        })
-        .then(user => {
-          userFullName.textContent = user.fullName || 'User Name';
-          userEmail.textContent = user.email || 'user@example.com';
-          
-          // Populate form fields
-          document.getElementById('firstName').value = user.firstName || '';
-          document.getElementById('lastName').value = user.lastName || '';
-          document.getElementById('email').value = user.email || '';
-          
-          // Store in localStorage for other pages
-          localStorage.setItem('fullName', user.fullName);
-          localStorage.setItem('email', user.email);
-        })
-        .catch(err => console.error('Error fetching user data:', err));
-    }
-    
-    // Load user data on page load
-    loadUserData();
-    
-    accountBtn.addEventListener('click', () => {
-      accountDropdown.classList.toggle('show');
-    });
-    
-    // Close dropdown when clicking outside
-    window.addEventListener('click', (event) => {
-      if (!event.target.matches('.account-btn') && !accountDropdown.contains(event.target)) {
-        accountDropdown.classList.remove('show');
-      }
-    });
-    
-    // Logout functionality
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      // Clear all user data from localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('fullName');
-      localStorage.removeItem('email');
-      
-      // Redirect to login page
-      window.location.href = 'login.html';
-    });
-    
+    if (!token) { window.location.href = 'login.html'; }
+
+    // Load names
+    fetch(`${window.API_BASE}/api/me`, { headers: { Authorization: 'Bearer ' + token }})
+      .then(r => r.json())
+      .then(u => {
+        document.getElementById('displayFirstName').textContent = u.firstName || '';
+        document.getElementById('displayLastName').textContent = u.lastName || '';
+      });
+
     // About modal
     const aboutBtn = document.getElementById('aboutBtn');
     const aboutModal = document.getElementById('aboutModal');
     const closeAboutModal = document.getElementById('closeAboutModal');
-    
-    aboutBtn.addEventListener('click', () => {
-      aboutModal.style.display = 'block';
-    });
-    
-    closeAboutModal.addEventListener('click', () => {
-      aboutModal.style.display = 'none';
-    });
-    
-    // Add Class modal (for teachers only)
-    const addClassModal = document.getElementById('addClassModal');
-    const closeAddClassModal = document.getElementById('closeAddClassModal');
-    const cancelAddClass = document.getElementById('cancelAddClass');
-    const confirmAddClass = document.getElementById('confirmAddClass');
-    
-    // Show Add Class button only for teachers
-    if (role === 'teacher') {
-      // Create Add Class button
-      const addClassBtn = document.createElement('button');
-      addClassBtn.textContent = 'Add Class';
-      addClassBtn.className = 'btn';
-      addClassBtn.style.marginTop = '24px';
-      
-      // Insert before settings container
-      const settingsContainer = document.querySelector('.settings-container');
-      settingsContainer.parentNode.insertBefore(addClassBtn, settingsContainer);
-      
-      // Add event listener
-      addClassBtn.addEventListener('click', () => {
-        addClassModal.style.display = 'block';
-      });
-    }
-    
-    closeAddClassModal.addEventListener('click', () => {
-      addClassModal.style.display = 'none';
+    aboutBtn.addEventListener('click', () => { aboutModal.style.display = 'block'; });
+    closeAboutModal.addEventListener('click', () => { aboutModal.style.display = 'none'; });
+
+    // Danger zone
+    document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+      alert('Account deletion is not enabled in this demo.');
     });
     
     cancelAddClass.addEventListener('click', () => {
