@@ -8,51 +8,58 @@
 </head>
  <body class="homepage2">
   <div class="sidebar">
-    ...
+    <div class="top">
+      <ul class="nav">
+        <li class="active" onclick="goHome()">Home</li>
+        <li onclick="goSettings()">Settings</li>
+        <li onclick="showAbout()">About</li>
+      </ul>
+    </div>
+    <div class="bottom">
+      <div class="small">GradeTracker v1.0</div>
+    </div>
   </div>
   <div class="main">
     <header class="header">
       <div class="header-title">Welcome</div>
-      <div class="account-menu"> ... same as student header ... </div>
+      <div class="account-menu">
+        <button class="account-btn" onclick="toggleAccountMenu()">
+          <span id="accountInitial">T</span>
+        </button>
+        <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+          <div class="account-info">
+            <div id="userFullName">User Name</div>
+            <div id="userEmail">user@example.com</div>
+          </div>
+          <button onclick="logout()">Log Out</button>
+        </div>
+      </div>
     </header>
 
-    <h2>My Classes</h2>
-    <div class="classroom-tabs" id="classroomTabs"></div>
+    <h2>Classes</h2>
+    <div class="classroom-tabs" id="classroomTabs">Loading...</div>
 
-    <div id="classActionArea" class="class-action-area"></div>
-
-    <!-- Create Class Modal (teacher) -->
-    <div id="createModal" class="modal" aria-hidden="true">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <div class="modal-title">Create Class</div>
-          <button id="closeCreate" class="modal-close" aria-label="Close">&times;</button>
-             </div>
+    <div style="margin-top:16px;">
+      <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
     </div>
-    <h2>My Subjects</h2>
-     <div class="classroom-tabs" id="classroomTabs">
-       Loading...
-     </div>
-     <div style="margin-top:16px;">
-       <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
-     </div>
-     <!-- Chatbot Toggle Button -->
-     <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
-     <!-- Chatbot Sidebar -->
-     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
-       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-         <div style="font-weight:600;">Assistant</div>
-         <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
-       </div>
-       <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
-         <div style="color:#666;">How can I help you plan classes and grades today?</div>
-       </div>
-       <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
-         <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
-         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
-       </div>
-     </div>
-   </div>
+
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+    <!-- Chatbot Sidebar -->
+    <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
+      <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:600;">Assistant</div>
+        <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+      <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
+        <div style="color:#666;">How can I help you plan classes and grades today?</div>
+      </div>
+      <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
+        <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+        <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
+      </div>
+    </div>
+  </div>
   
   <!-- About Modal -->
   <div id="aboutModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -74,17 +81,21 @@
   <div id="addClassModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
     <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <div style="font-size: 1.5em; font-weight: bold;">Add New Class</div>
+        <div style="font-size: 1.5em; font-weight: bold;">Create Class</div>
         <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAddClassModal()">&times;</button>
       </div>
       <div>
         <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Subject</label>
-          <input type="text" id="className" placeholder="Enter subject name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Class</label>
+          <input type="text" id="className" placeholder="Enter class name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Section</label>
+          <input type="text" id="section" placeholder="Enter section" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
         </div>
         <div class="modal-actions">
-          <button id="cancelCreate" class="btn-muted">Cancel</button>
-          <button id="confirmCreate" class="btn-primary">Create</button>
+          <button id="cancelCreate" class="btn-muted" onclick="closeAddClassModal()">Cancel</button>
+          <button id="confirmCreate" class="btn-primary" onclick="confirmAddClass()">Create</button>
         </div>
       </div>
     </div>
@@ -92,6 +103,7 @@
 </body>
 
 <script>
+  const role = localStorage.getItem('role');
   if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
       window.location.href = 'homepage2.html';
     }
@@ -115,9 +127,9 @@
     document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
     
     // Fetch user data for dropdown
-    fetch(`${window.API_BASE}/api/me`), {
+    fetch(`${window.API_BASE}/api/me`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-    }
+    })
       .then(res => res.json())
       .then(userData => {
         // Store user data in localStorage for future use
@@ -166,22 +178,20 @@
       document.getElementById('addClassModal').style.display = 'none';
       // Clear form fields
       document.getElementById('className').value = '';
-      document.getElementById('gradeLevel').value = '';
       document.getElementById('section').value = '';
     }
     
     function confirmAddClass() {
       const className = document.getElementById('className').value.trim();
-      const gradeLevel = document.getElementById('gradeLevel').value.trim();
       const section = document.getElementById('section').value.trim();
       
-      if (!className || !gradeLevel || !section) {
+      if (!className || !section) {
         alert('Please fill in all fields');
         return;
       }
       
       // Send data to server
-      fetch('${window.API_BASE}/api/subjects', {
+      fetch(`${window.API_BASE}/api/subjects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +199,6 @@
         },
         body: JSON.stringify({
           title: className,
-          gradeLevel: gradeLevel,
           section: section
         })
       })
@@ -225,25 +234,25 @@
       }
     }
 
-    // --- Fetch subjects from backend ---
+    // --- Fetch classes from backend ---
     function renderSubjects(subjects) {
       const container = document.getElementById('classroomTabs');
       container.innerHTML = "";
       if (!subjects.length) {
-        container.innerHTML = "<div>No subjects found.</div>";
+        container.innerHTML = "<div>No classes found. Click \"+ Create Class\" to add your first class.</div>";
         return;
       }
       subjects.forEach(subj => {
         const div = document.createElement('div');
         div.className = "class-tab";
-        div.innerHTML = `<div class="class-title">${subj.title}</div>
-                         <div class="class-section">${subj.grade_level || subj.gradeLevel || 'Grade 10'} - ${subj.section}</div>`;
+        div.innerHTML = `<div class=\"class-title\">${subj.title}</div>
+                         <div class=\"class-section\">${subj.section || ''}</div>`;
         div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(subj.title); };
         container.appendChild(div);
       });
     }
 
-     fetch('${window.API_BASE}/api/classes', {
+     fetch(`${window.API_BASE}/api/classes`, {
        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
      })
        .then(res => {
@@ -254,16 +263,16 @@
              window.location.href = 'login.html';
              return;
            }
-           throw new Error('Failed to load subjects');
+           throw new Error('Failed to load classes');
          }
          return res.json();
        })
-       .then(subjects => {
-         if (subjects) renderSubjects(subjects);
+       .then(classes => {
+         if (classes) renderSubjects(classes);
        })
        .catch(err => {
-         console.error('Error loading subjects:', err);
-         document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No subjects found. Click "Add Class" to create your first subject.</div>';
+         console.error('Error loading classes:', err);
+         document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>';
        });
 
      // Chatbot toggle logic

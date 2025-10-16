@@ -6,9 +6,12 @@
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
 </head>
-<body>
+<body class="subject-page">
   <div class="header">
-    <h2 id="subjectTitle">Subject</h2>
+    <div>
+      <h2 id="subjectTitle" style="margin-bottom:4px; font-weight:800;">Subject</h2>
+      <div id="sectionName" class="label-muted"></div>
+    </div>
     <div style="display:flex; align-items:center; gap:12px;">
       <a id="manageGradesBtn" href="#" style="display:none; padding:8px 12px; background:#1976d2; color:#fff; border-radius:6px; text-decoration:none;">Manage Grades</a>
       <div id="accessCodeDisplay" style="display: none; background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #2e7d32;">
@@ -17,9 +20,9 @@
     </div>
   </div>
   <div class="main">
-    <button class="back-btn" onclick="goBack()">← Back</button>
-    <div id="studentContainer">
-      <table class="student-table" id="studentTable">
+    <button class="back-button" onclick="goBack()">← Back to Home</button>
+    <div id="studentContainer" style="margin-top:16px; display:flex; justify-content:center;">
+      <table class="student-table" id="studentTable" style="max-width:800px; width:100%;">
         <thead>
           <tr>
             <th>Student Name</th>
@@ -58,6 +61,10 @@
           if (subjects.length > 0) {
             const subj = subjects[0];
             currentSubjectId = subj.id;
+            // Section display (small font)
+            if (subj.section) {
+              document.getElementById('sectionName').textContent = subj.section;
+            }
             if (subj.code) {
               document.getElementById('accessCodeValue').textContent = subj.code;
               document.getElementById('accessCodeDisplay').style.display = 'block';
@@ -68,6 +75,8 @@
             mg.style.display = 'inline-block';
             // Now load enrolled students for this subject
             loadStudents(currentSubjectId);
+            // Auto-refresh list every 5s to reflect new joins
+            setInterval(() => { if (currentSubjectId) loadStudents(currentSubjectId); }, 5000);
           }
         })
         .catch(err => console.error('Error fetching subject details:', err));
