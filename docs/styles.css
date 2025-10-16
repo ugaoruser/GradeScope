@@ -158,6 +158,19 @@ body {
 .modal-body{ padding:18px; display:flex; flex-direction:column; gap:12px; }
 .modal-actions{ padding:12px 18px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #eef4fb; }
 
+.close-modal {
+  top: 20px;
+  right: 20px;
+  color: white;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  background-color: rgb(0, 55, 184);
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
 /* Chatbot sidebar base */
 #chatbotSidebar{
   position:fixed; right:-360px; top:0; width:360px; height:100%; background:var(--card);
