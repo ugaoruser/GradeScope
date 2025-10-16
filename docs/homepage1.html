@@ -5,122 +5,6 @@
   <title>GradeTracker — Student Home</title>
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
-  <style>
-    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #ffffff; }
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0; width: 220px; 
-      background: linear-gradient(to bottom, #1a237e, #283593); 
-      color: #fff; display: flex; flex-direction: column; justify-content: space-between;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-    }
-    .sidebar .top { padding: 24px 0 0 0; }
-    .sidebar .nav { list-style: none; padding: 0; margin: 0; }
-    .sidebar .nav li { 
-      padding: 16px 32px; cursor: pointer; 
-      transition: all 0.3s ease;
-      border-left: 4px solid transparent;
-    }
-    .sidebar .nav li.active, .sidebar .nav li:hover { 
-      background: rgba(255,255,255,0.1); 
-      border-left: 4px solid #64b5f6;
-    }
-    .sidebar .bottom { padding: 24px 0 24px 0; text-align: center; }
-    .main {
-      margin-left: 220px; padding: 32px;
-    }
-    .header {
-      display: flex; justify-content: space-between; align-items: center; 
-      background: #fff; padding: 16px 32px; 
-      border-bottom: 1px solid #e0e0e0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .account-menu { position: relative; display: flex; align-items: center; gap: 12px; }
-    .account-btn {
-      background: #1976d2; color: white; border: none; 
-      border-radius: 50%; width: 40px; height: 40px; 
-      cursor: pointer; font-size: 18px;
-      transition: transform 0.2s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .account-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .account-dropdown {
-      display: none; position: absolute; right: 0; top: 48px; 
-      background: #fff; border-radius: 8px; 
-      min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10; overflow: hidden;
-    }
-    .account-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .account-dropdown button {
-      width: 100%; background: none; border: none; 
-      padding: 12px 16px; text-align: left; cursor: pointer;
-      transition: background 0.2s ease;
-      font-weight: 500;
-    }
-    .account-dropdown button:hover { background: #f5f5f5; }
-
-    .join-btn {
-      width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; 
-      background: #43a047; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .join-btn:hover { filter: brightness(0.95); }
-    h2 {
-      font-size: 1.8em;
-      color: #1a237e;
-      margin-bottom: 24px;
-      position: relative;
-      padding-bottom: 10px;
-    }
-    h2:after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 60px;
-      height: 3px;
-      background: #1976d2;
-    }
-    .classroom-tabs {
-      display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px;
-    }
-    .class-tab {
-      background: #fff; border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-      width: 320px; min-height: 140px; padding: 24px; 
-      display: flex; flex-direction: column; justify-content: space-between;
-      cursor: pointer; transition: all 0.3s ease;
-      border-top: 4px solid #1976d2;
-    }
-    .class-tab:hover { 
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12); 
-      transform: translateY(-5px);
-    }
-    .class-title { 
-      font-size: 1.3em; 
-      font-weight: bold; 
-      margin-bottom: 12px; 
-      color: #1a237e;
-    }
-    .class-section { 
-      color: #666; 
-      font-size: 0.95em; 
-      display: flex;
-      align-items: center;
-    }
-    .class-section:before {
-      content: '•';
-      margin-right: 6px;
-      color: #1976d2;
-      font-size: 1.2em;
-    }
-  </style>
 </head>
 <body>
   <div class="sidebar">
@@ -138,7 +22,6 @@
     <div class="header">
       <div style="font-weight:600; color:#1a237e">Welcome</div>
       <div class="account-menu">
-        <button class="join-btn" id="joinBtn">+</button>
         <button class="account-btn" onclick="toggleAccountMenu()">
           <span id="accountInitial">A</span>
         </button>
@@ -154,6 +37,9 @@
     <h2>My Classes</h2>
     <div class="classroom-tabs" id="classroomTabs">
       Loading...
+    </div>
+    <div style="margin-top:16px;">
+      <button class="join-btn" id="joinBtn">+ Add Class</button>
     </div>
 
     <!-- Join Class Modal -->
@@ -201,19 +87,11 @@
   
   <script>
     const role = localStorage.getItem('role');
-    if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
-      window.location.href = 'homepage2.html';
-    }
-    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
     if (!role || !localStorage.getItem('token')) {
-      // User not logged in, redirect
       window.location.href = 'login.html';
     }
-
-    // --- Routing: Only allow students ---
-    if (role !== 'student') {
+    // Only redirect teachers to their homepage; allow students and parents here
+    if (role === 'teacher') {
       window.location.href = 'homepage2.html';
     }
 
@@ -301,9 +179,7 @@
     // Start with empty classes for testing
     document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
     
-    // Uncomment below to load actual classes
-    /*
-    fetch('${window.API_BASE}/api/classes', {
+    fetch(`${window.API_BASE}/api/classes`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     })
       .then(res => {
@@ -319,13 +195,16 @@
         return res.json();
       })
       .then(classes => {
-        if (classes) renderClasses(classes);
+        if (classes && classes.length) {
+          renderClasses(classes);
+        } else {
+          document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
+        }
       })
       .catch(err => {
         console.error('Error loading classes:', err);
         document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
       });
-    */
 
     // Join Class interactions
     document.getElementById('joinBtn').addEventListener('click', () => {

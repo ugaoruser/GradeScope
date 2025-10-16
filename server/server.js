@@ -563,21 +563,11 @@ app.get('/api/classes', verifyToken, async (req, res) => {
          JOIN enrollments e ON e.subject_id = s.id
          WHERE e.student_id = ?`, [req.user.userId]);
          
-      // If no classes found, provide default classes for testing
-      if (classes.length === 0) {
-        classes = [
-          { id: 1, title: 'Mathematics', section: 'Section A' },
-          { id: 2, title: 'Science', section: 'Section B' },
-          { id: 3, title: 'English Literature', section: 'Section A' },
-          { id: 4, title: 'World History', section: 'Section C' }
-        ];
-      } else {
-        // Add section field to each class if not present
-        classes = classes.map(cls => ({
-          ...cls,
-          section: cls.section || 'Section A'
-        }));
-      }
+      // Normalize section field if needed
+      classes = classes.map(cls => ({
+        ...cls,
+        section: cls.section || cls.grade_level || null
+      }));
     } else if (req.user.role === 'teacher') {
       try {
         [classes] = await db.query(
@@ -585,21 +575,11 @@ app.get('/api/classes', verifyToken, async (req, res) => {
            FROM subjects s
            WHERE s.teacher_id = ?`, [req.user.userId]);
            
-        // If no classes found, provide default classes for testing
-        if (classes.length === 0) {
-          classes = [
-            { id: 1, title: 'Mathematics', section: 'Section A' },
-            { id: 2, title: 'Science', section: 'Section B' },
-            { id: 3, title: 'English Literature', section: 'Section A' },
-            { id: 4, title: 'World History', section: 'Section C' }
-          ];
-        } else {
-          // Add section field to each class
-          classes = classes.map(cls => ({
-            ...cls,
-            section: cls.grade_level || 'Section A'
-          }));
-        }
+        // Normalize section field
+        classes = classes.map(cls => ({
+          ...cls,
+          section: cls.grade_level || null
+        }));
       } catch (error) {
         console.error("Error fetching teacher classes:", error);
         // Return default classes on error
@@ -620,35 +600,19 @@ app.get('/api/classes', verifyToken, async (req, res) => {
          JOIN parent_child pc ON u.id = pc.child_id
          WHERE pc.parent_id = ?`, [req.user.userId]);
          
-      // If no classes found, provide default classes for testing
-      if (classes.length === 0) {
-        classes = [
-          { id: 1, title: 'Mathematics', section: 'Section A', student_name: 'Child Name' },
-          { id: 2, title: 'Science', section: 'Section B', student_name: 'Child Name' },
-          { id: 3, title: 'English Literature', section: 'Section A', student_name: 'Child Name' },
-          { id: 4, title: 'World History', section: 'Section C', student_name: 'Child Name' }
-        ];
-      } else {
-        // Add section field to each class
-        classes = classes.map(cls => ({
-          ...cls,
-          section: cls.grade_level || 'Section A'
-        }));
-      }
+      // Normalize section field
+      classes = classes.map(cls => ({
+        ...cls,
+        section: cls.grade_level || null
+      }));
     } else {
       classes = [];
     }
     res.json(classes);
   } catch (err) {
     console.error('Error loading classes:', err);
-    // Even on error, return default classes to prevent UI errors
-    const defaultClasses = [
-      { id: 1, title: 'Mathematics', section: 'Section A' },
-      { id: 2, title: 'Science', section: 'Section B' },
-      { id: 3, title: 'English Literature', section: 'Section A' },
-      { id: 4, title: 'World History', section: 'Section C' }
-    ];
-    res.json(defaultClasses);
+    // On error, return empty list to prevent UI errors
+    res.json([]);
   }
 });
 

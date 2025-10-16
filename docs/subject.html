@@ -48,10 +48,13 @@
   </style>
 </head>
 <body>
-  <div class="header">
+  <div class="header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
     <h2 id="subjectTitle">Subject</h2>
-    <div id="accessCodeDisplay" style="display: none; background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #2e7d32;">
-      Access Code: <span id="accessCodeValue"></span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a id="manageGradesBtn" href="#" style="display:none; padding:8px 12px; background:#1976d2; color:#fff; border-radius:6px; text-decoration:none;">Manage Grades</a>
+      <div id="accessCodeDisplay" style="display: none; background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #2e7d32;">
+        Access Code: <span id="accessCodeValue"></span>
+      </div>
     </div>
   </div>
   <div class="main">
@@ -84,17 +87,28 @@
     const subject = urlParams.get('subject') || "Subject";
     document.getElementById('subjectTitle').textContent = subject;
 
-    // Show access code for teachers
+    // Show access code for teachers and load students
+    let currentSubjectId = null;
     if (role === 'teacher') {
-      // Fetch subject details to get access code
+      // Fetch subject details to get access code and ID
       fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subject)}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       })
         .then(res => res.json())
         .then(subjects => {
-          if (subjects.length > 0 && subjects[0].code) {
-            document.getElementById('accessCodeValue').textContent = subjects[0].code;
-            document.getElementById('accessCodeDisplay').style.display = 'block';
+          if (subjects.length > 0) {
+            const subj = subjects[0];
+            currentSubjectId = subj.id;
+            if (subj.code) {
+              document.getElementById('accessCodeValue').textContent = subj.code;
+              document.getElementById('accessCodeDisplay').style.display = 'block';
+            }
+            // Show manage grades button
+            const mg = document.getElementById('manageGradesBtn');
+            mg.href = `teacher-grades.html?id=${encodeURIComponent(currentSubjectId)}&name=${encodeURIComponent(subject)}`;
+            mg.style.display = 'inline-block';
+            // Now load enrolled students for this subject
+            loadStudents(currentSubjectId);
           }
         })
         .catch(err => console.error('Error fetching subject details:', err));
@@ -126,9 +140,9 @@
       students.forEach(stu => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${stu.name}</td>
-          <td><span class="student-grade">${stu.grade}</span></td>
-          <td><button onclick="viewDetails('${stu.id}')">View Details</button></td>
+          <td>${stu.full_name || stu.name}</td>
+          <td><span class=\"student-grade\">—</span></td>
+          <td><button onclick=\"viewDetails('${stu.id}')\">View Details</button></td>
         `;
         tableBody.appendChild(row);
       });
@@ -143,21 +157,23 @@
     if (role === 'student') {
       renderForStudent({});
     } else if (role === 'teacher') {
-      fetch(`${window.API_BASE}/api/subject/students?subject=${encodeURIComponent(subject)}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to load students');
-          return res.json();
-        })
-        .then(students => renderForTeacher(students))
-        .catch(err => {
-          document.getElementById('studentGrid').innerHTML = 'Error loading students.';
-          document.getElementById('infoMsg').textContent = err.message;
-        });
+      // Students will be loaded after subject ID is resolved in the code above
     } else {
       document.getElementById('studentGrid').innerHTML = '';
       document.getElementById('infoMsg').textContent = 'Unknown role.';
+    }
+
+    async function loadStudents(subjectId) {
+      try {
+        const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (!res.ok) throw new Error('Failed to load students');
+        const students = await res.json();
+        renderForTeacher(students);
+      } catch (err) {
+        document.getElementById('infoMsg').textContent = err.message;
+      }
     }
   </script>
   <script>
