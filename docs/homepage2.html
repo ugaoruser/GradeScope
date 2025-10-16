@@ -6,30 +6,27 @@
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
 </head>
-<body>
+<body class="homepage2">
   <div class="sidebar">
-    <div class="top">
-       <ul class="nav">
-         <li class="active" onclick="goHome()">Home</li>
-         <li onclick="goSettings()">Settings</li>
-       </ul>
-    </div>
-    <div class="bottom">
-      <span style="cursor:pointer;" onclick="showAbout()"><i style="font-size: 16px; margin-right: 5px;">ⓘ</i> About</span>
-    </div>
+    ...
   </div>
   <div class="main">
-    <div class="header">
-      <div class="account-menu">
-        <button class="account-btn" onclick="toggleAccountMenu()">
-          <span id="accountInitial">T</span>
-        </button>
-        <div class="account-dropdown" id="accountDropdown">
-          <div style="padding: 12px 16px; border-bottom: 1px solid #eee;">
-            <div style="font-weight: bold; margin-bottom: 4px;" id="userFullName">User Name</div>
-            <div style="font-size: 0.85em; color: #666;" id="userEmail">user@example.com</div>
-          </div>
-          <button onclick="logout()">Log Out</button>
+    <header class="header">
+      <div class="header-title">Welcome</div>
+      <div class="account-menu"> ... same as student header ... </div>
+    </header>
+
+    <h2>My Classes</h2>
+    <div class="classroom-tabs" id="classroomTabs"></div>
+
+    <div id="classActionArea" class="class-action-area"></div>
+
+    <!-- Create Class Modal (teacher) -->
+    <div id="createModal" class="modal" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title">Create Class</div>
+          <button id="closeCreate" class="modal-close" aria-label="Close">&times;</button>
         </div>
       </div>
     </div>
@@ -86,21 +83,15 @@
           <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Subject</label>
           <input type="text" id="className" placeholder="Enter subject name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
         </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Grade Level</label>
-          <input type="text" id="gradeLevel" placeholder="Enter grade level" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Section</label>
-          <input type="text" id="section" placeholder="Enter section" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-          <button style="padding: 10px 16px; background: #f5f5f5; color: #333; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="closeAddClassModal()">Cancel</button>
-          <button style="padding: 10px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em;" onclick="confirmAddClass()">Confirm</button>
+        <div class="modal-actions">
+          <button id="cancelCreate" class="btn-muted">Cancel</button>
+          <button id="confirmCreate" class="btn-primary">Create</button>
         </div>
       </div>
     </div>
   </div>
+</body>
+
   <script>
     const role = localStorage.getItem('role');
     if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
