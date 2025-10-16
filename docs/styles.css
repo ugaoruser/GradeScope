@@ -230,8 +230,14 @@ body.login-page, body.signup-page {
 }
 .login-page .auth-container,
 .signup-page .auth-container {
-  background:#fff; border-radius:12px; padding:36px; box-shadow:var(--shadow-md); width:100%; max-width:430px;
+  background:#fff; 
+  border-radius:12px; 
+  padding:36px; 
+  box-shadow:var(--shadow-md); 
+  width:100%; 
+  max-width:430px;
 }
+
 .login-page .auth-header, .signup-page .auth-header { text-align:center; margin-bottom: 20px; }
 .login-page .auth-footer, .signup-page .auth-footer { text-align:center; margin-top: 16px; }
 .login-page .error-message, .signup-page .error-message { text-align:center; }
