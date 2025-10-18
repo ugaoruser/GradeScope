@@ -328,6 +328,8 @@
     let selectedStudentId = '';
     let editingItemId = null;
     let editingScoreId = null;
+    const initialStudentId = urlParams.get('student_id') || '';
+    const viewMode = urlParams.get('view') === 'assessment' ? 'assessment' : 'final';
     
     // --- Initialize page ---
     function init() {
@@ -413,6 +415,11 @@
           option.textContent = student.full_name;
           select.appendChild(option);
         });
+        // Preselect from URL and load
+        if (initialStudentId) {
+          select.value = initialStudentId;
+          loadStudentGrades();
+        }
       })
       .catch(err => {
         console.error('Error loading students:', err);
@@ -521,6 +528,10 @@
         data.forEach(score => {
           const item = gradeItems.find(item => item.id === score.grade_item_id);
           if (!item) return;
+          // filter by view mode
+          const included = !!item.included_in_final;
+          if (viewMode === 'final' && !included) return;
+          if (viewMode === 'assessment' && included) return;
           
           const row = document.createElement('tr');
           const percentage = ((score.score / item.max_score) * 100).toFixed(1);

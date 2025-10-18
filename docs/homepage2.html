@@ -15,9 +15,9 @@
   <div class="sidebar">
     <div class="top">
       <ul class="nav">
-        <li class="active" onclick="goHome()">Home</li>
-        <li onclick="goSettings()">Settings</li>
-        <li onclick="showAbout()">About</li>
+        <li class="active" onclick="location.href='homepage2.html'">Home</li>
+        <li onclick="location.href='settings.html'">Settings</li>
+        <li id="aboutBtn">About</li>
       </ul>
     </div>
     <div class="bottom">
@@ -227,23 +227,23 @@
       });
     }
 
-    function toggleAccountMenu() {
+    function toggleAccountMenu(event) {
+      event && event.stopPropagation();
       document.getElementById('accountDropdown').classList.toggle('show');
     }
     
-    window.onclick = function(event) {
-      if (!event.target.matches('.account-btn')) {
-        document.getElementById('accountDropdown').classList.remove('show');
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('accountDropdown');
+      const btn = document.querySelector('.account-btn');
+      if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.remove('show');
       }
-      
-      // Close modals when clicking outside
-      if (event.target.id === 'aboutModal') {
-        closeAbout();
-      }
-      if (event.target.id === 'addClassModal') {
-        closeAddClassModal();
-      }
-    }
+      if (e.target.id === 'aboutModal') closeAbout();
+      if (e.target.id === 'addClassModal') closeAddClassModal();
+    });
+    document.querySelector('.account-btn').addEventListener('click', (e) => e.stopPropagation());
+    document.getElementById('accountDropdown').addEventListener('click', (e) => e.stopPropagation());
+    document.getElementById('aboutBtn').addEventListener('click', showAbout);
 
     // --- Fetch classes from backend ---
     function renderSubjects(subjects) {
