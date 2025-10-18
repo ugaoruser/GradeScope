@@ -21,7 +21,7 @@
       </ul>
     </div>
     <div class="bottom">
-      <div class="small">GradeTracker v1.0</div>
+      <div class="app-version">Grade Tracker v1.0</div>
     </div>
   </div>
 
@@ -36,19 +36,20 @@
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
             <div id="userFullName">User Name</div>
-            <div id="userEmail">user@example.com</div>
+            <div id="userEmail"></div>
           </div>
           <button onclick="logout()">Log Out</button>
         </div>
       </div>
     </header>
 
-    <h2>Classes</h2>
+    <div class="header-actions" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <h2 style="margin:0;">Classes</h2>
+      <button class="join-btn" id="joinBtn">+ Add Class</button>
+    </div>
+
     <div class="classroom-tabs" id="classroomTabs">
       <!-- if no classes, JS will insert .no-classes with the button below -->
-    </div>
-    <div style="margin-top:16px;">
-      <button class="join-btn" id="joinBtn">+ Add Class</button>
     </div>
 
     <!-- Place Add/Join area after classes -->
@@ -120,14 +121,15 @@
         localStorage.setItem('email', userData.email);
         
         document.getElementById('userFullName').textContent = userData.fullName || user.name || 'User Name';
-        document.getElementById('userEmail').textContent = userData.email || user.email || 'user@example.com';
+        if (userData.email) localStorage.setItem('email', userData.email);
+        document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
         document.getElementById('accountInitial').textContent = (userData.fullName && userData.fullName[0]) || (user.name && user.name[0]) || 'A';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
         // Use localStorage as fallback
         document.getElementById('userFullName').textContent = localStorage.getItem('fullName') || user.name || 'User Name';
-        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || 'user@example.com';
+        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
       });
 
     function goHome() { location.reload(); }
@@ -202,7 +204,7 @@
     }
 
     // Start with empty classes for testing
-    document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
+    document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Add Class" to join a class.</div>';
     
     fetch(`${window.API_BASE}/api/classes`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }

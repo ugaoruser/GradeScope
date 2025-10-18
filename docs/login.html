@@ -97,6 +97,7 @@
           localStorage.setItem('token', data.token);
           localStorage.setItem('role', data.role);
           localStorage.setItem('user', JSON.stringify({ name: data.name, userId: data.userId, role: data.role }));
+          localStorage.setItem('email', email);
 
           showSuccess('Login successful! Redirecting...');
           setTimeout(() => {

@@ -16,32 +16,38 @@
       </ul>
     </div>
     <div class="bottom">
-      <div>GradeTracker v1.0</div>
+      <div class="app-version">Grade Tracker v1.0</div>
     </div>
   </div>
   
   <div class="main">
-    <h1>Settings</h1>
+    <header class="header" style="margin-bottom:16px;">
+      <div class="header-title">Settings</div>
+    </header>
     
     <div class="settings-container">
       <div class="settings-title">Account Settings</div>
       
-      <div class="settings-section">
-        <div class="settings-section-title">Profile Information</div>
-        <div class="form-group">
-          <label>First Name</label>
-          <div id="displayFirstName"></div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-section-title">Profile Information</div>
+          <div class="form-row">
+            <div class="col">
+              <label>First Name</label>
+              <div id="displayFirstName" class="field-display"></div>
+            </div>
+            <div class="col">
+              <label>Last Name</label>
+              <div id="displayLastName" class="field-display"></div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Last Name</label>
-          <div id="displayLastName"></div>
+
+        <div class="settings-card danger">
+          <div class="settings-section-title">Danger Zone</div>
+          <p>Once you delete your account, there is no going back. Please be certain.</p>
+          <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
         </div>
-      </div>
-      
-      <div class="settings-section">
-        <div class="settings-section-title"><strong>Danger Zone</strong></div>
-        <p>Once you delete your account, there is no going back. Please be certain.</p>
-        <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
       </div>
     </div>
   </div>

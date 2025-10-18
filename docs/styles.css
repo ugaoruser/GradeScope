@@ -99,10 +99,13 @@ body {
 }
 .header{
   display:flex; justify-content:space-between; align-items:center;
-  background: transparent;
-  padding: 8px 0 18px 0;
+  width: calc(100%);
+  background: linear-gradient(90deg,#3f51b5,#5c6bc0);
+  color:#fff;
+  padding: 14px 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
-.header-title { font-weight:700; font-size:1.25rem; color:var(--text); }
+.header-title { font-weight:700; font-size:1.25rem; }
 
 /* Account menu */
 .account-menu { position:relative; display:flex; align-items:center; gap:12px; }
@@ -122,6 +125,7 @@ body {
 /* -------------------------
    03. Shared UI components
    ------------------------- */
+.app-version { font-size: 0.9rem; opacity: 0.9; }
 /* Cards */
 .card{ background:var(--card); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow-md); }
 .card:hover{ transform: translateY(-4px); transition:transform var(--transition-fast); }
@@ -265,7 +269,13 @@ body.index-page { display:flex; align-items:center; justify-content:center; }
 
 /* Settings page specifics */
 body.settings-page .main{ padding:28px; }
-body.settings-page .settings-container { background:var(--card); padding:20px; border-radius:12px; box-shadow:var(--shadow-md); }
+body.settings-page .settings-container { background:var(--card); padding:24px; border-radius:16px; box-shadow:var(--shadow-md); }
+body.settings-page .settings-title { font-weight:800; font-size:1.2rem; margin-bottom:16px; }
+body.settings-page .settings-grid { display:grid; grid-template-columns:1fr; gap:16px; }
+body.settings-page .settings-card { background: #fff; border:1px solid #eef2f7; border-radius:12px; padding:16px; box-shadow:0 6px 16px rgba(2,6,23,.06); }
+body.settings-page .settings-card.danger { border-color: #fdecea; background:#fff7f7; }
+body.settings-page .settings-section-title { font-weight:700; margin-bottom:8px; }
+body.settings-page .field-display { padding:10px 12px; border:1px dashed #dbe5f0; border-radius:8px; background:#f9fbff; }
 
 /* Student grades page */
 body.student-grades-page .header { background: linear-gradient(90deg,#3f51b5,#5c6bc0); color:#fff; padding:16px 32px; border-radius:8px; }

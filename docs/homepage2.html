@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="theme.css">
   <script src="config.js" defer></script>
+  <script src="chatbot.js" defer></script>
 </head>
  <body class="homepage2">
   <div class="sidebar">
@@ -21,7 +22,7 @@
       </ul>
     </div>
     <div class="bottom">
-      <div class="small">GradeTracker v1.0</div>
+      <div class="app-version">Grade Tracker v1.0</div>
     </div>
   </div>
   <div class="main">
@@ -34,19 +35,19 @@
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
             <div id="userFullName">User Name</div>
-            <div id="userEmail">user@example.com</div>
+            <div id="userEmail"></div>
           </div>
           <button onclick="logout()">Log Out</button>
         </div>
       </div>
     </header>
 
-    <h2>Classes</h2>
-    <div class="classroom-tabs" id="classroomTabs">Loading...</div>
-
-    <div style="margin-top:16px;">
+    <div class="header-actions" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <h2 style="margin:0;">Classes</h2>
       <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
     </div>
+
+    <div class="classroom-tabs" id="classroomTabs">Loading...</div>
 
     <!-- Chatbot Toggle Button -->
     <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
@@ -57,7 +58,7 @@
         <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
       </div>
       <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
-        <div style="color:#666;">How can I help you plan classes and grades today?</div>
+        <div style="color:#666;">I can help you draft comments and estimate student progress. Ask me something like "Create a comment for Maria in Algebra, score 82" or "Average of 78, 85, 90".</div>
       </div>
       <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
         <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
@@ -130,10 +131,10 @@
     }
 
     // --- Account Initial and User Info ---
-    const user = JSON.parse(localStorage.getItem('user')) || { name: "Teacher", email: "teacher@example.com" };
+    const user = JSON.parse(localStorage.getItem('user')) || { name: "Teacher", email: localStorage.getItem('email') || "" };
     document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'T';
     document.getElementById('userFullName').textContent = user.name || 'Teacher';
-    document.getElementById('userEmail').textContent = user.email || 'teacher@example.com';
+    document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
     
     // Fetch user data for dropdown
     fetch(`${window.API_BASE}/api/me`, {
@@ -143,17 +144,17 @@
       .then(userData => {
         // Store user data in localStorage for future use
         localStorage.setItem('fullName', userData.fullName);
-        localStorage.setItem('email', userData.email);
+        if (userData.email) localStorage.setItem('email', userData.email);
         
         document.getElementById('userFullName').textContent = userData.fullName || user.name || 'User Name';
-        document.getElementById('userEmail').textContent = userData.email || user.email || 'user@example.com';
+        document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
         document.getElementById('accountInitial').textContent = (userData.fullName && userData.fullName[0]) || (user.name && user.name[0]) || 'T';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
         // Use localStorage as fallback
         document.getElementById('userFullName').textContent = localStorage.getItem('fullName') || user.name || 'User Name';
-        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || 'user@example.com';
+        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
       });
 
     function goHome() { location.reload(); }
@@ -294,21 +295,86 @@
      document.getElementById('closeChatbot').addEventListener('click', () => {
        sidebar.style.right = '-360px';
      });
+
+     function appendChat(text, who = 'bot'){
+       const log = document.getElementById('chatLog');
+       const line = document.createElement('div');
+       line.style.margin = '6px 0';
+       if (who === 'bot') { line.style.color = '#444'; }
+       else { line.style.fontWeight = '600'; }
+       line.textContent = text;
+       log.appendChild(line);
+       log.scrollTop = log.scrollHeight;
+     }
+
+     function containsProfanity(text){
+       const bad = [
+         'fuck','shit','bitch','asshole','bastard','dick','piss','cunt','motherfucker','slut','whore'
+       ];
+       const lower = text.toLowerCase();
+       return bad.some(w => lower.includes(w));
+     }
+
+     function parseNumbers(text){
+       const nums = (text.match(/\b\d{1,3}(?:\.\d+)?\b/g) || []).map(n => parseFloat(n)).filter(n => n<=100);
+       return nums;
+     }
+
+     function handleProgressQuery(text){
+       const nums = parseNumbers(text);
+       if (nums.length === 0) return 'Please provide scores (0-100). Example: Average of 78, 85, 90.';
+       const avg = nums.reduce((a,b)=>a+b,0)/nums.length;
+       return `Approximate progress based on ${nums.length} score(s): ${avg.toFixed(1)}%.`;
+     }
+
+     function handleCommentQuery(text){
+       // Try to extract name, subject/topic, and score
+       const score = parseNumbers(text)[0] ?? 85;
+       const nameMatch = text.match(/for\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/i);
+       const topicMatch = text.match(/in\s+([A-Za-z ]+)/i) || text.match(/on\s+([A-Za-z ]+)/i);
+       const name = nameMatch ? nameMatch[1].trim() : 'The student';
+       const topic = topicMatch ? topicMatch[1].trim() : 'this topic';
+       const subject = topic; // basic heuristic
+       const bot = new FeedbackChatbot();
+       const { feedback, suggestions } = bot.generateCompleteFeedback(score, subject, topic, name);
+       return `${feedback}\nSuggestions: ${suggestions.slice(0,2).join('; ')}`;
+     }
+
+     function inScope(text){
+       const t = text.toLowerCase();
+       return t.includes('comment') || t.includes('feedback') || t.includes('progress') || t.includes('average') || /\d/.test(t);
+     }
+
+     function processMessage(text){
+       if (containsProfanity(text)){
+         return 'Please avoid using offensive language. Let\'s keep this respectful.';
+       }
+       const t = text.toLowerCase();
+       if (t.includes('progress') || t.includes('average') || t.includes('mean')){
+         return handleProgressQuery(text);
+       }
+       if (t.includes('comment') || t.includes('feedback')){
+         return handleCommentQuery(text);
+       }
+       if (!inScope(text)){
+         return 'I can help with: (1) drafting teacher comments, (2) approximate progress calculations. I can\'t perform other tasks, but you can try asking: "Create a comment for Ana in Science, score 88" or "Average of 76, 81, 90".';
+       }
+       // Fallback within scope
+       return 'Try specifying scores or the student/topic. For example: "Create a comment for John in Algebra, score 84" or "Average of 75, 82, 91".';
+     }
+
      document.getElementById('sendChat').addEventListener('click', () => {
        const input = document.getElementById('chatInput');
        const text = input.value.trim();
        if (!text) return;
-       const log = document.getElementById('chatLog');
-       const me = document.createElement('div');
-       me.textContent = text;
-       log.appendChild(me);
+       appendChat(text, 'me');
        input.value = '';
-       // Placeholder reply
-       const bot = document.createElement('div');
-       bot.style.color = '#666';
-       bot.textContent = 'Thanks! I will keep that in mind.';
-       log.appendChild(bot);
-       log.scrollTop = log.scrollHeight;
+       const reply = processMessage(text);
+       appendChat(reply, 'bot');
+     });
+
+     document.getElementById('chatInput').addEventListener('keydown', (e)=>{
+       if (e.key === 'Enter') document.getElementById('sendChat').click();
      });
     </script>
 </html>
