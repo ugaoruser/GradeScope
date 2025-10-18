@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>GradeTracker — Student Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
   <script src="config.js" defer></script>
 </head>
 <body class="homepage1">
@@ -172,11 +177,15 @@
       classes.forEach(cls => {
         const div = document.createElement('div');
         div.className = "class-tab";
-        div.innerHTML = `<div class="class-title">${cls.title}</div>
-                         <div class="class-section">${cls.grade_level || cls.gradeLevel || 'Grade 10'} - ${cls.section}</div>`;
-        div.onclick = () => { 
-          window.location.href = `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}`;
-        };
+        let meta = `${cls.grade_level || cls.gradeLevel || 'Grade 10'} - ${cls.section}`;
+        if (role === 'parent' && cls.student_name) {
+          meta = `${meta} • ${cls.student_name}`;
+        }
+        div.innerHTML = `<div class="class-title">${cls.title}</div><div class="class-section">${meta}</div>`;
+        const url = (role === 'parent' && cls.student_id)
+          ? `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}&childId=${encodeURIComponent(cls.student_id)}`
+          : `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}`;
+        div.onclick = () => { window.location.href = url; };
         container.appendChild(div);
       });
     }
@@ -225,7 +234,7 @@
       const accessCode = document.getElementById('joinCode').value.trim();
       if (!accessCode) { alert('Access code is required'); return; }
       try {
-        const resp = await fetch('${window.API_BASE}/api/subjects/join', {
+        const resp = await fetch(`${window.API_BASE}/api/subjects/join`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
           body: JSON.stringify({ accessCode })

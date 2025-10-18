@@ -1,0 +1,97 @@
+/* theme.css - lightweight overrides to align with prototype aesthetics */
+:root {
+  --brand: #2563eb;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --bg-grad-start: #eef2ff;
+  --bg-grad-end: #e0e7ff;
+  --text-strong: #0f172a;
+  --text-muted: #475569;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --ring: rgba(37, 99, 235, 0.4);
+}
+
+/* Base */
+body.homepage1, body.login-page, body.signup-page, body.student-grades-page {
+  background: linear-gradient(135deg, var(--bg-grad-start), var(--bg-grad-end));
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--text-strong);
+}
+
+/* Header */
+.header {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+.header .header-title { font-weight: 700; font-size: 1.125rem; }
+
+/* Account menu */
+.account-menu { position: relative; }
+.account-btn {
+  width: 40px; height: 40px; border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid #e5e7eb;
+  display: grid; place-items: center; font-weight: 600; color: var(--brand-700);
+  box-shadow: 0 1px 2px rgba(15,23,42,.04);
+}
+.account-dropdown {
+  position: absolute; right: 0; top: 48px; width: 260px;
+  background: var(--surface);
+  border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px;
+  box-shadow: 0 10px 20px rgba(2,6,23,.08);
+}
+.account-dropdown .account-info { margin-bottom: 8px; }
+.account-dropdown button { width: 100%; }
+
+/* Cards and tabs */
+.classroom-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.class-tab {
+  background: var(--surface);
+  border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px;
+  box-shadow: 0 6px 16px rgba(2,6,23,.06);
+  cursor: pointer; transition: transform .12s ease, box-shadow .12s ease;
+}
+.class-tab:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(2,6,23,.10); }
+.class-title { font-weight: 600; margin-bottom: 6px; }
+.class-section { color: var(--text-muted); font-size: .9rem; }
+
+/* Buttons */
+.btn-primary, .join-btn, .btn-login, .btn-signup {
+  background: var(--brand-600); color: #fff; border: none; border-radius: 10px;
+  padding: 10px 14px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 6px 14px rgba(37,99,235,.24);
+}
+.btn-primary:hover, .join-btn:hover, .btn-login:hover, .btn-signup:hover { background: var(--brand-700); }
+.btn-muted { background: #e5e7eb; color: #111827; border-radius: 10px; padding: 10px 14px; }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--surface);
+  border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px;
+  outline: none; box-shadow: 0 0 0 0 var(--ring);
+}
+input:focus, select:focus, textarea:focus { border-color: var(--brand-600); box-shadow: 0 0 0 4px var(--ring); }
+
+/* Modal */
+.modal .modal-panel {
+  background: var(--surface);
+  border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 20px 40px rgba(2,6,23,.18);
+}
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+.modal-title { font-weight: 700; }
+.modal-actions { display:flex; gap: 8px; justify-content: flex-end; }
+
+/* Grades tables */
+.category-header { font-weight: 600; margin: 14px 0 8px; }
+table { width: 100%; background: var(--surface); border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 16px rgba(2,6,23,.06); }
+th, td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+th { background: var(--surface-muted); color: var(--text-muted); font-weight: 600; }
+.grade-summary { margin-top: 12px; font-weight: 600; }
+
+/* Layout containers */
+.main { max-width: 1024px; margin: 0 auto; padding: 16px; }
+.sidebar { color: #fff; }

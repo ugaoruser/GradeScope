@@ -587,7 +587,7 @@ app.get('/api/classes', verifyToken, async (req, res) => {
     } else if (req.user.role === 'parent') {
       // Parents can see their children's classes
       [classes] = await db.query(
-        `SELECT s.id, s.title, s.grade_level, u.full_name as student_name
+        `SELECT s.id, s.title, s.grade_level, u.full_name as student_name, u.id as student_id
          FROM subjects s
          JOIN enrollments e ON e.subject_id = s.id
          JOIN users u ON e.student_id = u.id
@@ -1021,6 +1021,27 @@ app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, async (req, 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// List children for the current parent
+app.get('/api/children', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({ message: 'Only parents can view children' });
+    }
+    const [rows] = await db.query(
+      `SELECT u.id, u.full_name 
+       FROM parent_child pc 
+       JOIN users u ON u.id = pc.child_id 
+       WHERE pc.parent_id = ? 
+       ORDER BY u.full_name`,
+      [req.user.userId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error loading children:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

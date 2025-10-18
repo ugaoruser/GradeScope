@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>GradeTracker — Teacher Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
   <script src="config.js" defer></script>
 </head>
  <body class="homepage2">
@@ -88,6 +93,10 @@
         <div style="margin-bottom: 16px;">
           <label style="display: block; margin-bottom: 8px; font-weight: bold;">Name of Class</label>
           <input type="text" id="className" placeholder="Enter class name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: bold;">Grade Level</label>
+          <input type="text" id="gradeLevel" placeholder="e.g., Grade 10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
         </div>
         <div style="margin-bottom: 16px;">
           <label style="display: block; margin-bottom: 8px; font-weight: bold;">Section</label>
@@ -183,9 +192,10 @@
     
     function confirmAddClass() {
       const className = document.getElementById('className').value.trim();
+      const gradeLevel = document.getElementById('gradeLevel').value.trim();
       const section = document.getElementById('section').value.trim();
       
-      if (!className || !section) {
+      if (!className || !gradeLevel || !section) {
         alert('Please fill in all fields');
         return;
       }
@@ -199,6 +209,7 @@
         },
         body: JSON.stringify({
           title: className,
+          gradeLevel: gradeLevel,
           section: section
         })
       })

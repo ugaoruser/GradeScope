@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Grades — GradeTracker</title>
+  <title>Subject Grades - GradeTracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
   <script src="config.js" defer></script>
 </head>
 <body class="student-grades-page">
@@ -12,6 +17,7 @@
     <h2 id="subjectTitle">Subject Grades</h2>
     <div>
       <span id="studentName"></span>
+      <select id="childSelect" style="display:none; margin-left:8px;"></select>
       <button class="logout-btn" onclick="logout()">Log Out</button>
     </div>
   </div>
@@ -118,18 +124,19 @@
     // Check if user is logged in
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    const userName = localStorage.getItem('name');
+    const userObj = JSON.parse(localStorage.getItem('user') || '{}');
     
     if (!token || (role !== 'student' && role !== 'parent')) {
       window.location.href = 'login.html';
     }
     
-    document.getElementById('studentName').textContent = userName;
+    // student name will be set below based on role
     
     // Get subject ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const subjectId = urlParams.get('id');
     const subjectTitle = urlParams.get('title');
+    const initialChildId = urlParams.get('childId');
     
     if (!subjectId) {
       window.location.href = 'homepage1.html';
@@ -184,8 +191,9 @@
           }
         });
         
-        // Fetch grade items
-        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}`, {
+        // Fetch grade items (include childId for parents)
+        const childParam = (role === 'parent' && window.selectedChildId) ? `&childId=${encodeURIComponent(window.selectedChildId)}` : '';
+        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       })
@@ -318,8 +326,41 @@
       window.location.href = 'login.html';
     }
     
-    // Load initial data
-    loadGradeData(1);
+    // Initialize based on role
+    const isParent = role === 'parent';
+    if (isParent) {
+      const childSelect = document.getElementById('childSelect');
+      fetch(`${window.API_BASE}/api/children`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(children => {
+          if (!children || children.length === 0) return;
+          childSelect.style.display = 'inline-block';
+          childSelect.innerHTML = '';
+          children.forEach(ch => {
+            const opt = document.createElement('option');
+            opt.value = ch.id;
+            opt.textContent = ch.full_name;
+            childSelect.appendChild(opt);
+          });
+          // pick initial child
+          window.selectedChildId = initialChildId || String(children[0].id);
+          childSelect.value = window.selectedChildId;
+          document.getElementById('studentName').textContent = children.find(c => String(c.id) === String(window.selectedChildId))?.full_name || '';
+          childSelect.addEventListener('change', () => {
+            window.selectedChildId = childSelect.value;
+            const chosen = children.find(c => String(c.id) === String(window.selectedChildId));
+            document.getElementById('studentName').textContent = chosen?.full_name || '';
+            loadGradeData(currentQuarter);
+          });
+          loadGradeData(1);
+        })
+        .catch(err => console.error('Failed to load children', err));
+    } else {
+      // student
+      const displayName = localStorage.getItem('fullName') || userObj.name || 'Student';
+      document.getElementById('studentName').textContent = displayName;
+      loadGradeData(1);
+    }
   </script>
 </body>
 </html>
