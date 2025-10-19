@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>GradeTracker — Teacher Home</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
@@ -194,6 +195,7 @@
       m.classList.remove('show');
       setTimeout(()=>{ m.style.display = 'none'; }, 180);
     }
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
     
     // Add Class Modal Functions
     function showAddClassModal() {
@@ -374,7 +376,7 @@
            </div>
            <div class="class-actions" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
              <button onclick="viewAutoClass('{{CLASS_ID}}', '{{CLASS_TITLE}}')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">View</button>
-             <button onclick="manageAutoClass('{{CLASS_ID}}', '{{CLASS_TITLE}}')" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Manage</button>
+            <button onclick="manageAutoClass('{{CLASS_ID}}', '{{CLASS_TITLE}}')" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Manage</button>
            </div>
          </div>`;
        }
@@ -410,9 +412,18 @@
        }
        
        generateClassId(classData) {
-         const timestamp = Date.now();
-         const random = Math.random().toString(36).substr(2, 5);
-         return `auto_${classData.title.toLowerCase().replace(/[^a-z0-9]/g, '')}_${timestamp}_${random}`;
+         // Generate an 8-character alphanumeric ID and ensure uniqueness
+         window.__autoIdRegistry = window.__autoIdRegistry || new Set();
+         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+         function gen8() {
+           let id = '';
+           for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+           return id;
+         }
+         let id = gen8();
+         while (window.__autoIdRegistry.has(id)) id = gen8();
+         window.__autoIdRegistry.add(id);
+         return id;
        }
        
        sanitizeClassName(title) {
@@ -460,19 +471,22 @@
      
      // Global functions for auto-generated classes
      window.viewAutoClass = function(classId, title) {
-       window.location.href = `teacher-grades.html?id=${encodeURIComponent(classId)}&name=${encodeURIComponent(title)}&auto=true`;
+       // Open in read-only mode for viewing
+       window.location.href = `teacher-grades.html?id=${encodeURIComponent(classId)}&name=${encodeURIComponent(title)}&readonly=1`;
      };
      
      window.manageAutoClass = function(classId, title) {
+       // Open management flow
        window.location.href = `subject.html?subject=${encodeURIComponent(title)}&auto=true`;
      };
      
-     // Create demo auto-generated classes after a delay
-     setTimeout(() => {
+     // Encapsulate auto-generated DOM creation
+     function generateDynamicElements() {
        if (window.autoClassSystem) {
          window.autoClassSystem.createDemoClasses();
        }
-     }, 2000);
+     }
+     document.addEventListener('DOMContentLoaded', generateDynamicElements);
      
      // Chatbot toggle logic
      const sidebar = document.getElementById('chatbotSidebar');

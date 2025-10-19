@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Grade Management — GradeTracker</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
@@ -13,7 +14,6 @@
   <script src="chatbot.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="chart.js" defer></script>
-  <script src="api-mock.js" defer></script>
   <script src="config.js" defer></script>
 </head>
 <body class="teacher-grades-page">
@@ -135,7 +135,7 @@
           <label>Periodical Exam:</label>
           <input type="number" id="weightPE" min="0" max="100" value="20">%
         </div>
-        <button class="btn-submit" onclick="saveWeights()">Save Weights</button>
+        <button class="btn-submit" onclick="saveWeights()" id="saveWeightsBtn">Save Weights</button>
       </div>
     </div>
     
@@ -190,7 +190,7 @@
       </div>
     </div>
     
-    <button class="action-btn" onclick="toggleAddForm(true)">Add New Grade Item</button>
+    <button class="action-btn" onclick="toggleAddForm(true)" id="addItemBtn">Add New Grade Item</button>
     
     <div id="ptContent" class="category-content">
       <h3>Performance Tasks</h3>
@@ -294,7 +294,7 @@
         </div>
       </div>
       
-      <button class="action-btn" onclick="toggleScoreForm(true)">Add New Score</button>
+      <button class="action-btn" onclick="toggleScoreForm(true)" id="addScoreBtn">Add New Score</button>
     </div>
   </div>
   
@@ -303,6 +303,8 @@
     const role = localStorage.getItem('role');
     const token = localStorage.getItem('token');
     const userName = localStorage.getItem('userName');
+    const urlParamsAll = new URLSearchParams(window.location.search);
+    const readOnlyMode = urlParamsAll.get('readonly') === '1';
     
     if (!role || role !== 'teacher') {
       window.location.href = 'login.html';
@@ -856,6 +858,16 @@
     
     // Initialize the page
     document.getElementById('gradeItemSelect').addEventListener('change', updateMaxScore);
+    // Apply read-only mode if requested
+    if (readOnlyMode) {
+      document.querySelectorAll('.action-buttons').forEach(el => el.style.display = 'none');
+      const addItemBtn = document.getElementById('addItemBtn'); if (addItemBtn) addItemBtn.style.display = 'none';
+      const addScoreBtn = document.getElementById('addScoreBtn'); if (addScoreBtn) addScoreBtn.style.display = 'none';
+      const saveWeightsBtn = document.getElementById('saveWeightsBtn'); if (saveWeightsBtn) saveWeightsBtn.style.display = 'none';
+      document.getElementById('weightPT').readOnly = true;
+      document.getElementById('weightWW').readOnly = true;
+      document.getElementById('weightPE').readOnly = true;
+    }
     init();
   </script>
 </body>

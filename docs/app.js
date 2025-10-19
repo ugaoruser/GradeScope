@@ -1,5 +1,4 @@
 // Improved page loading without visible buffer
-const API_BASE = 'https://gradescope-a4hw.onrender.com'
 
 const role = localStorage.getItem('role');
 if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
