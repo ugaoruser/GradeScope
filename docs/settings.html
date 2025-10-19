@@ -41,6 +41,12 @@
               <div id="displayLastName" class="field-display"></div>
             </div>
           </div>
+          <div class="form-row">
+            <div class="col">
+              <label>Email</label>
+              <div id="displayEmail" class="field-display"></div>
+            </div>
+          </div>
         </div>
 
         <div class="settings-card danger">
@@ -52,14 +58,32 @@
     </div>
   </div>
   
-  <!-- About Modal -->
-  <div id="aboutModal" class="modal">
-    <div class="modal-content">
+  <!-- About Modal (reused from homepages with transition) -->
+  <div id="aboutModal" class="modal" aria-hidden="true" style="display:none;">
+    <div class="modal-panel">
       <div class="modal-header">
         <div class="modal-title">About GradeScope Lite</div>
-        <button class="close-modal" id="closeAboutModal">&times;</button>
+        <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
+        <div class="settings-section-title">Profile Information</div>
+        <div class="form-row">
+          <div class="col">
+            <label>First Name</label>
+            <div id="aboutFirstName" class="field-display"></div>
+          </div>
+          <div class="col">
+            <label>Last Name</label>
+            <div id="aboutLastName" class="field-display"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col">
+            <label>Email</label>
+            <div id="aboutEmail" class="field-display"></div>
+          </div>
+        </div>
+        <hr style="margin:12px 0; border:none; border-top:1px solid #eef2f7;">
         <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
@@ -74,20 +98,21 @@
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; }
 
-    // Load names
+    // Load profile
     fetch(`${window.API_BASE}/api/me`, { headers: { Authorization: 'Bearer ' + token }})
       .then(r => r.json())
       .then(u => {
         document.getElementById('displayFirstName').textContent = u.firstName || '';
         document.getElementById('displayLastName').textContent = u.lastName || '';
+        document.getElementById('displayEmail').textContent = u.email || localStorage.getItem('email') || '';
       });
 
     // About modal
     const aboutBtn = document.getElementById('aboutBtn');
     const aboutModal = document.getElementById('aboutModal');
-    const closeAboutModal = document.getElementById('closeAboutModal');
-    aboutBtn.addEventListener('click', () => { aboutModal.style.display = 'block'; });
-    closeAboutModal.addEventListener('click', () => { aboutModal.style.display = 'none'; });
+    function showAbout(){ aboutModal.style.display = 'flex'; requestAnimationFrame(()=> aboutModal.classList.add('show')); }
+    function closeAbout(){ aboutModal.classList.remove('show'); setTimeout(()=> aboutModal.style.display='none', 180); }
+    aboutBtn.addEventListener('click', showAbout);
 
     // Danger zone
     document.getElementById('deleteAccountBtn').addEventListener('click', () => {
@@ -257,10 +282,7 @@
     // Close modals when clicking outside
     window.addEventListener('click', (event) => {
       if (event.target === aboutModal) {
-        aboutModal.style.display = 'none';
-      }
-      if (event.target === addClassModal) {
-        addClassModal.style.display = 'none';
+        closeAbout();
       }
     });
   </script>

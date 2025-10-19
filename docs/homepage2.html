@@ -67,14 +67,32 @@
     </div>
   </div>
   
-  <!-- About Modal -->
-  <div id="aboutModal" style="display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <div style="font-size: 1.5em; font-weight: bold;">About GradeScope Lite</div>
-        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAbout()">&times;</button>
+  <!-- About Modal (unified with homepage format + transition) -->
+  <div id="aboutModal" class="modal" aria-hidden="true" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title">About GradeScope Lite</div>
+        <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
-      <div style="line-height: 1.6;">
+      <div class="modal-body">
+        <div class="settings-section-title">Profile Information</div>
+        <div class="form-row">
+          <div class="col">
+            <label>First Name</label>
+            <div id="aboutFirstName" class="field-display"></div>
+          </div>
+          <div class="col">
+            <label>Last Name</label>
+            <div id="aboutLastName" class="field-display"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col">
+            <label>Email</label>
+            <div id="aboutEmail" class="field-display"></div>
+          </div>
+        </div>
+        <hr style="margin:12px 0; border:none; border-top:1px solid #eef2f7;">
         <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
@@ -143,18 +161,29 @@
       .then(res => res.json())
       .then(userData => {
         // Store user data in localStorage for future use
-        localStorage.setItem('fullName', userData.fullName);
+        localStorage.setItem('firstName', userData.firstName || '');
+        localStorage.setItem('lastName', userData.lastName || '');
+        localStorage.setItem('fullName', userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim());
         if (userData.email) localStorage.setItem('email', userData.email);
         
-        document.getElementById('userFullName').textContent = userData.fullName || user.name || 'User Name';
+        const nameLine = `${userData.firstName || ''}${userData.lastName ? ', ' + userData.lastName : ''}`.trim() || userData.fullName || user.name || 'User Name';
+        document.getElementById('userFullName').textContent = nameLine;
         document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
-        document.getElementById('accountInitial').textContent = (userData.fullName && userData.fullName[0]) || (user.name && user.name[0]) || 'T';
+        document.getElementById('accountInitial').textContent = (nameLine && nameLine[0]) || 'T';
+        // Fill About modal profile fields
+        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = userData.firstName || '';
+        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = userData.lastName || '';
+        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = userData.email || localStorage.getItem('email') || '';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
         // Use localStorage as fallback
-        document.getElementById('userFullName').textContent = localStorage.getItem('fullName') || user.name || 'User Name';
+        const nameLine = `${localStorage.getItem('firstName') || ''}${localStorage.getItem('lastName') ? ', ' + localStorage.getItem('lastName') : ''}`.trim() || localStorage.getItem('fullName') || user.name || 'User Name';
+        document.getElementById('userFullName').textContent = nameLine;
         document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
+        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = localStorage.getItem('firstName') || '';
+        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = localStorage.getItem('lastName') || '';
+        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = localStorage.getItem('email') || '';
       });
 
     function goHome() { location.reload(); }
@@ -172,11 +201,15 @@
     
     // About Modal Functions
     function showAbout() { 
-      document.getElementById('aboutModal').style.display = 'block';
+      const m = document.getElementById('aboutModal');
+      m.style.display = 'flex';
+      requestAnimationFrame(() => m.classList.add('show'));
     }
     
     function closeAbout() {
-      document.getElementById('aboutModal').style.display = 'none';
+      const m = document.getElementById('aboutModal');
+      m.classList.remove('show');
+      setTimeout(()=>{ m.style.display = 'none'; }, 180);
     }
     
     // Add Class Modal Functions
@@ -191,7 +224,7 @@
       document.getElementById('section').value = '';
     }
     
-    function confirmAddClass() {
+    async function confirmAddClass() {
       const className = document.getElementById('className').value.trim();
       const gradeLevel = document.getElementById('gradeLevel').value.trim();
       const section = document.getElementById('section').value.trim();
@@ -200,32 +233,34 @@
         alert('Please fill in all fields');
         return;
       }
-      
-      // Send data to server
-      fetch(`${window.API_BASE}/api/subjects`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('token')
-        },
-        body: JSON.stringify({
-          title: className,
-          gradeLevel: gradeLevel,
-          section: section
-        })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to create class');
-        return res.json();
-      })
-      .then(data => {
+      const btn = document.getElementById('confirmCreate');
+      const prev = btn.textContent; btn.disabled = true; btn.textContent = 'Creating...';
+      try {
+        const res = await fetch(`${window.API_BASE}/api/subjects`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ title: className, gradeLevel, section })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to create class');
         alert('Class created successfully!');
         closeAddClassModal();
-        location.reload(); // Refresh to show new class
-      })
-      .catch(err => {
+        // Append to list without full reload
+        const container = document.getElementById('classroomTabs');
+        const div = document.createElement('div');
+        div.className = 'class-tab';
+        div.innerHTML = `<div class=\"class-title\">${data.title || className}</div>
+                         <div class=\"class-section\">${data.section || section}</div>`;
+        div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(data.title || className); };
+        container.appendChild(div);
+      } catch (err) {
         alert('Error creating class: ' + err.message);
-      });
+      } finally {
+        btn.disabled = false; btn.textContent = prev;
+      }
     }
 
     function toggleAccountMenu(event) {
@@ -264,23 +299,19 @@
       });
     }
 
-     fetch(`${window.API_BASE}/api/classes`, {
+     // Try subjects endpoint first, fall back to classes for compatibility
+     fetch(`${window.API_BASE}/api/subjects`, {
        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
      })
-       .then(res => {
-         if (!res.ok) {
-           if (res.status === 401) {
-             localStorage.removeItem('token');
-             localStorage.removeItem('role');
-             window.location.href = 'login.html';
-             return;
-           }
-           throw new Error('Failed to load classes');
-         }
-         return res.json();
+       .then(async res => {
+         if (res.ok) return res.json();
+         // fallback
+         const res2 = await fetch(`${window.API_BASE}/api/classes`, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }});
+         if (!res2.ok) throw new Error('Failed to load classes');
+         return res2.json();
        })
-       .then(classes => {
-         if (classes) renderSubjects(classes);
+       .then(list => {
+         if (list) renderSubjects(list);
        })
        .catch(err => {
          console.error('Error loading classes:', err);

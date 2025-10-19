@@ -90,7 +90,28 @@
         <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p>This website acts as a Grade Tracker ...</p>
+        <div class="settings-section-title">Profile Information</div>
+        <div class="form-row">
+          <div class="col">
+            <label>First Name</label>
+            <div id="aboutFirstName" class="field-display"></div>
+          </div>
+          <div class="col">
+            <label>Last Name</label>
+            <div id="aboutLastName" class="field-display"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col">
+            <label>Email</label>
+            <div id="aboutEmail" class="field-display"></div>
+          </div>
+        </div>
+        <hr style="margin:12px 0; border:none; border-top:1px solid #eef2f7;">
+        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
+        <p><strong>Version:</strong> V1.0</p>
+        <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
+        <p><strong>Main Dev:</strong> Jack Dylan Gallentes</p>
       </div>
     </div>
   </div>
@@ -117,19 +138,29 @@
       .then(res => res.json())
       .then(userData => {
         // Store user data in localStorage for future use
-        localStorage.setItem('fullName', userData.fullName);
-        localStorage.setItem('email', userData.email);
-        
-        document.getElementById('userFullName').textContent = userData.fullName || user.name || 'User Name';
+        localStorage.setItem('firstName', userData.firstName || '');
+        localStorage.setItem('lastName', userData.lastName || '');
+        localStorage.setItem('fullName', userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim());
         if (userData.email) localStorage.setItem('email', userData.email);
+        
+        const nameLine = `${userData.firstName || ''}${userData.lastName ? ', ' + userData.lastName : ''}`.trim() || userData.fullName || user.name || 'User Name';
+        document.getElementById('userFullName').textContent = nameLine;
         document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
-        document.getElementById('accountInitial').textContent = (userData.fullName && userData.fullName[0]) || (user.name && user.name[0]) || 'A';
+        document.getElementById('accountInitial').textContent = (nameLine && nameLine[0]) || 'A';
+        // Fill About modal profile fields
+        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = userData.firstName || '';
+        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = userData.lastName || '';
+        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = userData.email || localStorage.getItem('email') || '';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
         // Use localStorage as fallback
-        document.getElementById('userFullName').textContent = localStorage.getItem('fullName') || user.name || 'User Name';
+        const nameLine = `${localStorage.getItem('firstName') || ''}${localStorage.getItem('lastName') ? ', ' + localStorage.getItem('lastName') : ''}`.trim() || localStorage.getItem('fullName') || user.name || 'User Name';
+        document.getElementById('userFullName').textContent = nameLine;
         document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
+        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = localStorage.getItem('firstName') || '';
+        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = localStorage.getItem('lastName') || '';
+        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = localStorage.getItem('email') || '';
       });
 
     function goHome() { location.reload(); }
@@ -152,11 +183,15 @@
     }
 
     function showAbout() {
-      document.getElementById('aboutModal').style.display = 'block';
+      const m = document.getElementById('aboutModal');
+      m.style.display = 'flex';
+      requestAnimationFrame(() => m.classList.add('show'));
     }
 
     function closeAbout() {
-      document.getElementById('aboutModal').style.display = 'none';
+      const m = document.getElementById('aboutModal');
+      m.classList.remove('show');
+      setTimeout(() => { m.style.display = 'none'; }, 180);
     }
 
     // Improve dropdown reliability

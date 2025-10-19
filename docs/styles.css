@@ -150,12 +150,15 @@ body {
 .modal{
   display:none; position:fixed; inset:0; z-index:300; background: rgba(0,0,0,0.45);
   align-items:center; justify-content:center; padding:20px;
+  opacity:0; transition: opacity .18s ease;
 }
-.modal.show, .modal[aria-hidden="false"] { display:flex; }
+.modal.show, .modal[aria-hidden="false"] { display:flex; opacity:1; }
 .modal-panel{
   width:100%; max-width:520px; background:var(--card); border-radius:12px; overflow:hidden;
   box-shadow:0 30px 80px rgba(3,12,33,0.18);
+  transform: translateY(10px); opacity:0; transition: transform .18s ease, opacity .18s ease;
 }
+.modal.show .modal-panel{ transform: translateY(0); opacity:1; }
 .modal-header{ padding:14px 18px; display:flex; justify-content:space-between; align-items:center; background:var(--primary); color:#fff; }
 .modal-title{ font-weight:700; font-size:1.05rem; }
 .modal-close{ background:none; border:none; color:#fff; font-size:2rem; line-height:1; cursor:pointer; }
@@ -198,6 +201,9 @@ body {
 /* Small helpers */
 .label-muted { color:var(--muted); font-size:0.9rem; }
 .back-button { padding:8px 14px; border-radius:8px; border:none; background:#e8eef7; cursor:pointer; }
+
+/* Header actions alignment */
+.header-actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 8px; }
 
 /* -------------------------
    04. Role / page-specific theme overrides
@@ -824,10 +830,12 @@ h2:after {
 	position: absolute; 
 	bottom: 0; 
 	left: 0; 
-	width: 60px; 
-	height: 3px; 
-	background: #1976d2;
+	width: 0; 
+	height: 0; 
+	background: transparent;
 }
+/* Remove underline specifically under the Classes header group */
+.header-actions h2::after { display:none !important; content:''; }
 
 @media (max-width: 576px) {
   .col-xs-1 { grid-column: span 1; }
