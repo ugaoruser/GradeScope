@@ -31,22 +31,11 @@
       <div class="settings-grid">
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
-          <div class="form-row">
-            <div class="col">
-              <label>First Name</label>
-              <div id="displayFirstName" class="field-display"></div>
-            </div>
-            <div class="col">
-              <label>Last Name</label>
-              <div id="displayLastName" class="field-display"></div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="col">
-              <label>Email</label>
-              <div id="displayEmail" class="field-display"></div>
-            </div>
-          </div>
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+            <li><strong>First Name:</strong> <span id="displayFirstName" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
+            <li><strong>Last Name:</strong> <span id="displayLastName" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
+            <li><strong>Email:</strong> <span id="displayEmail" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
+          </ul>
         </div>
 
         <div class="settings-card danger">
@@ -58,7 +47,7 @@
     </div>
   </div>
   
-  <!-- About Modal (reused from homepages with transition) -->
+  <!-- About Modal (no profile info) -->
   <div id="aboutModal" class="modal" aria-hidden="true" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
@@ -66,24 +55,6 @@
         <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="settings-section-title">Profile Information</div>
-        <div class="form-row">
-          <div class="col">
-            <label>First Name</label>
-            <div id="aboutFirstName" class="field-display"></div>
-          </div>
-          <div class="col">
-            <label>Last Name</label>
-            <div id="aboutLastName" class="field-display"></div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="col">
-            <label>Email</label>
-            <div id="aboutEmail" class="field-display"></div>
-          </div>
-        </div>
-        <hr style="margin:12px 0; border:none; border-top:1px solid #eef2f7;">
         <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>

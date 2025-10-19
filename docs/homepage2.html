@@ -67,7 +67,7 @@
     </div>
   </div>
   
-  <!-- About Modal (unified with homepage format + transition) -->
+  <!-- About Modal (no profile info) -->
   <div id="aboutModal" class="modal" aria-hidden="true" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
@@ -75,24 +75,6 @@
         <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="settings-section-title">Profile Information</div>
-        <div class="form-row">
-          <div class="col">
-            <label>First Name</label>
-            <div id="aboutFirstName" class="field-display"></div>
-          </div>
-          <div class="col">
-            <label>Last Name</label>
-            <div id="aboutLastName" class="field-display"></div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="col">
-            <label>Email</label>
-            <div id="aboutEmail" class="field-display"></div>
-          </div>
-        </div>
-        <hr style="margin:12px 0; border:none; border-top:1px solid #eef2f7;">
         <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
@@ -170,10 +152,6 @@
         document.getElementById('userFullName').textContent = nameLine;
         document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
         document.getElementById('accountInitial').textContent = (nameLine && nameLine[0]) || 'T';
-        // Fill About modal profile fields
-        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = userData.firstName || '';
-        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = userData.lastName || '';
-        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = userData.email || localStorage.getItem('email') || '';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
@@ -224,6 +202,12 @@
       document.getElementById('section').value = '';
     }
     
+    function generateAccessCode(){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i=0;i<8;i++){ code += chars[Math.floor(Math.random()*chars.length)]; }
+      return code;
+    }
     async function confirmAddClass() {
       const className = document.getElementById('className').value.trim();
       const gradeLevel = document.getElementById('gradeLevel').value.trim();
@@ -246,16 +230,19 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to create class');
-        alert('Class created successfully!');
+        const accessCode = data.accessCode || data.access_code || data.code || generateAccessCode();
         closeAddClassModal();
         // Append to list without full reload
         const container = document.getElementById('classroomTabs');
         const div = document.createElement('div');
         div.className = 'class-tab';
         div.innerHTML = `<div class=\"class-title\">${data.title || className}</div>
-                         <div class=\"class-section\">${data.section || section}</div>`;
+                         <div class=\"class-section\">${data.section || section}</div>
+                         <div class=\"small\">Access Code: <strong>${accessCode}</strong></div>`;
         div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(data.title || className); };
         container.appendChild(div);
+        try { await navigator.clipboard.writeText(accessCode); } catch {}
+        alert('Class created! Access Code copied: ' + accessCode);
       } catch (err) {
         alert('Error creating class: ' + err.message);
       } finally {
@@ -327,6 +314,7 @@
        sidebar.style.right = '-360px';
      });
 
+     let chatMemory = [];
      function appendChat(text, who = 'bot'){
        const log = document.getElementById('chatLog');
        const line = document.createElement('div');
@@ -337,6 +325,13 @@
        log.appendChild(line);
        log.scrollTop = log.scrollHeight;
      }
+     function showTyping(){
+       const log = document.getElementById('chatLog');
+       const t = document.createElement('div');
+       t.id = 'typing'; t.style.color = '#888'; t.textContent = 'Assistant is typing…';
+       log.appendChild(t); log.scrollTop = log.scrollHeight; return t;
+     }
+     function hideTyping(el){ if (el && el.parentNode) el.parentNode.removeChild(el); }
 
      function containsProfanity(text){
        const bad = [
@@ -394,13 +389,17 @@
        return 'Try specifying scores or the student/topic. For example: "Create a comment for John in Algebra, score 84" or "Average of 75, 82, 91".';
      }
 
-     document.getElementById('sendChat').addEventListener('click', () => {
+     document.getElementById('sendChat').addEventListener('click', async () => {
        const input = document.getElementById('chatInput');
        const text = input.value.trim();
        if (!text) return;
        appendChat(text, 'me');
        input.value = '';
+       chatMemory.push(text);
+       const typing = showTyping();
+       await new Promise(r=>setTimeout(r, 450 + Math.random()*400));
        const reply = processMessage(text);
+       hideTyping(typing);
        appendChat(reply, 'bot');
      });
 

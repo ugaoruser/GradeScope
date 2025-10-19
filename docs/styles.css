@@ -131,10 +131,10 @@ body {
 .card:hover{ transform: translateY(-4px); transition:transform var(--transition-fast); }
 
 /* Class tabs */
-.classroom-tabs{ display:flex; gap:16px; flex-wrap:wrap; margin-top:16px; }
+.classroom-tabs{ display:flex; gap:24px; flex-wrap:wrap; margin:20px 0 12px; }
 .class-tab{
-  background: var(--card); border-radius:12px; padding:18px; width:320px; min-height:120px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.07); cursor:pointer; display:flex; flex-direction:column; justify-content:space-between;
+  background: var(--card); border-radius:12px; padding:20px; width:320px; min-height:140px; margin-bottom:12px;
+  box-shadow:0 6px 14px rgba(0,0,0,0.08); cursor:pointer; display:flex; flex-direction:column; justify-content:space-between;
   transition: transform .18s ease, box-shadow .18s ease;
 }
 .class-tab:hover{ transform:translateY(-6px); box-shadow:0 10px 30px rgba(0,0,0,0.12); }
@@ -242,6 +242,8 @@ body.homepage2 .btn-primary { background: var(--page-primary); color:#fff; }
 /* Header color accent if you want */
 body.homepage1 .modal-header { background: var(--page-primary); }
 body.homepage2 .modal-header { background: var(--page-primary); }
+/* Homepage1 header title override */
+body.homepage1 .header-title { color:#000 !important; font-size:1.6rem !important; }
 
 /* -------------------------
    05. Page-specific layout tweaks (scoped)
@@ -875,6 +877,7 @@ h2:after {
 .sidebar .nav { list-style: none; padding: 0; margin: 0; }
 .sidebar .nav li {
   padding: 16px 32px; cursor: pointer; transition: all 0.3s ease; border-left: 4px solid transparent;
+  font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial; font-size:15px; font-weight:700;
 }
 .sidebar .nav li.active, .sidebar .nav li:hover { background: rgba(255,255,255,0.1); border-left: 4px solid #64b5f6; }
 .sidebar .bottom { padding: 24px 0 24px 0; text-align: center; }
