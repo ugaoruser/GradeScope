@@ -43,8 +43,17 @@
     </header>
 
     <div class="header-actions" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-      <h2 style="margin:0;">Classes</h2>
-      <button class="join-btn" id="joinBtn">+ Add Class</button>
+      <h2 style="margin:0;" id="classesHeader">Classes</h2>
+      <button class="join-btn" id="joinBtn">+ Join Class</button>
+    </div>
+    
+    <!-- Parent context indicator -->
+    <div id="parentContext" style="display: none; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #0369a1;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>👨‍👩‍👧‍👦</span>
+        <span>Viewing <strong id="childNameDisplay"></strong>'s classes and grades</span>
+        <button onclick="switchChild()" style="margin-left: auto; background: #0ea5e9; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Switch Child</button>
+      </div>
     </div>
 
     <div class="classroom-tabs" id="classroomTabs">
@@ -106,10 +115,31 @@
     if (role === 'teacher') {
       window.location.href = 'homepage2.html';
     }
+    
+    // Set role-based theme immediately
+    document.body.dataset.role = role;
 
     // --- Account Initial ---
     const user = JSON.parse(localStorage.getItem('user')) || { name: "Student" };
-    document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'A';
+    const isParent = role === 'parent';
+    const selectedChildName = localStorage.getItem('selectedChildName');
+    
+    // Show appropriate name in header
+    let displayName = user.name;
+    if (isParent && selectedChildName) {
+      displayName = selectedChildName; // Show child's name for parents
+    }
+    
+    document.getElementById('accountInitial').textContent = (displayName && displayName[0]) || 'A';
+    
+    // Update header title based on role
+    const headerTitle = document.querySelector('.header-title');
+    if (isParent) {
+      headerTitle.textContent = `${selectedChildName || "Child"}'s Dashboard`;
+      headerTitle.style.fontSize = '1.2rem';
+    } else {
+      headerTitle.textContent = 'Welcome';
+    }
 
     // Fetch user data for dropdown
     fetch(`${window.API_BASE}/api/me`, {
@@ -123,16 +153,37 @@
         localStorage.setItem('fullName', userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim());
         if (userData.email) localStorage.setItem('email', userData.email);
         
-        const nameLine = `${userData.firstName || ''}${userData.lastName ? ', ' + userData.lastName : ''}`.trim() || userData.fullName || user.name || 'User Name';
-        document.getElementById('userFullName').textContent = nameLine;
+        let displayName = `${userData.firstName || ''}${userData.lastName ? ', ' + userData.lastName : ''}`.trim() || userData.fullName || user.name || 'User Name';
+        
+        // For parents, show child name in account dropdown but keep parent info
+        if (isParent && selectedChildName) {
+          document.getElementById('userFullName').innerHTML = `
+            <div style="font-weight: 600;">${displayName} (Parent)</div>
+            <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Viewing: ${selectedChildName}</div>
+          `;
+          document.getElementById('accountInitial').textContent = (selectedChildName && selectedChildName[0]) || 'A';
+        } else {
+          document.getElementById('userFullName').textContent = displayName;
+          document.getElementById('accountInitial').textContent = (displayName && displayName[0]) || 'A';
+        }
+        
         document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
-        document.getElementById('accountInitial').textContent = (nameLine && nameLine[0]) || 'A';
       })
       .catch(err => {
         console.error('Error fetching user data:', err);
         // Use localStorage as fallback
-        const nameLine = `${localStorage.getItem('firstName') || ''}${localStorage.getItem('lastName') ? ', ' + localStorage.getItem('lastName') : ''}`.trim() || localStorage.getItem('fullName') || user.name || 'User Name';
-        document.getElementById('userFullName').textContent = nameLine;
+        let displayName = `${localStorage.getItem('firstName') || ''}${localStorage.getItem('lastName') ? ', ' + localStorage.getItem('lastName') : ''}`.trim() || localStorage.getItem('fullName') || user.name || 'User Name';
+        
+        // For parents, show child name in account dropdown but keep parent info
+        if (isParent && selectedChildName) {
+          document.getElementById('userFullName').innerHTML = `
+            <div style="font-weight: 600;">${displayName} (Parent)</div>
+            <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Viewing: ${selectedChildName}</div>
+          `;
+        } else {
+          document.getElementById('userFullName').textContent = displayName;
+        }
+        
         document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
       });
 
@@ -152,8 +203,103 @@
       localStorage.removeItem('user');
       localStorage.removeItem('fullName');
       localStorage.removeItem('email');
+      localStorage.removeItem('selectedChildId');
+      localStorage.removeItem('selectedChildName');
       window.location.href = 'login.html';
     }
+    
+    // Parent context functions
+    function showParentContext() {
+      if (isParent && selectedChildName) {
+        document.getElementById('parentContext').style.display = 'block';
+        document.getElementById('childNameDisplay').textContent = selectedChildName;
+        document.getElementById('classesHeader').textContent = `${selectedChildName}'s Classes`;
+      }
+    }
+    
+    async function switchChild() {
+      if (!isParent) return;
+      
+      try {
+        const response = await fetch(`${window.API_BASE}/api/children`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load children');
+        
+        const children = await response.json();
+        
+        if (children.length <= 1) {
+          alert('Only one child found in your account.');
+          return;
+        }
+        
+        // Create simple child selection UI
+        const selectedId = await showChildSwitchModal(children);
+        if (selectedId) {
+          const selectedChild = children.find(c => c.id === selectedId);
+          localStorage.setItem('selectedChildId', selectedId.toString());
+          localStorage.setItem('selectedChildName', selectedChild.full_name);
+          location.reload(); // Refresh to show new child's data
+        }
+        
+      } catch (error) {
+        console.error('Error switching child:', error);
+        alert('Failed to switch child. Please try again.');
+      }
+    }
+    
+    function showChildSwitchModal(children) {
+      return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;';
+        
+        const content = document.createElement('div');
+        content.style.cssText = 'background:#fff;border-radius:12px;padding:2rem;max-width:400px;width:90%;';
+        
+        content.innerHTML = `
+          <h3 style="margin-bottom: 1rem;">Switch Child</h3>
+          <div id="childOptions" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;"></div>
+          <div style="display:flex;justify-content:flex-end;gap:0.5rem;">
+            <button onclick="this.closest('[style*=fixed]').remove()" style="padding:0.5rem 1rem;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;">Cancel</button>
+          </div>
+        `;
+        
+        const optionsContainer = content.querySelector('#childOptions');
+        
+        children.forEach(child => {
+          const option = document.createElement('button');
+          option.style.cssText = 'padding:1rem;background:#f8fafc;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;text-align:left;transition:all 0.15s;';
+          option.textContent = child.full_name;
+          
+          if (child.id.toString() === localStorage.getItem('selectedChildId')) {
+            option.style.borderColor = '#2563eb';
+            option.style.background = '#eff6ff';
+            option.innerHTML += ' <span style="color:#2563eb;font-weight:600;">(Current)</span>';
+          }
+          
+          option.onclick = () => {
+            modal.remove();
+            resolve(child.id);
+          };
+          
+          optionsContainer.appendChild(option);
+        });
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            modal.remove();
+            resolve(null);
+          }
+        };
+      });
+    }
+    
+    // Initialize parent context if applicable
+    showParentContext();
 
     function showAbout() {
       const m = document.getElementById('aboutModal');
@@ -227,7 +373,10 @@
         container.innerHTML = this.getLoadingHTML();
         
         try {
-          const cacheKey = 'user-classes';
+          const isParent = localStorage.getItem('role') === 'parent';
+          const selectedChildId = localStorage.getItem('selectedChildId');
+          const cacheKey = isParent ? `parent-classes-${selectedChildId}` : 'user-classes';
+          
           const cached = this.cache.get(cacheKey);
           
           if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
@@ -237,7 +386,14 @@
           }
           
           const startTime = performance.now();
-          const response = await fetch(`${window.API_BASE}/api/classes`, {
+          let apiUrl = `${window.API_BASE}/api/classes`;
+          
+          // For parents, we need to get their child's classes
+          if (isParent && selectedChildId) {
+            apiUrl += `?childId=${selectedChildId}`;
+          }
+          
+          const response = await fetch(apiUrl, {
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
           });
           
@@ -259,7 +415,8 @@
             timestamp: Date.now()
           });
           
-          console.log(`Classes loaded in ${loadTime.toFixed(2)}ms`);
+          const context = isParent ? `(for ${localStorage.getItem('selectedChildName') || 'child'})` : '';
+          console.log(`Classes loaded in ${loadTime.toFixed(2)}ms ${context}`);
           this.renderClasses(classes);
           
         } catch (error) {
@@ -300,18 +457,19 @@
           div.className = 'class-tab fade-in';
           div.style.animationDelay = `${index * 0.1}s`;
           
+          const isParent = localStorage.getItem('role') === 'parent';
+          const selectedChildId = localStorage.getItem('selectedChildId');
+          
           let meta = `${cls.grade_level || cls.gradeLevel || 'Grade 10'} - ${cls.section}`;
-          if (role === 'parent' && cls.student_name) {
-            meta = `${meta} • ${cls.student_name}`;
-          }
           
           div.innerHTML = `
             <div class="class-title">${cls.title}</div>
             <div class="class-section">${meta}</div>
           `;
           
-          const url = (role === 'parent' && cls.student_id)
-            ? `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}&childId=${encodeURIComponent(cls.student_id)}`
+          // For parents, always use the selected child context
+          const url = isParent && selectedChildId
+            ? `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}&childId=${encodeURIComponent(selectedChildId)}`
             : `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}`;
             
           div.onclick = () => window.location.href = url;
