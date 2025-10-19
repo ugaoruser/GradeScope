@@ -14,17 +14,19 @@
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
-    if (!token) {
-      window.location.href = 'login.html';
+    if (!token || !role) {
+      // No token or role - go to login
+      window.location.replace('login.html');
     } else {
-      // You can make this smarter:
-      // redirect teachers/students differently if needed
+      // Fast redirect to correct homepage
       if (role === 'teacher') {
-        window.location.href = 'teacher-grades.html';
-      } else if (role === 'student') {
-        window.location.href = 'student-grades.html';
+        window.location.replace('homepage2.html');
+      } else if (role === 'student' || role === 'parent') {
+        window.location.replace('homepage1.html');
       } else {
-        window.location.href = 'homepage1.html';
+        // Unknown role - clear and go to login
+        localStorage.clear();
+        window.location.replace('login.html');
       }
     }
   </script>

@@ -542,7 +542,7 @@
             <td>${percentage}%</td>
             <td>${score.comments || ''}</td>
             <td class="action-buttons">
-              <button class="btn-edit" onclick="editStudentScore(${score.id}, ${score.grade_item_id}, ${score.score}, '${score.comments || ''}')">Edit</button>
+              <button class="btn-edit" onclick="editStudentScore(${score.id}, ${score.grade_item_id}, ${score.score}, \`${score.comments || ''}\`)">Edit</button>
               <button class="btn-delete" onclick="deleteStudentScore(${score.id})">Delete</button>
             </td>
           `;

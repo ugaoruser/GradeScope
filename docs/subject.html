@@ -115,10 +115,10 @@
         const assessUrl = `${gradesUrl}&view=assessment`;
         row.innerHTML = `
           <td>${stu.full_name || stu.name}</td>
-          <td><span class=\"student-grade\">—</span></td>
+          <td><span class="student-grade">—</span></td>
           <td>
-            <button onclick=\"location.href='${gradesUrl}'\">View Grades</button>
-            <button onclick=\"location.href='${assessUrl}'\">View Assessments</button>
+            <button onclick="location.href='${gradesUrl}'">View Grades</button>
+            <button onclick="location.href='${assessUrl}'">View Assessments</button>
           </td>
         `;
         tableBody.appendChild(row);

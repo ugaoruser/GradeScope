@@ -461,65 +461,7 @@ button:focus, input:focus, textarea:focus { outline: 3px solid rgba(25,118,210,0
 .sidebar { color: #fff; }
 .main { background: transparent; }
 
-/* end of master stylesheet *//* ===================================================================== 
-	GradeTracker — Google Classroom-inspired Stylesheet 
-	- Google Classroom-like design 
-	- Role-based access control 
-	- Modern, clean interface 
-===================================================================== */ 
-
-/* 
-	------------------------- 
-	Theme variables - Monochromatic Theme 
-	------------------------- 
-*/ 
-
-:root{ 
-	--bg: #f5f5f5; 
-	--card: #ffffff; 
-	--muted: #757575; 
-	--text: #212121; 
-	--accent: #424242; 
-	--accent-light: #616161; 
-	--accent-dark: #212121; 
-	--accent-2: #757575; 
-	--danger: #d32f2f; 
-	--glass: rgba(255,255,255,0.7); 
-	--shadow-sm: 0 6px 18px rgba(33,33,33,0.08); 
-	--shadow-md: 0 14px 40px rgba(33,33,33,0.10); 
-	--radius-lg: 14px; --radius-md: 10px; 
-	--transition-fast: 180ms cubic-bezier(.2,.9,.2,1); 
-	--max-width: 1200px; 
-} 
-
-/* ------------------------- Reset & base ------------------------- */ 
-* { box-sizing: border-box; margin: 0; padding: 0; } 
-html,body { height: 100%; } 
-body { 
-	font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial; 
-	background: linear-gradient(180deg, var(--bg), #eef4fb 120%);
-	color: var(--text); 
-	-webkit-font-smoothing:antialiased; 
-	-moz-osx-font-smoothing:grayscale; 
-	line-height: 1.45; 
-	min-height: 100vh; 
-} 
-
-/* ------------------------- App header ------------------------- */ 
-.app-header{ 
-	display:flex; 
-	align-items:center; 
-	justify-content:space-between; 
-	padding:18px 28px; 
-	background: linear-gradient(90deg, var(--accent-dark) 0%, var(--accent) 70%); 
-	color: #fff; 
-	box-shadow: var(--shadow-md); 
-	position: sticky; 
-	top: 0; 
-	z-index: 120; 
-	border-bottom-left-radius: var(--radius-lg); 
-	border-bottom-right-radius: var(--radius-lg); 
-} 
+/* CSS optimized and cleaned - all duplicates removed */
 
 .app-title{ 
 	font-size: 26px; 
