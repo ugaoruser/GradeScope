@@ -463,6 +463,10 @@ button:focus, input:focus, textarea:focus { outline: 3px solid rgba(25,118,210,0
 
 /* CSS optimized and cleaned - all duplicates removed */
 
+/* Parent child selection UI */
+.parent-child-option{ background:#fff; border:2px solid #e5e7eb; border-radius:8px; padding:1rem; cursor:pointer; text-align:center; transition:all 0.15s; }
+.parent-child-option.selected{ border-color:#2563eb; }
+
 .app-title{ 
 	font-size: 26px; 
 	font-weight: 800; 

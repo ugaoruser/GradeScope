@@ -5,7 +5,7 @@
 
 // Define permission levels for different roles
 
-const API_BASE = `https://gradescope-a4hw.onrender.com`;
+const API_BASE = window.API_BASE;
 
 const PERMISSIONS = {
   student: {

@@ -9,19 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
-  <script>
-    // Prevent access-control auto-redirect from interfering with signup
-    // Only redirect if already logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-      const role = localStorage.getItem('role');
-      if (role === 'student') {
-        window.location.href = 'homepage1.html';
-      } else if (role === 'teacher') {
-        window.location.href = 'homepage2.html';
-      }
-    }
-  </script>
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
 </head>
@@ -86,88 +73,5 @@
     </div>
   </div>
 
-  <script>
-    function validateEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-      const role = document.getElementById('role').value;
-
-      if (!firstName || !lastName || !email || !password || !confirmPassword || !role) {
-        showError('Please fill in all fields');
-        return;
-      }
-
-      if (!validateEmail(email)) {
-        showError('Please enter a valid email');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showError('Passwords do not match');
-        return;
-      }
-
-      setLoading(true);
-      hideMessages();
-
-      try {
-        const response = await fetch(`${window.API_BASE}/api/signup`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ firstName, lastName, email, password, role })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          showSuccess('Account created successfully! Redirecting to login...');
-          setTimeout(() => { window.location.href = 'login.html'; }, 1000);
-        } else {
-          showError(data.message || 'Signup failed');
-        }
-      } catch (err) {
-        showError('Network error. Please try again.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    function showError(msg) {
-      const div = document.getElementById('error-message');
-      div.textContent = msg;
-      div.style.display = 'block';
-    }
-    function showSuccess(msg) {
-      const div = document.getElementById('success-message');
-      div.textContent = msg;
-      div.style.display = 'block';
-    }
-    function hideMessages() {
-      document.getElementById('error-message').style.display = 'none';
-      document.getElementById('success-message').style.display = 'none';
-    }
-    function setLoading(loading) {
-      const btn = document.getElementById('signup-btn');
-      const loader = document.getElementById('loading');
-      if (loading) {
-        btn.disabled = true;
-        btn.textContent = 'Creating Account...';
-        loader.style.display = 'block';
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'Create Account';
-        loader.style.display = 'none';
-      }
-    }
-  </script>
 </body>
 </html>

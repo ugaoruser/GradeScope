@@ -5,31 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
   <title>GradeScope Redirect</title>
 </head>
 <body class="index-page">
   <h2>Redirecting...</h2>
-
-  <script>
-    // Redirect user based on login state
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-
-    if (!token || !role) {
-      // No token or role - go to login
-      window.location.replace('login.html');
-    } else {
-      // Fast redirect to correct homepage
-      if (role === 'teacher') {
-        window.location.replace('homepage2.html');
-      } else if (role === 'student' || role === 'parent') {
-        window.location.replace('homepage1.html');
-      } else {
-        // Unknown role - clear and go to login
-        localStorage.clear();
-        window.location.replace('login.html');
-      }
-    }
-  </script>
 </body>
 </html>
