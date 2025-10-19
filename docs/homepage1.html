@@ -212,35 +212,176 @@
       });
     }
 
-    // Start with empty classes for testing
-    document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Add Class" to join a class.</div>';
-    
-    fetch(`${window.API_BASE}/api/classes`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-    })
-      .then(res => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            window.location.href = 'login.html';
+    // Performance-optimized class loading with caching
+    class FastClassLoader {
+      constructor() {
+        this.cache = new Map();
+        this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
+        this.loadClasses();
+      }
+      
+      async loadClasses() {
+        const container = document.getElementById('classroomTabs');
+        
+        // Show loading placeholder
+        container.innerHTML = this.getLoadingHTML();
+        
+        try {
+          const cacheKey = 'user-classes';
+          const cached = this.cache.get(cacheKey);
+          
+          if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+            console.log('Loading classes from cache');
+            this.renderClasses(cached.data);
             return;
           }
-          throw new Error('Failed to load classes');
+          
+          const startTime = performance.now();
+          const response = await fetch(`${window.API_BASE}/api/classes`, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+          });
+          
+          if (!response.ok) {
+            if (response.status === 401) {
+              localStorage.clear();
+              window.location.replace('login.html');
+              return;
+            }
+            throw new Error('Failed to load classes');
+          }
+          
+          const classes = await response.json();
+          const loadTime = performance.now() - startTime;
+          
+          // Cache the results
+          this.cache.set(cacheKey, {
+            data: classes,
+            timestamp: Date.now()
+          });
+          
+          console.log(`Classes loaded in ${loadTime.toFixed(2)}ms`);
+          this.renderClasses(classes);
+          
+        } catch (error) {
+          console.error('Error loading classes:', error);
+          container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">Failed to load classes. <button onclick="location.reload()" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Retry</button></div>';
         }
-        return res.json();
-      })
-      .then(classes => {
-        if (classes && classes.length) {
-          renderClasses(classes);
-        } else {
-          document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
+      }
+      
+      getLoadingHTML() {
+        return `
+          <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            ${Array(3).fill().map(() => `
+              <div class="loading-placeholder" style="height: 140px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%); background-size: 400% 100%; animation: skeleton-loading 1.5s ease-in-out infinite; border-radius: 12px;"></div>
+            `).join('')}
+          </div>
+          <style>
+            @keyframes skeleton-loading {
+              0% { background-position: 100% 50%; }
+              100% { background-position: -100% 50%; }
+            }
+          </style>
+        `;
+      }
+      
+      renderClasses(classes) {
+        const container = document.getElementById('classroomTabs');
+        
+        if (!classes || classes.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Add Class" to join a class.</div>';
+          return;
         }
-      })
-      .catch(err => {
-        console.error('Error loading classes:', err);
-        document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click the + button to join a class.</div>';
-      });
+        
+        // Use document fragment for better performance
+        const fragment = document.createDocumentFragment();
+        
+        classes.forEach((cls, index) => {
+          const div = document.createElement('div');
+          div.className = 'class-tab fade-in';
+          div.style.animationDelay = `${index * 0.1}s`;
+          
+          let meta = `${cls.grade_level || cls.gradeLevel || 'Grade 10'} - ${cls.section}`;
+          if (role === 'parent' && cls.student_name) {
+            meta = `${meta} • ${cls.student_name}`;
+          }
+          
+          div.innerHTML = `
+            <div class="class-title">${cls.title}</div>
+            <div class="class-section">${meta}</div>
+          `;
+          
+          const url = (role === 'parent' && cls.student_id)
+            ? `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}&childId=${encodeURIComponent(cls.student_id)}`
+            : `student-grades.html?id=${encodeURIComponent(cls.id)}&title=${encodeURIComponent(cls.title)}`;
+            
+          div.onclick = () => window.location.href = url;
+          
+          // Add lazy loading for class details
+          this.setupLazyLoading(div, cls.id);
+          
+          fragment.appendChild(div);
+        });
+        
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        
+        // Add CSS animation
+        if (!document.querySelector('#fade-in-styles')) {
+          const style = document.createElement('style');
+          style.id = 'fade-in-styles';
+          style.textContent = `
+            .fade-in {
+              opacity: 0;
+              transform: translateY(20px);
+              animation: fadeInUp 0.6s ease forwards;
+            }
+            @keyframes fadeInUp {
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      }
+      
+      setupLazyLoading(element, classId) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-viewport');
+              // Preload class data when visible
+              this.preloadClassData(classId);
+              observer.unobserve(entry.target);
+            }
+          });
+        });
+        
+        observer.observe(element);
+      }
+      
+      async preloadClassData(classId) {
+        try {
+          const cacheKey = `class-${classId}`;
+          if (!this.cache.has(cacheKey)) {
+            const response = await fetch(`${window.API_BASE}/api/classes/${classId}`, {
+              headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              this.cache.set(cacheKey, { data, timestamp: Date.now() });
+            }
+          }
+        } catch (error) {
+          console.error('Error preloading class data:', error);
+        }
+      }
+    }
+    
+    // Initialize fast class loader
+    new FastClassLoader();
 
     // Join Class interactions
     document.getElementById('joinBtn').addEventListener('click', () => {

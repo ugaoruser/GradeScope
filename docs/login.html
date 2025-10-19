@@ -9,25 +9,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <script>
-    // Minimal guard: don't redirect away from login when not authenticated
-    localStorage.getItem('token');
+    // Ultra-fast session check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token && role) {
+      // Instant redirect for existing sessions
+      window.location.replace(role === 'teacher' ? 'homepage2.html' : 'homepage1.html');
+    }
   </script>
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
 </head>
 <body class="login-page">
-  <script>
-    // Redirect logged-in users away from login page
-    const token = localStorage.getItem('token');
-    if (token) {
-      const role = localStorage.getItem('role');
-      if (role === 'student') {
-        window.location.href = 'homepage1.html';
-      } else if (role === 'teacher') {
-        window.location.href = 'homepage2.html';
-      }
-    }
-  </script>
 
   <div class="auth-container">
     <div class="auth-header">
@@ -62,60 +55,189 @@
     </div>
   </div>
 
+  <!-- Parent selection modal -->
+  <div id="parent-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:500px;width:90%;">
+      <h2>Select Your Child</h2>
+      <p>Choose which child's grades you'd like to view:</p>
+      <div id="child-selector" style="display:grid;gap:1rem;margin-top:1rem;"></div>
+      <button id="continue-btn" class="btn-login" style="margin-top:1rem;" disabled>Continue</button>
+    </div>
+  </div>
+
   <script>
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!email || !password) {
-        showError('Please fill in all fields');
-        return;
+    // Ultra-fast login system with parent workflow
+    class FastLogin {
+      constructor() {
+        this.form = document.getElementById('login-form');
+        this.setupEventListeners();
       }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showError('Please enter a valid email address');
-        return;
+      
+      setupEventListeners() {
+        this.form.addEventListener('submit', this.handleLogin.bind(this));
+        document.getElementById('email').focus();
       }
-
-      setLoading(true);
-      hideMessages();
-
-      try {
-        const response = await fetch(`${window.API_BASE}/api/login`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('role', data.role);
-          localStorage.setItem('user', JSON.stringify({ name: data.name, userId: data.userId, role: data.role }));
-          localStorage.setItem('email', email);
-
-          showSuccess('Login successful! Redirecting...');
-          setTimeout(() => {
-            if (data.role === 'student') {
-              window.location.href = 'homepage1.html';
-            } else {
-              window.location.href = 'homepage2.html';
-            }
-          }, 1000);
-        } else {
-          showError(data.message || 'Login failed');
+      
+      async handleLogin(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!this.validateInputs(email, password)) return;
+        
+        this.setLoading(true);
+        hideMessages();
+        
+        try {
+          const startTime = performance.now();
+          
+          const response = await fetch(`${window.API_BASE}/api/login`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, password })
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) throw new Error(data.message || 'Login failed');
+          
+          // Store auth data immediately for speed
+          const authData = {
+            token: data.token,
+            role: data.role,
+            userId: data.userId,
+            user: JSON.stringify({ name: data.name, userId: data.userId, role: data.role }),
+            email: email,
+            fullName: data.name
+          };
+          
+          Object.entries(authData).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+          });
+          
+          console.log(`Login completed in ${(performance.now() - startTime).toFixed(0)}ms`);
+          
+          // Handle parent workflow
+          if (data.role === 'parent') {
+            await this.handleParentLogin(data.token);
+          } else {
+            showSuccess('Login successful!');
+            setTimeout(() => {
+              const destination = data.role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
+              window.location.replace(destination);
+            }, 200);
+          }
+          
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          this.setLoading(false);
         }
-      } catch (error) {
-        showError('Network error. Please try again.');
-        console.error('Login error:', error);
-      } finally {
-        setLoading(false);
       }
-    });
+      
+      async handleParentLogin(token) {
+        try {
+          const childrenResponse = await fetch(`${window.API_BASE}/api/children`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (!childrenResponse.ok) throw new Error('Failed to load children');
+          
+          const children = await childrenResponse.json();
+          
+          if (children.length === 0) {
+            showError('No children found. Contact your school administrator.');
+            return;
+          }
+          
+          if (children.length === 1) {
+            // Auto-select single child and redirect to homepage1
+            localStorage.setItem('selectedChildId', children[0].id.toString());
+            localStorage.setItem('selectedChildName', children[0].full_name);
+            showSuccess('Login successful!');
+            setTimeout(() => window.location.replace('homepage1.html'), 200);
+          } else {
+            // Show child selection modal
+            this.showChildSelection(children);
+          }
+          
+        } catch (error) {
+          showError('Failed to load children: ' + error.message);
+        }
+      }
+      
+      showChildSelection(children) {
+        const modal = document.getElementById('parent-modal');
+        const selector = document.getElementById('child-selector');
+        const continueBtn = document.getElementById('continue-btn');
+        
+        selector.innerHTML = '';
+        let selectedChildId = null;
+        
+        children.forEach(child => {
+          const option = document.createElement('div');
+          option.style.cssText = 'background:#fff;border:2px solid #e5e7eb;border-radius:8px;padding:1rem;cursor:pointer;text-align:center;transition:all 0.15s;';
+          option.textContent = child.full_name;
+          
+          option.addEventListener('click', () => {
+            document.querySelectorAll('#child-selector > div').forEach(opt => 
+              opt.style.borderColor = '#e5e7eb');
+            option.style.borderColor = '#2563eb';
+            selectedChildId = child.id;
+            continueBtn.disabled = false;
+          });
+          
+          selector.appendChild(option);
+        });
+        
+        continueBtn.onclick = () => {
+          if (selectedChildId) {
+            const selectedChild = children.find(c => c.id === selectedChildId);
+            localStorage.setItem('selectedChildId', selectedChildId.toString());
+            localStorage.setItem('selectedChildName', selectedChild?.full_name || 'Student');
+            modal.style.display = 'none';
+            showSuccess('Login successful!');
+            setTimeout(() => window.location.replace('homepage1.html'), 200);
+          }
+        };
+        
+        modal.style.display = 'flex';
+      }
+      
+      validateInputs(email, password) {
+        if (!email || !password) {
+          showError('Please fill in all fields');
+          return false;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showError('Please enter a valid email address');
+          return false;
+        }
+        
+        return true;
+      }
+      
+      setLoading(loading) {
+        const btn = document.getElementById('login-btn');
+        const loader = document.getElementById('loading');
+        
+        if (loading) {
+          btn.disabled = true;
+          btn.textContent = 'Signing in...';
+          loader.style.display = 'block';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Log In';
+          loader.style.display = 'none';
+        }
+      }
+    }
+    
+    // Initialize fast login
+    new FastLogin();
 
     function showError(msg) {
       const div = document.getElementById('error-message');
