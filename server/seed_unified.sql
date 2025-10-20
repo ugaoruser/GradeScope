@@ -21,8 +21,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO roles (id, name) VALUES 
 (1, 'student'), 
 (2, 'teacher'), 
-(3, 'parent'), 
-(4, 'admin');
+(3, 'parent');
 
 -- Insert users (password: password123 for all)
 INSERT INTO users (id, first_name, last_name, email, password_hash, role_id) VALUES 
@@ -30,8 +29,7 @@ INSERT INTO users (id, first_name, last_name, email, password_hash, role_id) VAL
 (2, 'Jane', 'Smith', 'jane.smith@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 1),
 (3, 'Mike', 'Johnson', 'mike.johnson@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 2),
 (4, 'Sarah', 'Wilson', 'sarah.wilson@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 2),
-(5, 'Robert', 'Brown', 'robert.brown@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 3),
-(6, 'Admin', 'User', 'admin@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 4);
+(5, 'Robert', 'Brown', 'robert.brown@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 3);
 
 -- Insert sample subjects
 INSERT INTO subjects (id, code, title, grade_level, section, teacher_id) VALUES 

@@ -36,22 +36,6 @@ const PERMISSIONS = {
     editOwnProfile: true,
     viewChildGrades: true,
     viewChildSubjects: true
-  },
-  admin: {
-    viewOwnGrades: false,
-    joinSubjects: false,
-    viewSubjectDetails: true,
-    viewOwnProfile: true,
-    editOwnProfile: true,
-    createSubjects: true,
-    manageGrades: true,
-    viewStudentGrades: true,
-    createGradeItems: true,
-    createGradeCategories: true,
-    viewEnrolledStudents: true,
-    manageUsers: true,
-    manageRoles: true,
-    viewSystemLogs: true
   }
 };
 
@@ -87,12 +71,12 @@ function enforcePageAccess() {
   }
   
   // Role-specific page access
-  if (currentPage.endsWith('teacher-grades.html') && role !== 'teacher' && role !== 'admin') {
+if (currentPage.endsWith('teacher-grades.html') && role !== 'teacher') {
     window.location.href = `index.html`;
     return false;
   }
   
-  if (currentPage.endsWith('student-grades.html') && role !== 'student' && role !== 'parent' && role !== 'teacher' && role !== 'admin') {
+if (currentPage.endsWith('student-grades.html') && role !== 'student' && role !== 'parent' && role !== 'teacher') {
     window.location.href = `index.html`;
     return false;
   }
