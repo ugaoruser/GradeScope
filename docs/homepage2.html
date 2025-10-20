@@ -10,14 +10,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
-  <script src="chatbot.js" defer></script>
 </head>
  <body class="homepage2">
   <div class="sidebar">
     <div class="top">
       <ul class="nav">
-        <li class="active" onclick="location.href='homepage2.html'">Home</li>
-        <li onclick="location.href='settings.html'">Settings</li>
+        <li class="active" id="navHomeT">Home</li>
+        <li id="navSettingsT">Settings</li>
         <li id="aboutBtn">About</li>
       </ul>
     </div>
@@ -29,7 +28,7 @@
     <header class="header">
       <div class="header-title">Welcome</div>
       <div class="account-menu">
-        <button class="account-btn" onclick="toggleAccountMenu()">
+        <button class="account-btn" id="accountBtnT">
           <span id="accountInitial">T</span>
         </button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
@@ -37,14 +36,14 @@
             <div id="userFullName">User Name</div>
             <div id="userEmail"></div>
           </div>
-          <button onclick="logout()">Log Out</button>
+          <button id="logoutBtnT">Log Out</button>
         </div>
       </div>
     </header>
 
     <div class="header-actions" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
       <h2 style="margin:0;">Classes</h2>
-      <button class="add-class-btn" onclick="showAddClassModal()">+ Create Class</button>
+      <button class="add-class-btn" id="createClassBtn">+ Create Class</button>
     </div>
 
     <div class="classroom-tabs" id="classroomTabs">Loading...</div>
@@ -78,7 +77,7 @@
     <div class="modal-panel">
       <div class="modal-header">
         <div class="modal-title">About GradeScope Lite</div>
-        <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
+        <button class="modal-close" id="closeAboutBtnT" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
@@ -94,7 +93,7 @@
     <div style="background-color: #fff; margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <div style="font-size: 1.5em; font-weight: bold;">Create Class</div>
-        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" onclick="closeAddClassModal()">&times;</button>
+        <button style="font-size: 1.5em; cursor: pointer; background: none; border: none;" id="closeAddClassX">&times;</button>
       </div>
       <div>
         <div style="margin-bottom: 16px;">
@@ -110,484 +109,112 @@
           <input type="text" id="section" placeholder="Enter section" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em;">
         </div>
         <div class="modal-actions">
-          <button id="cancelCreate" class="btn-muted" onclick="closeAddClassModal()">Cancel</button>
-          <button id="confirmCreate" class="btn-primary" onclick="confirmAddClass()">Create</button>
+          <button id="cancelCreate" class="btn-muted">Cancel</button>
+          <button id="confirmCreate" class="btn-primary">Create</button>
         </div>
       </div>
     </div>
   </div>
-</body>
 
 <script>
-  const role = localStorage.getItem('role');
-  if (window.location.pathname.endsWith('homepage1.html') && role !== 'student') {
-      window.location.href = 'homepage2.html';
+// Embedded chatbot functionality
+class FeedbackChatbot {
+  generateCompleteFeedback(score, subject, topic, name) {
+    let feedback, suggestions;
+    if (score >= 90) {
+      feedback = `Outstanding work! ${name} demonstrates exceptional understanding of ${topic}.`;
+      suggestions = ["Continue challenging with advanced problems", "Consider peer tutoring opportunities"];
+    } else if (score >= 80) {
+      feedback = `${name} shows good understanding of ${topic} with solid performance.`;
+      suggestions = ["Practice more complex applications", "Work on speed and accuracy"];
+    } else if (score >= 70) {
+      feedback = `${name} meets the basic requirements for ${topic} understanding.`;
+      suggestions = ["Focus on foundational concepts", "Provide additional examples"];
+    } else {
+      feedback = `${name} needs additional support to fully understand ${topic} concepts.`;
+      suggestions = ["One-on-one tutoring recommended", "Break concepts into smaller steps"];
     }
-    if (window.location.pathname.endsWith('homepage2.html') && role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
-    if (!role || !localStorage.getItem('token')) {
-      // User not logged in, redirect
-      window.location.href = 'login.html';
-    }
-    
-    // --- Routing: Only allow teachers ---
-    if (role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
+    return { feedback, suggestions };
+  }
+}
 
-    // --- Account Initial and User Info ---
-    const user = JSON.parse(localStorage.getItem('user')) || { name: "Teacher", email: localStorage.getItem('email') || "" };
-    document.getElementById('accountInitial').textContent = (user.name && user.name[0]) || 'T';
-    document.getElementById('userFullName').textContent = user.name || 'Teacher';
-    document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
-    
-    // Fetch user data for dropdown
-    fetch(`${window.API_BASE}/api/me`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-    })
-      .then(res => res.json())
-      .then(userData => {
-        // Store user data in localStorage for future use
-        localStorage.setItem('firstName', userData.firstName || '');
-        localStorage.setItem('lastName', userData.lastName || '');
-        localStorage.setItem('fullName', userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim());
-        if (userData.email) localStorage.setItem('email', userData.email);
-        
-        const nameLine = `${userData.firstName || ''}${userData.lastName ? ', ' + userData.lastName : ''}`.trim() || userData.fullName || user.name || 'User Name';
-        document.getElementById('userFullName').textContent = nameLine;
-        document.getElementById('userEmail').textContent = userData.email || localStorage.getItem('email') || '';
-        document.getElementById('accountInitial').textContent = (nameLine && nameLine[0]) || 'T';
-      })
-      .catch(err => {
-        console.error('Error fetching user data:', err);
-        // Use localStorage as fallback
-        const nameLine = `${localStorage.getItem('firstName') || ''}${localStorage.getItem('lastName') ? ', ' + localStorage.getItem('lastName') : ''}`.trim() || localStorage.getItem('fullName') || user.name || 'User Name';
-        document.getElementById('userFullName').textContent = nameLine;
-        document.getElementById('userEmail').textContent = localStorage.getItem('email') || user.email || '';
-        const aFn = document.getElementById('aboutFirstName'); if (aFn) aFn.textContent = localStorage.getItem('firstName') || '';
-        const aLn = document.getElementById('aboutLastName'); if (aLn) aLn.textContent = localStorage.getItem('lastName') || '';
-        const aEm = document.getElementById('aboutEmail'); if (aEm) aEm.textContent = localStorage.getItem('email') || '';
-      });
+// Initialize chatbot functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const chatbot = new FeedbackChatbot();
+  const chatInput = document.getElementById('chatInput');
+  const sendButton = document.getElementById('sendChat');
+  const chatLog = document.getElementById('chatLog');
 
-    function goHome() { location.reload(); }
-    function goSettings() { window.location.href = "settings.html"; }
-    function logout() {
-      // Clear all user data from localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('fullName');
-      localStorage.removeItem('email');
-      
-      // Redirect to login page
-      window.location.href = "login.html";
-    }
-    
-    // About Modal Functions
-    function showAbout() { 
-      const m = document.getElementById('aboutModal');
-      m.style.display = 'flex';
-      requestAnimationFrame(() => m.classList.add('show'));
-    }
-    
-    function closeAbout() {
-      const m = document.getElementById('aboutModal');
-      m.classList.remove('show');
-      setTimeout(()=>{ m.style.display = 'none'; }, 180);
-    }
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
-    
-    // Add Class Modal Functions
-    function showAddClassModal() {
-      document.getElementById('addClassModal').style.display = 'block';
-    }
-    
-    function closeAddClassModal() {
-      document.getElementById('addClassModal').style.display = 'none';
-      // Clear form fields
-      document.getElementById('className').value = '';
-      document.getElementById('section').value = '';
-    }
-    
-    function generateAccessCode(){
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let code = '';
-      for (let i=0;i<8;i++){ code += chars[Math.floor(Math.random()*chars.length)]; }
-      return code;
-    }
-    async function confirmAddClass() {
-      const className = document.getElementById('className').value.trim();
-      const gradeLevel = document.getElementById('gradeLevel').value.trim();
-      const section = document.getElementById('section').value.trim();
-      
-      if (!className || !gradeLevel || !section) {
-        alert('Please fill in all fields');
-        return;
-      }
-      const btn = document.getElementById('confirmCreate');
-      const prev = btn.textContent; btn.disabled = true; btn.textContent = 'Creating...';
-      try {
-        const res = await fetch(`${window.API_BASE}/api/subjects`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify({ title: className, gradeLevel, section })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to create class');
-        const accessCode = data.accessCode || data.access_code || data.code || generateAccessCode();
-        closeAddClassModal();
-        // Append to list without full reload
-        const container = document.getElementById('classroomTabs');
-        const div = document.createElement('div');
-        div.className = 'class-tab';
-        div.innerHTML = `<div class=\"class-title\">${data.title || className}</div>
-                         <div class=\"class-section\">${data.section || section}</div>
-                         <div class=\"small\">Access Code: <strong>${accessCode}</strong></div>`;
-        div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(data.title || className); };
-        container.appendChild(div);
-        try { await navigator.clipboard.writeText(accessCode); } catch {}
-        alert('Class created! Access Code copied: ' + accessCode);
-      } catch (err) {
-        alert('Error creating class: ' + err.message);
-      } finally {
-        btn.disabled = false; btn.textContent = prev;
-      }
-    }
-
-    function toggleAccountMenu(event) {
-      event && event.stopPropagation();
-      document.getElementById('accountDropdown').classList.toggle('show');
-    }
-    
-    document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('accountDropdown');
-      const btn = document.querySelector('.account-btn');
-      if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-        dropdown.classList.remove('show');
-      }
-      if (e.target.id === 'aboutModal') closeAbout();
-      if (e.target.id === 'addClassModal') closeAddClassModal();
+  if (sendButton && chatInput && chatLog) {
+    sendButton.addEventListener('click', handleChat);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleChat();
     });
-    document.querySelector('.account-btn').addEventListener('click', (e) => e.stopPropagation());
-    document.getElementById('accountDropdown').addEventListener('click', (e) => e.stopPropagation());
-    document.getElementById('aboutBtn').addEventListener('click', showAbout);
+  }
 
-    // --- Fetch classes from backend ---
-    function renderSubjects(subjects) {
-      const container = document.getElementById('classroomTabs');
-      container.innerHTML = "";
-      if (!subjects.length) {
-        container.innerHTML = "<div>No classes found. Click \"+ Create Class\" to add your first class.</div>";
-        return;
-      }
-      subjects.forEach(subj => {
-        const div = document.createElement('div');
-        div.className = "class-tab";
-        div.innerHTML = `<div class=\"class-title\">${subj.title}</div>
-                         <div class=\"class-section\">${subj.section || ''}</div>`;
-        div.onclick = () => { window.location.href = "subject.html?subject=" + encodeURIComponent(subj.title); };
-        container.appendChild(div);
-      });
+  function handleChat() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    addMessage(message, 'user');
+    chatInput.value = '';
+    
+    setTimeout(() => {
+      const response = processMessage(message);
+      addMessage(response, 'bot');
+    }, 500);
+  }
+
+  function addMessage(text, sender) {
+    const div = document.createElement('div');
+    div.style.marginBottom = '8px';
+    div.style.padding = '8px 12px';
+    div.style.borderRadius = '8px';
+    div.style.maxWidth = '80%';
+    
+    if (sender === 'user') {
+      div.style.background = '#3b82f6';
+      div.style.color = 'white';
+      div.style.marginLeft = 'auto';
+    } else {
+      div.style.background = '#f3f4f6';
+      div.style.color = '#374151';
     }
+    
+    div.textContent = text;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
 
-     // Try subjects endpoint first, fall back to classes for compatibility
-     fetch(`${window.API_BASE}/api/subjects`, {
-       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-     })
-       .then(async res => {
-         if (res.ok) return res.json();
-         // fallback
-         const res2 = await fetch(`${window.API_BASE}/api/classes`, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }});
-         if (!res2.ok) throw new Error('Failed to load classes');
-         return res2.json();
-       })
-       .then(list => {
-         if (list) renderSubjects(list);
-       })
-       .catch(err => {
-         console.error('Error loading classes:', err);
-         document.getElementById('classroomTabs').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>';
-       });
-
-     // Auto-Generated Class System (Teachers Only)
-     class AutoClassSystem {
-       constructor() {
-         this.generatedClasses = new Map();
-         this.cache = new Map();
-         this.templates = {
-           html: this.getHTMLTemplate(),
-           css: this.getCSSTemplate()
-         };
-       }
-       
-       async generateClass(classData) {
-         const startTime = performance.now();
-         const classId = this.generateClassId(classData);
-         const className = this.sanitizeClassName(classData.title);
-         
-         const generatedClass = {
-           id: classId,
-           name: className,
-           data: classData,
-           html: this.generateHTMLComponent(classData, classId),
-           css: this.generateCSSComponent(classData, className),
-           metadata: {
-             generated: new Date().toISOString(),
-             autoGenerated: true,
-             generationTime: performance.now() - startTime
-           }
-         };
-         
-         this.generatedClasses.set(classId, generatedClass);
-         this.injectClass(generatedClass);
-         
-         console.log(`Auto-generated class ${className} in ${generatedClass.metadata.generationTime.toFixed(2)}ms`);
-         return generatedClass;
-       }
-       
-       generateHTMLComponent(classData, classId) {
-         return this.templates.html
-           .replace(/{{CLASS_ID}}/g, classId)
-           .replace(/{{CLASS_TITLE}}/g, this.escapeHtml(classData.title))
-           .replace(/{{CLASS_SECTION}}/g, this.escapeHtml(classData.section || ''))
-           .replace(/{{ACCESS_CODE}}/g, classData.accessCode || '')
-           .replace(/{{STUDENT_COUNT}}/g, classData.studentCount || '0');
-       }
-       
-       generateCSSComponent(classData, className) {
-         const primaryColor = this.generateClassColor(classData);
-         return this.templates.css
-           .replace(/{{CLASS_NAME}}/g, className)
-           .replace(/{{PRIMARY_COLOR}}/g, primaryColor);
-       }
-       
-       getHTMLTemplate() {
-         return `
-         <div class="auto-generated-class class-card" data-class-id="{{CLASS_ID}}" style="position: relative; border-left: 4px solid {{PRIMARY_COLOR}};">
-           <div class="auto-indicator" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 8px; height: 8px; background: #10b981; border-radius: 50%; opacity: 0.8;" title="Auto-generated"></div>
-           <div class="class-title" style="font-size: 1.3em; font-weight: bold; margin-bottom: 12px; color: var(--primary);">{{CLASS_TITLE}}</div>
-           <div class="class-section" style="color: #666; margin-bottom: 8px;">{{CLASS_SECTION}}</div>
-           <div class="class-stats" style="display: flex; gap: 1rem; margin: 1rem 0; font-size: 0.85rem;">
-             <div><span style="color: #888;">Students:</span> <span id="student-count-{{CLASS_ID}}">{{STUDENT_COUNT}}</span></div>
-             <div><span style="color: #888;">Code:</span> <code style="background: #f0f0f0; padding: 2px 4px; border-radius: 3px; font-family: monospace;">{{ACCESS_CODE}}</code></div>
-           </div>
-           <div class="class-actions" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-             <button onclick="viewAutoClass('{{CLASS_ID}}', '{{CLASS_TITLE}}')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">View</button>
-            <button onclick="manageAutoClass('{{CLASS_ID}}', '{{CLASS_TITLE}}')" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Manage</button>
-           </div>
-         </div>`;
-       }
-       
-       getCSSTemplate() {
-         return `
-         .auto-class-{{CLASS_NAME}} {
-           --class-primary: {{PRIMARY_COLOR}};
-           transition: all 0.2s ease;
-           transform: translateZ(0);
-         }
-         .auto-class-{{CLASS_NAME}}:hover {
-           transform: translateY(-2px) translateZ(0);
-           box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-         }`;
-       }
-       
-       injectClass(generatedClass) {
-         const container = document.getElementById('autoClassContainer');
-         if (container) {
-           const div = document.createElement('div');
-           div.innerHTML = generatedClass.html;
-           container.appendChild(div.firstElementChild);
-           
-           // Inject CSS
-           const style = document.createElement('style');
-           style.textContent = generatedClass.css;
-           document.head.appendChild(style);
-           
-           // Show the auto-generated section
-           document.getElementById('autoGeneratedSection').style.display = 'block';
-         }
-       }
-       
-       generateClassId(classData) {
-         // Generate an 8-character alphanumeric ID and ensure uniqueness
-         window.__autoIdRegistry = window.__autoIdRegistry || new Set();
-         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-         function gen8() {
-           let id = '';
-           for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
-           return id;
-         }
-         let id = gen8();
-         while (window.__autoIdRegistry.has(id)) id = gen8();
-         window.__autoIdRegistry.add(id);
-         return id;
-       }
-       
-       sanitizeClassName(title) {
-         return title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-       }
-       
-       escapeHtml(text) {
-         const div = document.createElement('div');
-         div.textContent = text;
-         return div.innerHTML;
-       }
-       
-       generateClassColor(classData) {
-         const hash = this.hashCode(classData.title);
-         const hue = Math.abs(hash) % 360;
-         return `hsl(${hue}, 65%, 50%)`;
-       }
-       
-       hashCode(str) {
-         let hash = 0;
-         for (let i = 0; i < str.length; i++) {
-           const char = str.charCodeAt(i);
-           hash = ((hash << 5) - hash) + char;
-           hash = hash & hash;
-         }
-         return hash;
-       }
-       
-       // Demo function to create auto-generated classes
-       createDemoClasses() {
-         const demoClasses = [
-           { title: 'AI Mathematics', section: 'Auto-Gen A', accessCode: 'AUTO001', studentCount: 25 },
-           { title: 'Smart Science', section: 'Auto-Gen B', accessCode: 'AUTO002', studentCount: 30 },
-           { title: 'Digital English', section: 'Auto-Gen C', accessCode: 'AUTO003', studentCount: 28 }
-         ];
-         
-         demoClasses.forEach(classData => {
-           setTimeout(() => this.generateClass(classData), Math.random() * 1000);
-         });
-       }
-     }
-     
-     // Initialize auto-class system for teachers only
-     window.autoClassSystem = new AutoClassSystem();
-     
-     // Global functions for auto-generated classes
-     window.viewAutoClass = function(classId, title) {
-       // Open in read-only mode for viewing
-       window.location.href = `teacher-grades.html?id=${encodeURIComponent(classId)}&name=${encodeURIComponent(title)}&readonly=1`;
-     };
-     
-     window.manageAutoClass = function(classId, title) {
-       // Open management flow
-       window.location.href = `subject.html?subject=${encodeURIComponent(title)}&auto=true`;
-     };
-     
-     // Encapsulate auto-generated DOM creation
-     function generateDynamicElements() {
-       if (window.autoClassSystem) {
-         window.autoClassSystem.createDemoClasses();
-       }
-     }
-     document.addEventListener('DOMContentLoaded', generateDynamicElements);
-     
-     // Chatbot toggle logic
-     const sidebar = document.getElementById('chatbotSidebar');
-     document.getElementById('chatbotToggle').addEventListener('click', () => {
-       sidebar.style.right = sidebar.style.right === '0px' ? '-360px' : '0px';
-     });
-     document.getElementById('closeChatbot').addEventListener('click', () => {
-       sidebar.style.right = '-360px';
-     });
-
-     let chatMemory = [];
-     function appendChat(text, who = 'bot'){
-       const log = document.getElementById('chatLog');
-       const line = document.createElement('div');
-       line.style.margin = '6px 0';
-       if (who === 'bot') { line.style.color = '#444'; }
-       else { line.style.fontWeight = '600'; }
-       line.textContent = text;
-       log.appendChild(line);
-       log.scrollTop = log.scrollHeight;
-     }
-     function showTyping(){
-       const log = document.getElementById('chatLog');
-       const t = document.createElement('div');
-       t.id = 'typing'; t.style.color = '#888'; t.textContent = 'Assistant is typing…';
-       log.appendChild(t); log.scrollTop = log.scrollHeight; return t;
-     }
-     function hideTyping(el){ if (el && el.parentNode) el.parentNode.removeChild(el); }
-
-     function containsProfanity(text){
-       const bad = [
-         'fuck','shit','bitch','asshole','bastard','dick','piss','cunt','motherfucker','slut','whore'
-       ];
-       const lower = text.toLowerCase();
-       return bad.some(w => lower.includes(w));
-     }
-
-     function parseNumbers(text){
-       const nums = (text.match(/\b\d{1,3}(?:\.\d+)?\b/g) || []).map(n => parseFloat(n)).filter(n => n<=100);
-       return nums;
-     }
-
-     function handleProgressQuery(text){
-       const nums = parseNumbers(text);
-       if (nums.length === 0) return 'Please provide scores (0-100). Example: Average of 78, 85, 90.';
-       const avg = nums.reduce((a,b)=>a+b,0)/nums.length;
-       return `Approximate progress based on ${nums.length} score(s): ${avg.toFixed(1)}%.`;
-     }
-
-     function handleCommentQuery(text){
-       // Try to extract name, subject/topic, and score
-       const score = parseNumbers(text)[0] ?? 85;
-       const nameMatch = text.match(/for\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/i);
-       const topicMatch = text.match(/in\s+([A-Za-z ]+)/i) || text.match(/on\s+([A-Za-z ]+)/i);
-       const name = nameMatch ? nameMatch[1].trim() : 'The student';
-       const topic = topicMatch ? topicMatch[1].trim() : 'this topic';
-       const subject = topic; // basic heuristic
-       const bot = new FeedbackChatbot();
-       const { feedback, suggestions } = bot.generateCompleteFeedback(score, subject, topic, name);
-       return `${feedback}\nSuggestions: ${suggestions.slice(0,2).join('; ')}`;
-     }
-
-     function inScope(text){
-       const t = text.toLowerCase();
-       return t.includes('comment') || t.includes('feedback') || t.includes('progress') || t.includes('average') || /\d/.test(t);
-     }
-
-     function processMessage(text){
-       if (containsProfanity(text)){
-         return 'Please avoid using offensive language. Let\'s keep this respectful.';
-       }
-       const t = text.toLowerCase();
-       if (t.includes('progress') || t.includes('average') || t.includes('mean')){
-         return handleProgressQuery(text);
-       }
-       if (t.includes('comment') || t.includes('feedback')){
-         return handleCommentQuery(text);
-       }
-       if (!inScope(text)){
-         return 'I can help with: (1) drafting teacher comments, (2) approximate progress calculations. I can\'t perform other tasks, but you can try asking: "Create a comment for Ana in Science, score 88" or "Average of 76, 81, 90".';
-       }
-       // Fallback within scope
-       return 'Try specifying scores or the student/topic. For example: "Create a comment for John in Algebra, score 84" or "Average of 75, 82, 91".';
-     }
-
-     document.getElementById('sendChat').addEventListener('click', async () => {
-       const input = document.getElementById('chatInput');
-       const text = input.value.trim();
-       if (!text) return;
-       appendChat(text, 'me');
-       input.value = '';
-       chatMemory.push(text);
-       const typing = showTyping();
-       await new Promise(r=>setTimeout(r, 450 + Math.random()*400));
-       const reply = processMessage(text);
-       hideTyping(typing);
-       appendChat(reply, 'bot');
-     });
-
-     document.getElementById('chatInput').addEventListener('keydown', (e)=>{
-       if (e.key === 'Enter') document.getElementById('sendChat').click();
-     });
-    </script>
+  function processMessage(message) {
+    const lower = message.toLowerCase();
+    
+    // Average calculation
+    if (lower.includes('average')) {
+      const numbers = message.match(/\d+/g);
+      if (numbers) {
+        const avg = numbers.reduce((a, b) => parseInt(a) + parseInt(b), 0) / numbers.length;
+        return `The average is ${avg.toFixed(1)}.`;
+      }
+    }
+    
+    // Comment generation
+    if (lower.includes('comment')) {
+      const nameMatch = lower.match(/for ([a-z]+)/i);
+      const scoreMatch = message.match(/\d+/);
+      const topicMatch = lower.match(/in ([a-z\s]+)/i);
+      
+      const name = nameMatch ? nameMatch[1] : 'the student';
+      const score = scoreMatch ? parseInt(scoreMatch[0]) : 85;
+      const topic = topicMatch ? topicMatch[1].trim() : 'this subject';
+      
+      const result = chatbot.generateCompleteFeedback(score, topic, topic, name);
+      return `${result.feedback}\n\nSuggestion: ${result.suggestions[0]}`;
+    }
+    
+    return "I can help with: (1) calculating averages: 'Average of 85, 90, 78' (2) generating comments: 'Comment for Ana in Math, score 88'";
+  }
+});
+</script>
+</body>
 </html>

@@ -1,4 +1,4 @@
-window.API_BASE = 'https://gradescope-a4hw.onrender.com'
+window.API_BASE = 'http://localhost:3000'
 
 ;(function(){
   'use strict';
@@ -265,7 +265,96 @@ window.API_BASE = 'https://gradescope-a4hw.onrender.com'
     if (Page.is('login.html')) return initLogin();
     if (Page.is('signup.html')) return initSignup();
     if (Page.is('homepage1.html')) return initHomepage1();
+    if (Page.is('homepage2.html')) return initHomepage2();
   });
+
+  // ---------- Teacher page ----------
+  function initHomepage2(){
+    const role = getRole(); if (!getToken() || role!=='teacher'){ location.href = role==='teacher' ? 'login.html' : 'homepage1.html'; return; }
+    bindHomepage2UI();
+    setupTeacherHeader();
+    loadTeacherSubjects();
+    setupChatbotToggle();
+  }
+
+  function bindHomepage2UI(){
+    qs('#navHomeT')?.addEventListener('click', ()=> location.href='homepage2.html');
+    qs('#navSettingsT')?.addEventListener('click', ()=> location.href='settings.html');
+    qs('#accountBtnT')?.addEventListener('click', (e)=>{ e.stopPropagation(); qs('#accountDropdown')?.classList.toggle('show'); });
+    document.addEventListener('click', (e)=>{
+      const dd = qs('#accountDropdown'); const btn = qs('#accountBtnT');
+      if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('show');
+    });
+    qs('#logoutBtnT')?.addEventListener('click', logout);
+    // About modal
+    qs('#aboutBtn')?.addEventListener('click', ()=> showAbout());
+    qs('#closeAboutBtnT')?.addEventListener('click', ()=> closeAbout());
+    // Add class modal
+    qs('#createClassBtn')?.addEventListener('click', ()=> toggleAddClass(true));
+    qs('#closeAddClassX')?.addEventListener('click', ()=> toggleAddClass(false));
+    qs('#cancelCreate')?.addEventListener('click', ()=> toggleAddClass(false));
+    qs('#confirmCreate')?.addEventListener('click', confirmAddClass);
+  }
+
+  async function setupTeacherHeader(){
+    try{
+      const res = await fetch(`${window.API_BASE}/api/me`, { headers: authHeaders() });
+      const userData = await res.json();
+      if (res.ok){
+        localStorage.setItem('firstName', userData.firstName || '');
+        localStorage.setItem('lastName', userData.lastName || '');
+        localStorage.setItem('fullName', userData.fullName || `${userData.firstName||''} ${userData.lastName||''}`.trim());
+        if (userData.email) localStorage.setItem('email', userData.email);
+      }
+    }catch{}
+    const display = localStorage.getItem('fullName') || (JSON.parse(localStorage.getItem('user')||'{}').name) || 'Teacher';
+    const init = display?.charAt(0) || 'T';
+    qs('#accountInitial') && (qs('#accountInitial').textContent = init);
+    qs('#userFullName') && (qs('#userFullName').textContent = display);
+    qs('#userEmail') && (qs('#userEmail').textContent = localStorage.getItem('email') || '');
+  }
+
+  function toggleAddClass(show){ const m = qs('#addClassModal'); if (!m) return; m.style.display = show? 'block':'none'; if (!show){ const f=(id)=>{const el=qs(id); if(el) el.value='';}; f('#className'); f('#section'); } }
+
+  async function confirmAddClass(){
+    const className = qs('#className')?.value.trim();
+    const gradeLevel = qs('#gradeLevel')?.value.trim();
+    const section = qs('#section')?.value.trim();
+    if (!className || !gradeLevel || !section){ alert('Please fill in all fields'); return; }
+    const btn = qs('#confirmCreate'); const prev = btn?.textContent; if (btn){ btn.disabled = true; btn.textContent = 'Creating...'; }
+    try{
+      const res = await fetch(`${window.API_BASE}/api/subjects`,{
+        method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ title: className, gradeLevel, section })
+      });
+      const data = await res.json(); if (!res.ok) throw new Error(data.message || 'Failed to create class');
+      const accessCode = data.accessCode || data.access_code || data.code || '';
+      toggleAddClass(false);
+      const c = qs('#classroomTabs'); if (c){ const div=document.createElement('div'); div.className='class-tab'; div.innerHTML = `<div class="class-title">${data.title || className}</div><div class="class-section">${data.section || section}</div>${accessCode?`<div class="small">Access Code: <strong>${accessCode}</strong></div>`:''}`; div.addEventListener('click', ()=> location.href = `subject.html?subject=${encodeURIComponent(data.title || className)}`); c.appendChild(div);} 
+      try{ if (accessCode) await navigator.clipboard.writeText(accessCode);}catch{}
+      alert('Class created!' + (accessCode? ` Access Code: ${accessCode}`:''));
+    }catch(e){ alert('Error creating class: ' + e.message); }
+    finally{ if (btn){ btn.disabled = false; btn.textContent = prev; } }
+  }
+
+  async function loadTeacherSubjects(){
+    const container = qs('#classroomTabs'); if (!container) return; container.textContent = 'Loading...';
+    try{
+      let res = await fetch(`${window.API_BASE}/api/subjects`, { headers: authHeaders() });
+      let list; if (res.ok){ list = await res.json(); } else {
+        const res2 = await fetch(`${window.API_BASE}/api/classes`, { headers: authHeaders() });
+        if (!res2.ok) throw new Error('Failed to load classes'); list = await res2.json();
+      }
+      renderTeacherSubjects(list);
+    }catch(e){ console.error('Error loading classes:', e); container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>'; }
+  }
+
+  function renderTeacherSubjects(subjects){
+    const container = qs('#classroomTabs'); if (!container) return; container.innerHTML='';
+    if (!subjects || !subjects.length){ container.innerHTML = '<div>No classes found. Click "+ Create Class" to add your first class.</div>'; return; }
+    subjects.forEach(subj=>{ const div=document.createElement('div'); div.className='class-tab'; div.innerHTML = `<div class="class-title">${subj.title}</div><div class="class-section">${subj.section||''}</div>`; div.addEventListener('click', ()=> location.href = `subject.html?subject=${encodeURIComponent(subj.title)}`); container.appendChild(div); });
+  }
+
+  function setupChatbotToggle(){ const sidebar=qs('#chatbotSidebar'); const tog=qs('#chatbotToggle'); const close=qs('#closeChatbot'); if (tog && sidebar){ tog.addEventListener('click', ()=>{ sidebar.style.right = sidebar.style.right==='0px' ? '-360px' : '0px'; }); } if (close && sidebar){ close.addEventListener('click', ()=> sidebar.style.right='-360px'); } }
 
   // Expose minimal globals only if needed elsewhere
   window.App = { logout };
