@@ -486,12 +486,6 @@ button:focus, input:focus, textarea:focus { outline: 3px solid rgba(25,118,210,0
 	cursor: pointer; /* clickable to change role */ 
 } 
 
-/* ------------------------- Container ------------------------- */ 
-.container{ 
-	max-width: var(--max-width); 
-	margin: 26px auto; 
-	padding: 0 20px; 
-} 
 
 /* ------------------------- Class header & tabs ------------------------- */ 
 .class-header{ 
@@ -884,4 +878,15 @@ input:focus, select:focus, textarea:focus {
   background: var(--brand-700); 
 }
 
+/* Tabs + Quarter tabs styling */
+.tabs { display:flex; gap:8px; margin:12px 0; }
+.tab { display:inline-block; padding:8px 12px; border-radius:8px; cursor:pointer; background:#fff; border:1px solid #e5e7eb; font-weight:600; }
+.tab.active { background: var(--brand-600); color:#fff; border-color: transparent; }
+.quarter-tabs { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
+.quarter-tab { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:8px 12px; font-weight:600; }
+.quarter-tab.active { background: var(--brand-600); color:#fff; border-color: transparent; }
+
 /* Single unified stylesheet - all duplicates removed */
+
+/* Charts */
+.chart-container { position: relative; height: 340px; }

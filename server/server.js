@@ -1,13 +1,10 @@
 // server/server.js
 import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 import path from "path";
 import bodyParser from "body-parser";
-import pool from './db.js'; 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
@@ -15,6 +12,9 @@ import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load env from this server folder explicitly to avoid root .env conflicts
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -12,7 +12,7 @@
   <script src="config.js" defer></script>
 </head>
 <body class="subject-page">
-  <div class="header">
+  <header class="header">
     <div>
       <h2 id="subjectTitle" style="margin-bottom:4px; font-weight:800;">Subject</h2>
       <div id="sectionName" class="label-muted"></div>
@@ -22,8 +22,18 @@
       <div id="accessCodeDisplay" style="display: none; background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #2e7d32;">
         Access Code: <span id="accessCodeValue"></span>
       </div>
+      <div class="account-menu">
+        <button class="account-btn" id="accountBtnT"><span id="accountInitial">T</span></button>
+        <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+          <div class="account-info">
+            <div id="userFullName">User Name</div>
+            <div id="userEmail"></div>
+          </div>
+          <button id="logoutBtnT">Log Out</button>
+        </div>
+      </div>
     </div>
-  </div>
+  </header>
   <div class="main">
     <button class="back-button" onclick="goBack()">← Back to Home</button>
     <div id="studentContainer" style="margin-top:16px; display:flex; justify-content:center;">
@@ -132,7 +142,6 @@
     } else if (role === 'teacher') {
       // Students will be loaded after subject ID is resolved in the code above
     } else {
-      document.getElementById('studentGrid').innerHTML = '';
       document.getElementById('infoMsg').textContent = 'Unknown role.';
     }
 

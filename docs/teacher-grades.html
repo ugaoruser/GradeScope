@@ -13,15 +13,19 @@
   <script src="config.js" defer></script>
 </head>
 <body class="teacher-grades-page">
-  <div class="app-header">
-    <div class="app-header-content">
-      <h1>GradeTracker</h1>
-      <div class="user-controls">
-        <span id="userName">Teacher</span>
-        <button onclick="logout()" class="logout-btn">Logout</button>
+  <header class="header">
+    <div class="header-title">Welcome</div>
+    <div class="account-menu">
+      <button class="account-btn" id="accountBtnT"><span id="accountInitial">T</span></button>
+      <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+        <div class="account-info">
+          <div id="userFullName">User Name</div>
+          <div id="userEmail"></div>
+        </div>
+        <button id="logoutBtnT">Log Out</button>
       </div>
     </div>
-  </div>
+  </header>
   
   <div class="container">
     <button class="back-button" onclick="goBack()">← Back to Subjects</button>
@@ -314,7 +318,19 @@
     const urlParams = new URLSearchParams(window.location.search);
     const subjectId = urlParams.get('id');
     const subjectName = urlParams.get('name') || "Subject";
-    document.getElementById('subjectTitle').textContent = subjectName;
+document.getElementById('subjectTitle').textContent = subjectName;
+    // Fetch subject details to show section/grade level
+    (function fetchSubjectMeta(){
+      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r=>r.json())
+        .then(list=>{
+          const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
+          if (subj){
+            const sec = subj.section || subj.grade_level || '';
+            if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+          }
+        }).catch(()=>{});
+    })();
     
     // Global variables
     let currentQuarter = 1;
@@ -867,5 +883,8 @@
     }
     init();
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="api-mock.js"></script>
+  <script src="chart.js"></script>
 </body>
 </html>

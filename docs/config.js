@@ -25,7 +25,7 @@ window.API_BASE = 'http://localhost:3000'
     const email = qs('#email')?.value.trim();
     const password = qs('#password')?.value;
     if (!email || !password) { showError('Please fill in all fields'); return; }
-    hideMessages(); setLoading('#login-btn','#loading', true, 'Signing in...');
+    hideMessages(); setLoading('#login-btn','#loading', true, 'Logging in...');
     try{
       const res = await fetch(`${window.API_BASE}/api/login`, {
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -261,12 +261,35 @@ window.API_BASE = 'http://localhost:3000'
 
   // ---------- Boot ----------
   document.addEventListener('DOMContentLoaded', ()=>{
+    // Attach account dropdown handlers globally (any page)
+    attachAccountDropdownHandlers();
+    // Global logout handlers on any page
+    const bindLogout = ()=>{
+      const l1 = document.getElementById('logoutBtn');
+      const l2 = document.getElementById('logoutBtnT');
+      l1 && l1.addEventListener('click', logout);
+      l2 && l2.addEventListener('click', logout);
+    };
+    bindLogout();
+
     if (Page.is('index.html')) return initIndex();
     if (Page.is('login.html')) return initLogin();
     if (Page.is('signup.html')) return initSignup();
     if (Page.is('homepage1.html')) return initHomepage1();
     if (Page.is('homepage2.html')) return initHomepage2();
   });
+
+  function attachAccountDropdownHandlers(){
+    const btn = document.getElementById('accountBtn') || document.getElementById('accountBtnT');
+    const dd = document.getElementById('accountDropdown');
+    if (!btn || !dd) return;
+    const setExpanded = (v)=>{ btn.setAttribute('aria-expanded', v ? 'true' : 'false'); dd.setAttribute('aria-hidden', v ? 'false' : 'true'); };
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); const willShow = !dd.classList.contains('show'); dd.classList.toggle('show'); setExpanded(willShow); });
+    document.addEventListener('click', (e)=>{
+      if (!dd.contains(e.target) && !btn.contains(e.target)) { dd.classList.remove('show'); setExpanded(false); }
+    });
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ dd.classList.remove('show'); setExpanded(false); document.querySelectorAll('.modal.show').forEach(m=> m.classList.remove('show')); document.querySelectorAll('.modal[style*="display: block"], .modal[style*="display:block"]').forEach(m=> m.style.display='none'); } });
+  }
 
   // ---------- Teacher page ----------
   function initHomepage2(){

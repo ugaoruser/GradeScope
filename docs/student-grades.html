@@ -13,14 +13,21 @@
   <script src="config.js" defer></script>
 </head>
 <body class="student-grades-page">
-  <div class="header">
-    <h2 id="subjectTitle">Subject Grades</h2>
-    <div>
+  <header class="header">
+    <div class="header-title" id="subjectTitle">Subject Grades</div>
+    <div class="account-menu" style="display:flex; align-items:center; gap:10px;">
       <span id="studentName"></span>
       <select id="childSelect" style="display:none; margin-left:8px;"></select>
-      <button class="logout-btn" onclick="logout()">Log Out</button>
+      <button class="account-btn" id="accountBtn"><span id="accountInitial">A</span></button>
+      <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+        <div class="account-info">
+          <div id="userFullName">User Name</div>
+          <div id="userEmail"></div>
+        </div>
+<button id="logoutBtn" class="logout-btn" onclick="logout()">Log Out</button>
+      </div>
     </div>
-  </div>
+  </header>
   
   <div class="main">
     <button class="back-btn" onclick="goBack()">← Back to Subjects</button>

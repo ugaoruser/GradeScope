@@ -98,9 +98,9 @@ class PerformanceChart {
     if (studentSelect) {
       studentSelect.addEventListener('change', () => {
         this.currentStudentId = studentSelect.value;
-        // Get subject ID from URL or default to 1
+        // Get subject ID from URL (?id=) or fallback to ?subject or '1'
         const urlParams = new URLSearchParams(window.location.search);
-        this.currentSubjectId = urlParams.get('subject') || '1';
+        this.currentSubjectId = urlParams.get('id') || urlParams.get('subject') || '1';
         
         if (this.currentStudentId) {
           this.loadStudentData(this.currentStudentId, this.currentSubjectId);

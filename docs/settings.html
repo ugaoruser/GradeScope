@@ -11,7 +11,7 @@
   <div class="sidebar">
     <div class="top">
       <ul class="nav">
-        <li onclick="location.href='homepage1.html'">Home</li>
+        <li id="goHome">Home</li>
         <li class="active">Settings</li>
         <li id="aboutBtn">About</li>
       </ul>
@@ -24,6 +24,16 @@
   <div class="main">
     <header class="header" style="margin-bottom:16px;">
       <div class="header-title">Settings</div>
+      <div class="account-menu">
+        <button class="account-btn" id="accountBtn"><span id="accountInitial">A</span></button>
+        <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+          <div class="account-info">
+            <div id="userFullName">User Name</div>
+            <div id="userEmail"></div>
+          </div>
+          <button id="logoutBtn" class="logout-btn">Log Out</button>
+        </div>
+      </div>
     </header>
     
     <div class="settings-container">
@@ -49,10 +59,10 @@
   </div>
   
   <!-- About Modal (no profile info) -->
-  <div id="aboutModal" class="modal" aria-hidden="true" style="display:none;">
+<div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
-        <div class="modal-title">About GradeScope Lite</div>
+        <div class="modal-title">About GradeTracker</div>
         <button class="modal-close" onclick="closeAbout()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
@@ -105,6 +115,11 @@
       }
     });
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
+    // Dynamic home routing based on role
+    document.getElementById('goHome').addEventListener('click', ()=>{
+      const r = localStorage.getItem('role');
+      location.href = r === 'teacher' ? 'homepage2.html' : 'homepage1.html';
+    });
   </script>
 </body>
 </html>
