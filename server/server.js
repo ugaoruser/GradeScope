@@ -217,14 +217,10 @@ app.post("/api/login", async (req, res) => {
     const user = rows[0];
 
     if (!user) {
-      console.log("LOGIN: no user found for", email);
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    console.log("USER found:", user);
-
     const ok = await bcrypt.compare(password, user.password_hash || "");
-    console.log("PASSWORD MATCH:", ok);
 
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
@@ -366,7 +362,8 @@ app.post("/api/grades", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Only teachers can add grades" });
     }
 
-    const { studentId, subjectId, grade, remarks } = req.body;
+    const { studentId, subjectId, grade, remarks, comments } = req.body;
+    const note = comments ?? remarks ?? null;
     
     // Create a simple grade item for this subject if it doesn't exist
     const [gradeItem] = await db.query(`
@@ -383,12 +380,12 @@ app.post("/api/grades", verifyToken, async (req, res) => {
       gradeItemId = gradeItem[0].id;
     }
 
-    // Insert the grade
+    // Insert the grade (use comments column)
     await db.query(`
-      INSERT INTO scores (grade_item_id, student_id, score, remarks) 
+      INSERT INTO scores (grade_item_id, student_id, score, comments) 
       VALUES (?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE score = VALUES(score), remarks = VALUES(remarks)
-    `, [gradeItemId, studentId, grade, remarks]);
+      ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)
+    `, [gradeItemId, studentId, grade, note]);
 
     res.json({ message: "Grade added successfully" });
   } catch (err) {
@@ -695,6 +692,12 @@ app.post("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
     
     try {
       for (const item of items) {
+        const categoryId = item.categoryId ?? item.category_id;
+        const itemType = item.itemType ?? item.item_type ?? null;
+        const includedInFinal = (item.includedInFinal ?? item.included_in_final) ? 1 : 0;
+        const maxScore = item.maxScore ?? item.max_score;
+        const dateAssigned = item.dateAssigned ?? item.date_assigned ?? null;
+
         if (item.id) {
           // Update existing item
           await db.query(
@@ -703,8 +706,8 @@ app.post("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
              included_in_final = ?, max_score = ?, date_assigned = ?
              WHERE id = ? AND subject_id = ?`,
             [
-              item.categoryId, item.title, item.topic, item.itemType,
-              item.includedInFinal, item.maxScore, item.dateAssigned,
+              categoryId, item.title, item.topic, itemType,
+              includedInFinal, maxScore, dateAssigned,
               item.id, subjectId
             ]
           );
@@ -715,8 +718,8 @@ app.post("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
              (subject_id, category_id, title, topic, item_type, included_in_final, max_score, date_assigned)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              subjectId, item.categoryId, item.title, item.topic, item.itemType,
-              item.includedInFinal, item.maxScore, item.dateAssigned
+              subjectId, categoryId, item.title, item.topic, itemType,
+              includedInFinal, maxScore, dateAssigned
             ]
           );
         }

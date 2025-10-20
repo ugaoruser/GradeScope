@@ -58,11 +58,7 @@ window.API_BASE =
       if (!r.ok) throw new Error('Failed to load children');
       const children = await r.json();
       if (!children.length){ showError('No children found. Contact your school.'); return; }
-      if (children.length === 1){
-        localStorage.setItem('selectedChildId', String(children[0].id));
-        localStorage.setItem('selectedChildName', children[0].full_name || 'Student');
-        redirectByRole('parent'); return;
-      }
+      // Always ask parent to choose explicitly, even if only one child
       showParentSelection(children);
     }catch(e){ showError('Failed to load children: ' + e.message); }
   }
@@ -70,7 +66,8 @@ window.API_BASE =
   function showParentSelection(children){
     const modal = qs('#parent-modal'); const selector = qs('#child-selector'); const btn = qs('#continue-btn');
     if (!modal || !selector || !btn) { redirectByRole('parent'); return; }
-    selector.innerHTML = ''; let selectedId = null; btn.disabled = true;
+    selector.innerHTML = '';
+    let selectedId = null; btn.disabled = true;
     children.forEach(child=>{
       const div = document.createElement('div');
       div.className = 'parent-child-option';
@@ -78,6 +75,11 @@ window.API_BASE =
       div.addEventListener('click', ()=>{ qsa('#child-selector > div').forEach(d=> d.classList.remove('selected')); div.classList.add('selected'); selectedId = child.id; btn.disabled = false; });
       selector.appendChild(div);
     });
+    // Preselect automatically if there's only one, but still require explicit Continue
+    if (children.length === 1){
+      selectedId = children[0].id; btn.disabled = false;
+      const first = selector.firstElementChild; if (first) first.classList.add('selected');
+    }
     btn.onclick = ()=>{ if (!selectedId) return; const c = children.find(x=> x.id === selectedId); localStorage.setItem('selectedChildId', String(selectedId)); localStorage.setItem('selectedChildName', c?.full_name || 'Student'); modal.style.display='none'; redirectByRole('parent'); };
     modal.style.display = 'flex';
   }
