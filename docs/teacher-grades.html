@@ -10,10 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
-  <script src="access-control.js"></script>
-  <script src="chatbot.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="chart.js" defer></script>
   <script src="config.js" defer></script>
 </head>
 <body class="teacher-grades-page">
@@ -345,7 +341,8 @@
     
     // --- Navigation functions ---
     function goBack() {
-      window.location.href = 'index.html';
+      const role = localStorage.getItem('role');
+      window.location.href = role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
     }
     
     function logout() {

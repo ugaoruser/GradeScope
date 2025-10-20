@@ -30,7 +30,8 @@ INSERT INTO users (id, first_name, last_name, email, password_hash, role_id) VAL
 (2, 'Jane', 'Smith', 'jane.smith@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 1),
 (3, 'Mike', 'Johnson', 'mike.johnson@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 2),
 (4, 'Sarah', 'Wilson', 'sarah.wilson@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 2),
-(5, 'Robert', 'Brown', 'robert.brown@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 3);
+(5, 'Robert', 'Brown', 'robert.brown@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 3),
+(6, 'Admin', 'User', 'admin@school.edu', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HSy.8K2', 4);
 
 -- Insert sample subjects
 INSERT INTO subjects (id, code, title, grade_level, section, teacher_id) VALUES 
@@ -98,6 +99,19 @@ INSERT INTO grade_items (id, subject_id, category_id, title, topic, item_type, i
 (3, 1, 2, 'Quiz 1', 'Algebra Basics', 'Quiz', TRUE, 50),
 (4, 1, 2, 'Quiz 2', 'Linear Equations', 'Quiz', TRUE, 50),
 (5, 1, 3, 'Quarter 1 Exam', 'All Q1 Topics', 'Exam', TRUE, 100),
+-- Mathematics - Quarter 2
+(6, 1, 4, 'Group Activity', 'Trigonometry', 'Performance Task', TRUE, 100),
+(7, 1, 5, 'Homework Set', 'Quadratic Equations', 'Written Work', TRUE, 50),
+(8, 1, 6, 'Quarter 2 Exam', 'All Q2 Topics', 'Exam', TRUE, 100),
+-- Science - Quarter 1
+(9, 2, 13, 'Lab Experiment', 'Chemical Reactions', 'Performance Task', TRUE, 100),
+(10, 2, 13, 'Science Fair Project', 'Biology', 'Performance Task', TRUE, 100),
+(11, 2, 14, 'Research Paper', 'Ecosystems', 'Written Work', TRUE, 100),
+(12, 2, 15, 'Quarter 1 Exam', 'All Q1 Topics', 'Exam', TRUE, 100),
+-- Science - Quarter 2
+(15, 2, 16, 'Lab Report', 'Physics', 'Performance Task', TRUE, 100),
+(16, 2, 17, 'Research Assignment', 'Earth Science', 'Written Work', TRUE, 100),
+(17, 2, 18, 'Quarter 2 Exam', 'All Q2 Topics', 'Exam', TRUE, 100),
 -- Assessment items (not included in final grade)
 (13, 1, 1, 'Practice Problems', 'Algebra', 'Assessment', FALSE, 50),
 (14, 2, 13, 'Pre-lab Quiz', 'Lab Safety', 'Assessment', FALSE, 20);
@@ -115,7 +129,33 @@ INSERT INTO scores (grade_item_id, student_id, score, comments) VALUES
 (2, 2, 95, 'Excellent project and presentation'),
 (3, 2, 48, 'Good understanding of concepts'),
 (4, 2, 47, 'Continue practicing equations'),
-(5, 2, 92, 'Excellent understanding of concepts');
+(5, 2, 92, 'Excellent understanding of concepts'),
+-- Mathematics - Quarter 2 - John Doe
+(6, 1, 88, 'Great teamwork'),
+(7, 1, 42, 'Complete all problems next time'),
+(8, 1, 85, 'Good exam performance'),
+-- Mathematics - Quarter 2 - Jane Smith
+(6, 2, 94, 'Outstanding group contribution'),
+(7, 2, 48, 'All problems solved correctly'),
+(8, 2, 96, 'Excellent exam performance'),
+-- Science - Quarter 1 - John Doe
+(9, 1, 82, 'Good lab work, improve documentation'),
+(10, 1, 90, 'Excellent project presentation'),
+(11, 1, 85, 'Well-researched paper'),
+(12, 1, 79, 'Review biological concepts'),
+-- Science - Quarter 1 - Jane Smith
+(9, 2, 88, 'Very thorough lab documentation'),
+(10, 2, 95, 'Outstanding project and presentation'),
+(11, 2, 92, 'Excellent research and writing'),
+(12, 2, 94, 'Outstanding exam performance'),
+-- Science - Quarter 2 - John Doe
+(15, 1, 84, 'Good lab report'),
+(16, 1, 88, 'Well-researched assignment'),
+(17, 1, 82, 'Good exam performance'),
+-- Science - Quarter 2 - Jane Smith
+(15, 2, 92, 'Excellent lab report'),
+(16, 2, 94, 'Outstanding research'),
+(17, 2, 90, 'Excellent exam performance');
 
 -- Display test credentials
 SELECT 'Test Users Available:' as info;
