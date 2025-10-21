@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
+  <script src="chatbot.js" defer></script>
   <script src="config.js" defer></script>
 </head>
  <body class="homepage2">
@@ -117,102 +118,58 @@
   </div>
 
 <script>
-// Embedded chatbot functionality
-class FeedbackChatbot {
-  generateCompleteFeedback(score, subject, topic, name) {
-    let feedback, suggestions;
-    if (score >= 90) {
-      feedback = `Outstanding work! ${name} demonstrates exceptional understanding of ${topic}.`;
-      suggestions = ["Continue challenging with advanced problems", "Consider peer tutoring opportunities"];
-    } else if (score >= 80) {
-      feedback = `${name} shows good understanding of ${topic} with solid performance.`;
-      suggestions = ["Practice more complex applications", "Work on speed and accuracy"];
-    } else if (score >= 70) {
-      feedback = `${name} meets the basic requirements for ${topic} understanding.`;
-      suggestions = ["Focus on foundational concepts", "Provide additional examples"];
-    } else {
-      feedback = `${name} needs additional support to fully understand ${topic} concepts.`;
-      suggestions = ["One-on-one tutoring recommended", "Break concepts into smaller steps"];
-    }
-    return { feedback, suggestions };
-  }
-}
-
-// Initialize chatbot functionality
+// Collaborate with the in-app Agent (global singleton from chatbot.js)
 document.addEventListener('DOMContentLoaded', function() {
-  const chatbot = new FeedbackChatbot();
+  const agent = window.Agent; // FeedbackChatbot instance exposed by chatbot.js
   const chatInput = document.getElementById('chatInput');
   const sendButton = document.getElementById('sendChat');
   const chatLog = document.getElementById('chatLog');
 
   if (sendButton && chatInput && chatLog) {
     sendButton.addEventListener('click', handleChat);
-    chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') handleChat();
-    });
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChat(); });
   }
 
   function handleChat() {
     const message = chatInput.value.trim();
     if (!message) return;
-    
     addMessage(message, 'user');
     chatInput.value = '';
-    
-    setTimeout(() => {
-      const response = processMessage(message);
-      addMessage(response, 'bot');
-    }, 500);
+    setTimeout(() => { addMessage(processMessage(message), 'bot'); }, 300);
   }
 
   function addMessage(text, sender) {
     const div = document.createElement('div');
-    div.style.marginBottom = '8px';
-    div.style.padding = '8px 12px';
-    div.style.borderRadius = '8px';
-    div.style.maxWidth = '80%';
-    
-    if (sender === 'user') {
-      div.style.background = '#3b82f6';
-      div.style.color = 'white';
-      div.style.marginLeft = 'auto';
-    } else {
-      div.style.background = '#f3f4f6';
-      div.style.color = '#374151';
-    }
-    
-    div.textContent = text;
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    div.style.marginBottom = '8px'; div.style.padding = '8px 12px'; div.style.borderRadius = '8px'; div.style.maxWidth = '80%';
+    if (sender === 'user') { div.style.background = '#3b82f6'; div.style.color = 'white'; div.style.marginLeft = 'auto'; }
+    else { div.style.background = '#f3f4f6'; div.style.color = '#374151'; }
+    div.textContent = text; chatLog.appendChild(div); chatLog.scrollTop = chatLog.scrollHeight;
   }
 
   function processMessage(message) {
     const lower = message.toLowerCase();
-    
     // Average calculation
     if (lower.includes('average')) {
-      const numbers = message.match(/\d+/g);
-      if (numbers) {
-        const avg = numbers.reduce((a, b) => parseInt(a) + parseInt(b), 0) / numbers.length;
-        return `The average is ${avg.toFixed(1)}.`;
-      }
+      const nums = message.match(/\d+(?:\.\d+)?/g);
+      if (nums) { const avg = nums.map(Number).reduce((a,b)=>a+b,0) / nums.length; return `The average is ${avg.toFixed(1)}.`; }
     }
-    
-    // Comment generation
-    if (lower.includes('comment')) {
-      const nameMatch = lower.match(/for ([a-z]+)/i);
-      const scoreMatch = message.match(/\d+/);
-      const topicMatch = lower.match(/in ([a-z\s]+)/i);
-      
+    // Comment generation via Agent
+    if (agent && (lower.includes('comment') || lower.includes('feedback'))) {
+      const nameMatch = message.match(/for\s+([A-Za-z][\w-]*)/i);
+      const scoreMatch = message.match(/(\d{1,3})(?!.*\d)/);
+      const topicMatch = message.match(/in\s+([^,]+)$/i);
       const name = nameMatch ? nameMatch[1] : 'the student';
-      const score = scoreMatch ? parseInt(scoreMatch[0]) : 85;
+      const score = scoreMatch ? Math.min(100, parseInt(scoreMatch[1], 10)) : 85;
       const topic = topicMatch ? topicMatch[1].trim() : 'this subject';
-      
-      const result = chatbot.generateCompleteFeedback(score, topic, topic, name);
-      return `${result.feedback}\n\nSuggestion: ${result.suggestions[0]}`;
+      const subjectEl = document.getElementById('selected-subject-label') || document.getElementById('subjectTitle');
+      const subject = subjectEl ? subjectEl.textContent : 'General';
+      try{
+        const res = agent.generateCompleteFeedback(score, subject, topic, name);
+        const suggestion = (res.suggestions && res.suggestions[0]) ? `\n\nSuggestion: ${res.suggestions[0]}` : '';
+        return `${res.feedback}${suggestion}`;
+      }catch{ /* fallback */ }
     }
-    
-    return "I can help with: (1) calculating averages: 'Average of 85, 90, 78' (2) generating comments: 'Comment for Ana in Math, score 88'";
+    return "I can help with: average calculations (e.g., 'Average of 85, 90, 78') and generating comments (e.g., 'Comment for Ana in Math, score 88').";
   }
 });
 </script>

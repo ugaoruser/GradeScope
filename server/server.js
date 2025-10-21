@@ -79,6 +79,8 @@ app.get('/api/events', (req, res) => {
     if (auth && auth.startsWith('Bearer ')) token = auth.slice(7);
     // Then try cookies
     if (!token) token = (req.headers.cookie||'').split(';').map(s=>s.trim()).reduce((acc,cur)=>{ const i=cur.indexOf('='); if(i>0) acc[cur.slice(0,i)] = decodeURIComponent(cur.slice(i+1)); return acc; },{}).token;
+    // Finally support query token for EventSource cross-origin
+    if (!token && req.query && req.query.token) token = req.query.token;
     if (!token) return res.status(401).end();
     try {
       jwt.verify(token, process.env.JWT_SECRET || 'secret');

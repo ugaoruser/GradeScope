@@ -219,6 +219,8 @@
     }
 
     function loadGradeData(quarter) {
+      let lastCategories = [];
+      let lastItems = [];
       // Try cached render first (fast UI), then fetch fresh
       if (!renderFromCache(quarter)){
         document.getElementById('ptTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
@@ -229,7 +231,7 @@
       // Fetch categories to get weights
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`)
       .then(res => res.json())
-      .then(categories => {
+      .then(categories => { lastCategories = categories;
         // Set weights for each category
         categories.forEach(category => {
           if (category.name === 'Performance Task') {
@@ -246,7 +248,7 @@
         return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`);
       })
       .then(res => res.json())
-      .then(items => {
+      .then(items => { lastItems = items;
         // Group items by category
         const ptItems = items.filter(item => item.category_name === 'Performance Task');
         const wwItems = items.filter(item => item.category_name === 'Written Works');
@@ -293,11 +295,10 @@
         }
         // Cache fresh payload
         try{
-          localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories, items, summary, ts: Date.now() }));
+          localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories: lastCategories, items: lastItems, summary, ts: Date.now() }));
         }catch{}
       })
-        console.error('Error loading grade data:', error);
-      });
+      .catch((error) => { console.error('Error loading grade data:', error); });
     }
     
     function populateTable(tableId, items, renderRowFunc) {

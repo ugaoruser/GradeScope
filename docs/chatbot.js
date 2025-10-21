@@ -293,3 +293,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Expose a singleton agent for collaboration across pages
+if (typeof window !== 'undefined') {
+  if (!window.Agent) {
+    try {
+      window.Agent = new FeedbackChatbot();
+    } catch (_) {}
+  }
+}

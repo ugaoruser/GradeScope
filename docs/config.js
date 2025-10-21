@@ -1,7 +1,10 @@
 // API base resolution without hardcoded deploy URL
 window.API_BASE = (function(){
-  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+  const host = location.hostname;
+  const isLocal = ['localhost','127.0.0.1'].includes(host);
   if (isLocal) return 'http://localhost:3000';
+  // When hosted on GitHub Pages, call the Render API
+  if (host.endsWith('github.io')) return 'https://gradescope-a4hw.onrender.com';
   if (window.ENV_API_BASE) return window.ENV_API_BASE;
   return `${location.protocol}//${location.host}`;
 })();
@@ -12,6 +15,10 @@ window.API_BASE = (function(){
     const of = window.fetch.bind(window);
     window.fetch = (input, init)=>{
       const opts = Object.assign({ credentials: 'include' }, init||{});
+      const headers = new Headers(opts.headers || {});
+      const t = localStorage.getItem('token');
+      if (t && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${t}`);
+      opts.headers = headers;
       return of(input, opts).then(r=>{
         if (r && r.status === 401) {
           try{ localStorage.clear(); }catch{}
@@ -40,8 +47,11 @@ window.API_BASE = (function(){
   // Session helpers
   const getToken = () => localStorage.getItem('token');
   const getRole = () => localStorage.getItem('role');
-  // Cookie-based auth; no Authorization header needed for same-origin
-  const authHeaders = () => ({ });
+  // Prefer cookie for same-origin; add Authorization header automatically when token exists (needed for cross-origin)
+  const authHeaders = () => {
+    const t = localStorage.getItem('token');
+    return t ? { 'Authorization': `Bearer ${t}` } : {};
+  };
 
   // ---------- Auth ----------
   async function handleLogin(event){
@@ -66,14 +76,14 @@ window.API_BASE = (function(){
 
   function persistAuth(data, email){
     const items = {
-      // Do not store JWT in localStorage; rely on httpOnly cookie
+      token: data.token || localStorage.getItem('token') || '',
       role: data.role,
       userId: data.userId,
       user: JSON.stringify({ name: data.name, userId: data.userId, role: data.role }),
       email: email,
       fullName: data.name || ''
     };
-    Object.entries(items).forEach(([k,v])=> localStorage.setItem(k, v));
+    Object.entries(items).forEach(([k,v])=> (v!==undefined && v!==null) && localStorage.setItem(k, v));
   }
 
   async function parentFlow(){
@@ -151,7 +161,8 @@ window.API_BASE = (function(){
   function connectEvents(){
     if (sse) return;
     try{
-      sse = new EventSource(`${window.API_BASE}/api/events`);
+      const tok = getToken();
+      sse = new EventSource(`${window.API_BASE}/api/events${tok?`?token=${encodeURIComponent(tok)}`:''}`);
       const refresh = debounce(()=>{
         try{
           if (Page.is('homepage1.html')) loadClasses();
@@ -258,11 +269,7 @@ window.API_BASE = (function(){
   function bindHomepage1UI(){
     qs('#navHome')?.addEventListener('click', ()=> location.href='homepage1.html');
     qs('#navSettings')?.addEventListener('click', ()=> location.href='settings.html');
-    qs('#accountBtn')?.addEventListener('click', (e)=>{ e.stopPropagation(); qs('#accountDropdown')?.classList.toggle('show'); });
-    document.addEventListener('click', (e)=>{
-      const dd = qs('#accountDropdown'); const btn = qs('#accountBtn');
-      if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('show');
-    });
+    // Account dropdown handled globally in attachAccountDropdownHandlers
     qs('#logoutBtn')?.addEventListener('click', logout);
     qs('#aboutBtn')?.addEventListener('click', ()=> showAbout());
     qs('#closeAboutBtn')?.addEventListener('click', ()=> closeAbout());
@@ -431,11 +438,7 @@ window.API_BASE = (function(){
   function bindHomepage2UI(){
     qs('#navHomeT')?.addEventListener('click', ()=> location.href='homepage2.html');
     qs('#navSettingsT')?.addEventListener('click', ()=> location.href='settings.html');
-    qs('#accountBtnT')?.addEventListener('click', (e)=>{ e.stopPropagation(); qs('#accountDropdown')?.classList.toggle('show'); });
-    document.addEventListener('click', (e)=>{
-      const dd = qs('#accountDropdown'); const btn = qs('#accountBtnT');
-      if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('show');
-    });
+    // Account dropdown handled globally in attachAccountDropdownHandlers
     qs('#logoutBtnT')?.addEventListener('click', logout);
     // About modal
     qs('#aboutBtn')?.addEventListener('click', ()=> showAbout());
