@@ -43,10 +43,33 @@
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-            <li><strong>First Name:</strong> <span id="displayFirstName" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
-            <li><strong>Last Name:</strong> <span id="displayLastName" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
-            <li><strong>Email:</strong> <span id="displayEmail" class="field-display" style="display:inline-block; margin-left:8px; border:none; background:transparent; padding:0;"></span></li>
+            <li><strong>First Name:</strong> <input id="editFirstName" class="field-display" style="display:inline-block; margin-left:8px;" /></li>
+            <li><strong>Last Name:</strong> <input id="editLastName" class="field-display" style="display:inline-block; margin-left:8px;" /></li>
+            <li><strong>Email:</strong> <span id="displayEmail" class="field-display" style="display:inline-block; margin-left:8px;"></span></li>
           </ul>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button id="saveProfileBtn" class="btn btn-primary">Save Profile</button>
+          </div>
+          <div id="profileMsg" class="small" style="margin-top:6px;color:#2563eb;"></div>
+        </div>
+
+        <div class="settings-card" id="themeCard">
+          <div class="settings-section-title">Appearance</div>
+          <button id="toggleThemeBtn" class="btn btn-primary">Toggle Dark Mode</button>
+        </div>
+
+        <div class="settings-card" id="parentLinkCard" style="display:none;">
+          <div class="settings-section-title">Link a Child (Parent)</div>
+          <div class="form-group">
+            <label for="childEmail">Child's Email</label>
+            <input type="email" id="childEmail" placeholder="student@example.com">
+          </div>
+          <button id="linkChildBtn" class="btn btn-primary">Link Child</button>
+          <div id="linkMsg" class="small" style="margin-top:8px;"></div>
+          <div style="margin-top:12px;">
+            <div style="font-weight:700;margin-bottom:6px;">Linked Children</div>
+            <ul id="childrenList" style="list-style:disc;padding-left:20px;"></ul>
+          </div>
         </div>
 
         <div class="settings-card danger">
@@ -57,6 +80,8 @@
       </div>
     </div>
   </div>
+  
+  <div id="toast" style="position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#111827;color:#fff;padding:10px 14px;border-radius:8px;display:none;z-index:500;"></div>
   
   <!-- About Modal (no profile info) -->
 <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" style="display:none;">
@@ -80,13 +105,23 @@
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; }
 
+    // Theme init
+    (function(){
+      const t = localStorage.getItem('theme') || 'light';
+      document.documentElement.dataset.theme = t;
+    })();
+
     // Load profile
-    fetch(`${window.API_BASE}/api/me`, { headers: { Authorization: 'Bearer ' + token }})
+    fetch(`${window.API_BASE}/api/me`)
       .then(r => r.json())
       .then(u => {
-        document.getElementById('displayFirstName').textContent = u.firstName || '';
-        document.getElementById('displayLastName').textContent = u.lastName || '';
+        document.getElementById('editFirstName').value = u.firstName || '';
+        document.getElementById('editLastName').value = u.lastName || '';
         document.getElementById('displayEmail').textContent = u.email || localStorage.getItem('email') || '';
+        if (u.role === 'parent') {
+          document.getElementById('parentLinkCard').style.display = 'block';
+          loadChildren();
+        }
       });
 
     // About modal
@@ -97,6 +132,45 @@
     aboutBtn.addEventListener('click', showAbout);
     // Fast logout binding for settings page
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    // Save profile
+    document.getElementById('saveProfileBtn').addEventListener('click', async()=>{
+      const fn = document.getElementById('editFirstName').value.trim();
+      const ln = document.getElementById('editLastName').value.trim();
+      const msg = document.getElementById('profileMsg');
+      msg.textContent='';
+      if (!fn || !ln) { msg.textContent = 'First and last name are required.'; return; }
+      try{
+        const r = await fetch(`${window.API_BASE}/api/me/update`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ firstName: fn, lastName: ln }) });
+        const d = await r.json(); if(!r.ok) throw new Error(d.message||'Failed to save');
+        localStorage.setItem('fullName', d.fullName || `${fn} ${ln}`);
+        msg.style.color = '#059669'; msg.textContent = 'Saved!';
+      }catch(e){ msg.style.color = '#ef4444'; msg.textContent = e.message; }
+    });
+
+    // Theme toggle
+    document.getElementById('toggleThemeBtn').addEventListener('click', ()=>{
+      const cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = cur;
+      localStorage.setItem('theme', cur);
+      showToast(`Theme set to ${cur}`);
+    });
+
+    // Parent link actions
+    function showToast(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.style.display='block'; setTimeout(()=> t.style.display='none', 1600); }
+    async function loadChildren(){
+      try{ const r=await fetch(`${window.API_BASE}/api/children`); if(!r.ok) return; const children=await r.json(); const ul=document.getElementById('childrenList'); ul.innerHTML=''; children.forEach(c=>{ const li=document.createElement('li'); li.textContent=c.full_name; ul.appendChild(li); }); }catch{}
+    }
+    document.getElementById('linkChildBtn').addEventListener('click', async()=>{
+      const email = document.getElementById('childEmail').value.trim();
+      const msg = document.getElementById('linkMsg'); msg.textContent='';
+      if (!email) { msg.textContent='Please enter a child email.'; return; }
+      try{
+        const r = await fetch(`${window.API_BASE}/api/parent/link`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ childEmail: email }) });
+        const d = await r.json(); if(!r.ok) throw new Error(d.message||'Failed');
+        showToast('Linked successfully'); document.getElementById('childEmail').value=''; loadChildren();
+      }catch(e){ msg.textContent = e.message; }
+    });
 
     // Danger zone
     document.getElementById('deleteAccountBtn').addEventListener('click', () => {

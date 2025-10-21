@@ -21,10 +21,16 @@ const PORT = process.env.PORT || 3000;
 
 // CORS
 app.use(cors({
-  origin: [
-    'https://ugaoruser.github.io', // your GitHub Pages domain
-    'http://localhost:5500'       // for local testing
-  ],
+  origin: function(origin, cb){
+    const allowed = [
+      undefined, // same-origin
+      'https://ugaoruser.github.io',
+      'http://localhost:5500',
+      'http://localhost:3000'
+    ];
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    return cb(null, true); // be permissive for now
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -34,11 +40,61 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "../docs"))); // serve frontend
 
+// Favicon: serve a tiny fallback if /favicon.ico missing on disk
+app.get('/favicon.ico', (req, res) => {
+  try{
+    const filePath = path.join(__dirname, '../favicon.ico');
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+    // 1x1 transparent PNG as fallback (b64)
+    const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/ayv0XQAAAAASUVORK5CYII=';
+    const buf = Buffer.from(b64, 'base64');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Content-Type', 'image/x-icon');
+    return res.status(200).end(buf);
+  }catch{
+    return res.status(204).end();
+  }
+});
+
+// --- Server-Sent Events (SSE) for real-time updates ---
+const sseClients = new Set();
+function broadcast(event, data) {
+  for (const res of sseClients) {
+    try {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch {}
+  }
+}
+app.get('/api/events', (req, res) => {
+  try {
+    const token = req.query.token;
+    if (!token) return res.status(401).end();
+    try {
+      jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    } catch {
+      return res.status(401).end();
+    }
+    res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+    res.write(': connected\n\n');
+    sseClients.add(res);
+    const ping = setInterval(() => {
+      try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
+    }, 25000);
+    req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
+  } catch {
+    try { res.end(); } catch {}
+  }
+});
+
 // MySQL pool
+const required = ['DB_HOST','DB_USER','DB_PASSWORD','DB_NAME'];
+for (const k of required){ if (!process.env[k]) { console.warn(`[warn] Missing ${k} in environment. Using defaults may be insecure.`); } }
 const db = await mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "MySQLRoot123",
+  password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "grade_tracker",
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
   connectionLimit: 10
@@ -47,23 +103,28 @@ const db = await mysql.createPool({
 // Lightweight startup migration to ensure required schema parts exist
 async function ensureStartupMigrations() {
   try {
-    // Ensure 'section' column exists on subjects (MySQL 8+: IF NOT EXISTS)
+    // Ensure 'section', 'code', 'teacher_id', 'grade_level' columns exist on subjects
     await db.query(`
       ALTER TABLE subjects
-      ADD COLUMN IF NOT EXISTS section VARCHAR(50) NULL
+      ADD COLUMN IF NOT EXISTS section VARCHAR(50) NULL,
+      ADD COLUMN IF NOT EXISTS code VARCHAR(32) UNIQUE NULL,
+      ADD COLUMN IF NOT EXISTS teacher_id INT NULL,
+      ADD COLUMN IF NOT EXISTS grade_level VARCHAR(50) NULL
     `);
   } catch (e) {
     // Fallback for older MySQL versions without IF NOT EXISTS
     try {
       const [cols] = await db.query(`
         SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'subjects' AND COLUMN_NAME = 'section'
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'subjects'
       `);
-      if (!cols.length) {
-        await db.query(`ALTER TABLE subjects ADD COLUMN section VARCHAR(50) NULL`);
-      }
+      const have = new Set(cols.map(c=>c.COLUMN_NAME));
+      if (!have.has('section')) await db.query(`ALTER TABLE subjects ADD COLUMN section VARCHAR(50) NULL`);
+      if (!have.has('code')) await db.query(`ALTER TABLE subjects ADD COLUMN code VARCHAR(32) UNIQUE NULL`);
+      if (!have.has('teacher_id')) await db.query(`ALTER TABLE subjects ADD COLUMN teacher_id INT NULL`);
+      if (!have.has('grade_level')) await db.query(`ALTER TABLE subjects ADD COLUMN grade_level VARCHAR(50) NULL`);
     } catch (inner) {
-      console.error('Failed to ensure subjects.section column:', inner);
+      console.error('Failed to ensure subjects columns:', inner);
     }
   }
   try {
@@ -83,7 +144,58 @@ async function ensureStartupMigrations() {
     console.error('Failed to ensure grade_categories table:', e);
   }
   try {
-    // Ensure scores table exists
+    // Ensure grade_items table exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS grade_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        subject_id INT NOT NULL,
+        category_id INT NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        topic VARCHAR(255),
+        item_type VARCHAR(50),
+        included_in_final TINYINT(1) DEFAULT 1,
+        max_score DECIMAL(8,2) NOT NULL,
+        date_assigned DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES grade_categories(id) ON DELETE CASCADE
+      )
+    `);
+  } catch (e) {
+    console.error('Failed to ensure grade_items table:', e);
+  }
+  try {
+    // Ensure enrollments table exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS enrollments (
+        subject_id INT NOT NULL,
+        student_id INT NOT NULL,
+        enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (subject_id, student_id),
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+  } catch (e) {
+    console.error('Failed to ensure enrollments table:', e);
+  }
+  try {
+    // Ensure parent_child table exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS parent_child (
+        parent_id INT NOT NULL,
+        child_id INT NOT NULL,
+        linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (parent_id, child_id),
+        FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (child_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+  } catch (e) {
+    console.error('Failed to ensure parent_child table:', e);
+  }
+  try {
+    // Ensure scores and announcements tables exist
     await db.query(`
       CREATE TABLE IF NOT EXISTS scores (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -97,12 +209,26 @@ async function ensureStartupMigrations() {
         UNIQUE (grade_item_id, student_id)
       )
     `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        subject_id INT NOT NULL,
+        teacher_id INT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+        FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
   } catch (e) {
-    console.error('Failed to ensure scores table:', e);
+    console.error('Failed to ensure scores/announcements tables:', e);
   }
 }
 
 await ensureStartupMigrations();
+
+// Helper: basic sanitization
+function sanitizeStr(s, max=255){ if (typeof s !== 'string') return ''; const t = s.trim(); return t.length>max? t.slice(0,max): t; }
 
 // Helper: find user by email & role
 async function findUserByEmailAndRole(email, roleName) {
@@ -132,12 +258,23 @@ async function getRoleId(roleName) {
   return rows[0]?.id;
 }
 
-// Middleware: verify JWT token
+// Middleware: verify JWT token (Authorization header or httpOnly cookie)
+function parseTokenFromCookies(cookieHeader){
+  if (!cookieHeader) return null;
+  try{
+    return cookieHeader.split(';').map(s=>s.trim()).reduce((acc,cur)=>{
+      const idx = cur.indexOf('=');
+      if (idx>0){ acc[cur.slice(0,idx)] = decodeURIComponent(cur.slice(idx+1)); }
+      return acc;
+    }, {})['token'] || null;
+  }catch{ return null; }
+}
 function verifyToken(req, res, next) {
   const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ message: "Missing authorization" });
-  
-  const token = auth.replace("Bearer ", "");
+  let token = null;
+  if (auth && auth.startsWith('Bearer ')) token = auth.replace('Bearer ', '');
+  if (!token) token = parseTokenFromCookies(req.headers.cookie);
+  if (!token) return res.status(401).json({ message: "Missing authorization" });
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET || "secret");
     req.user = payload;
@@ -150,7 +287,11 @@ function verifyToken(req, res, next) {
 // Signup route
 app.post("/api/signup", async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    let { firstName, lastName, email, password, role } = req.body;
+    firstName = sanitizeStr(firstName, 60);
+    lastName = sanitizeStr(lastName, 60);
+    email = sanitizeStr(email, 140).toLowerCase();
+    role = sanitizeStr(role, 20);
     
     if (!firstName || !lastName || !email || !password || !role) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -230,6 +371,10 @@ app.post("/api/login", async (req, res) => {
       process.env.JWT_SECRET || "secret",
       { expiresIn: "8h" }
     );
+
+    // Set httpOnly cookie for better security when same-origin
+    const isProd = process.env.NODE_ENV === 'production';
+    res.setHeader('Set-Cookie', `token=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${60*60*8}; SameSite=Lax${isProd?'; Secure':''}`);
 
     // ✅ Return correct structure
     res.json({
@@ -387,6 +532,7 @@ app.post("/api/grades", verifyToken, async (req, res) => {
       ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)
     `, [gradeItemId, studentId, grade, note]);
 
+broadcast('scoreUpdated', { subjectId, student_id: studentId, grade_item_id: gradeItemId });
     res.json({ message: "Grade added successfully" });
   } catch (err) {
     console.error(err);
@@ -427,29 +573,22 @@ app.post("/api/subjects", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Only teachers can create subjects" });
     }
 
-    const { title, gradeLevel, section } = req.body;
+    let { title, gradeLevel, section } = req.body;
+    title = sanitizeStr(title, 120);
+    gradeLevel = sanitizeStr(gradeLevel, 40);
+    section = sanitizeStr(section, 50);
     
     if (!title || !gradeLevel || !section) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     // Generate a secure 8-character access code with mixed charset
-    function generateAccessCode() {
-      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      const lower = 'abcdefghijklmnopqrstuvwxyz';
-      const digits = '0123456789';
-      const symbols = '!@#$%^&*()-_=+[]{};:,.<>?';
-      const all = upper + lower + digits + symbols;
-      const pick = (set) => set[Math.floor(Math.random() * set.length)];
-      // ensure at least one of each class
-      const required = [pick(upper), pick(lower), pick(digits), pick(symbols)];
-      const remaining = Array.from({ length: 4 }, () => pick(all));
-      const chars = required.concat(remaining);
-      for (let i = chars.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [chars[i], chars[j]] = [chars[j], chars[i]];
-      }
-      return chars.join('');
+function generateAccessCode() {
+      // 6-character, uppercase alphanumeric for easy sharing
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
     }
     const accessCode = generateAccessCode();
     
@@ -479,6 +618,7 @@ app.post("/api/subjects", verifyToken, async (req, res) => {
       console.warn('Failed to send access code email:', mailErr);
     }
 
+broadcast('classCreated', { subjectId: result.insertId, title, section, teacherId: req.user.userId });
     res.json({ 
       message: "Subject created successfully", 
       subjectId: result.insertId,
@@ -535,6 +675,7 @@ app.post("/api/subjects/join", verifyToken, async (req, res) => {
       ON DUPLICATE KEY UPDATE enrolled_at = CURRENT_TIMESTAMP
     `, [subject.id, studentId]);
 
+broadcast('enrollmentUpdated', { subjectId: subject.id, studentId });
     res.json({ message: "Successfully joined the subject" });
   } catch (err) {
     console.error(err);
@@ -671,11 +812,13 @@ app.post("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
     }
 
     const { subjectId } = req.params;
-    const { items } = req.body;
+const { items } = req.body;
     
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({ message: "Items array is required" });
     }
+    // Sanitize items minimally
+    items.forEach(it=>{ if (it){ it.title = sanitizeStr(it.title, 120); it.topic = sanitizeStr(it.topic, 200); it.item_type = sanitizeStr(it.item_type||it.itemType||'', 40); } });
 
     // Verify teacher owns this subject
     const [subjects] = await db.query(
@@ -951,6 +1094,7 @@ app.post("/api/subjects/:subjectId/scores", verifyToken, async (req, res) => {
       ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)
     `, [grade_item_id, student_id, score, comments]);
     
+broadcast('scoreUpdated', { subjectId: Number(subjectId), student_id, grade_item_id });
     res.json({ message: "Score saved successfully" });
   } catch (err) {
     console.error(err);
@@ -1024,6 +1168,83 @@ app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, async (req, 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Parent link a child by email (simple immediate link if student exists)
+app.post('/api/parent/link', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'parent') return res.status(403).json({ message: 'Only parents can link children' });
+    const { childEmail } = req.body;
+    if (!childEmail) return res.status(400).json({ message: 'Child email is required' });
+    const [rows] = await db.query(`
+      SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id
+      WHERE u.email = ? AND r.name = 'student' LIMIT 1
+    `, [childEmail]);
+    const child = rows[0];
+    if (!child) return res.status(404).json({ message: 'Student account not found' });
+    await db.query(`
+      INSERT IGNORE INTO parent_child (parent_id, child_id) VALUES (?, ?)
+    `, [req.user.userId, child.id]);
+    broadcast('parentLinkUpdated', { parentId: req.user.userId, childId: child.id });
+    res.json({ message: 'Linked successfully' });
+  } catch (e) {
+    console.error('Link child error:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Subject announcements
+app.get('/api/subjects/:subjectId/announcements', verifyToken, async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+    // Basic access: teacher of subject or enrolled student/parent of enrolled child
+    let allowed = false;
+    if (req.user.role === 'teacher') {
+      const [s] = await db.query(`SELECT 1 FROM subjects WHERE id = ? AND teacher_id = ?`, [subjectId, req.user.userId]);
+      allowed = s.length > 0;
+    } else if (req.user.role === 'student') {
+      const [en] = await db.query(`SELECT 1 FROM enrollments WHERE subject_id = ? AND student_id = ?`, [subjectId, req.user.userId]);
+      allowed = en.length > 0;
+    } else if (req.user.role === 'parent') {
+      const { childId } = req.query;
+      if (childId) {
+        const [pc] = await db.query(`SELECT 1 FROM parent_child WHERE parent_id = ? AND child_id = ?`, [req.user.userId, childId]);
+        if (pc.length) {
+          const [en] = await db.query(`SELECT 1 FROM enrollments WHERE subject_id = ? AND student_id = ?`, [subjectId, childId]);
+          allowed = en.length > 0;
+        }
+      }
+    }
+    if (!allowed) return res.status(403).json({ message: 'Not authorized' });
+
+    const [rows] = await db.query(`
+      SELECT a.id, a.message, a.created_at, u.full_name as teacher_name
+      FROM announcements a JOIN users u ON a.teacher_id = u.id
+      WHERE a.subject_id = ? ORDER BY a.created_at DESC LIMIT 50
+    `, [subjectId]);
+    res.json(rows);
+  } catch (e) {
+    console.error('Get announcements error:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/subjects/:subjectId/announcements', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') return res.status(403).json({ message: 'Only teachers can post announcements' });
+    const { subjectId } = req.params;
+    let { message } = req.body;
+    message = sanitizeStr(message, 5000);
+    if (!message) return res.status(400).json({ message: 'Message is required' });
+    const [s] = await db.query(`SELECT 1 FROM subjects WHERE id = ? AND teacher_id = ?`, [subjectId, req.user.userId]);
+    if (!s.length) return res.status(403).json({ message: 'Not authorized' });
+    await db.query(`INSERT INTO announcements (subject_id, teacher_id, message) VALUES (?, ?, ?)`, [subjectId, req.user.userId, message.trim()]);
+    broadcast('announcement', { subjectId: Number(subjectId) });
+    res.json({ message: 'Announcement posted' });
+  } catch (e) {
+    console.error('Post announcement error:', e);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

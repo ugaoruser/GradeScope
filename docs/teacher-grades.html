@@ -322,7 +322,7 @@
 document.getElementById('subjectTitle').textContent = subjectName;
     // Fetch subject details to show section/grade level
     (function fetchSubjectMeta(){
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`, { headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
         .then(r=>r.json())
         .then(list=>{
           const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
@@ -407,9 +407,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
     
     // --- Data loading functions ---
     function loadStudents() {
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const select = document.getElementById('studentSelect');
+      while (select.options.length > 1) { select.remove(1); }
+      const placeholder = document.createElement('option'); placeholder.disabled = true; placeholder.text='Loading...'; select.appendChild(placeholder);
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load students');
         return res.json();
@@ -443,9 +444,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     function loadGradeCategories() {
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load grade categories');
         return res.json();
@@ -468,9 +467,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     function loadGradeItems() {
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      document.querySelector('#ptTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+      document.querySelector('#wwTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+      document.querySelector('#peTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load grade items');
         return res.json();
@@ -524,14 +524,15 @@ document.getElementById('subjectTitle').textContent = subjectName;
     function loadStudentGrades() {
       selectedStudentId = document.getElementById('studentSelect').value;
       
+      const tbody = document.querySelector('#studentGradesTable tbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div><div class="loading-placeholder" style="height:16px"></div><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+
       if (!selectedStudentId) {
         document.getElementById('studentGradesSection').classList.add('hidden');
         return;
       }
       
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load student grades');
         return res.json();
@@ -567,6 +568,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         });
         
         document.getElementById('studentGradesSection').classList.remove('hidden');
+        document.dispatchEvent(new Event('grades:loaded'));
       })
       .catch(err => {
         console.error('Error loading student grades:', err);
@@ -659,10 +661,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categories })
       })
       .then(res => {
@@ -726,10 +725,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/items`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items })
       })
       .then(res => {
@@ -772,10 +768,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scoreData)
       })
       .then(res => {
@@ -818,10 +811,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         return;
       }
       
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items/${id}`, { method: 'DELETE' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to delete grade item');
         return res.json();
@@ -852,10 +842,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         return;
       }
       
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores/${id}`, { method: 'DELETE' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to delete score');
         return res.json();
@@ -884,8 +871,50 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     init();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="api-mock.js"></script>
-  <script src="chart.js"></script>
+  <script>
+    // Lazy-load Chart.js and render based on table data
+    (function(){
+      const canvas = document.getElementById('performanceChart');
+      if (!canvas) return;
+      let loaded = false;
+      async function loadLib(){
+        if (loaded) return; loaded = true;
+        await new Promise(res=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'; s.onload=res; s.onerror=res; document.head.appendChild(s); });
+        try { renderChartFromState(); } catch {}
+      }
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if (e.isIntersecting) { loadLib(); io.disconnect(); } });
+      }, { root: null, threshold: 0.1 });
+      io.observe(canvas);
+
+      let chart;
+      window.renderChartFromState = function(){
+        try{
+          if (!window.Chart) return;
+          const tbody = document.querySelector('#studentGradesTable tbody');
+          if (!tbody) return;
+          const labels = [];
+          const series = [];
+          document.querySelectorAll('#studentGradesTable tbody tr').forEach((tr)=>{
+            const tds = tr.querySelectorAll('td');
+            if (tds.length >= 4){
+              labels.push(tds[0].textContent.trim());
+              const pct = (tds[3].textContent||'0').replace('%','').trim();
+              const v = Number(pct) || 0; series.push(v);
+            }
+          });
+          const ctx = canvas.getContext('2d');
+          const data = { labels, datasets: [{ label:'Student Score %', data: series, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', tension:0.25, fill:true }] };
+          const options = { scales: { y: { min:0, max:100, title:{ display:true, text:'%' } } } };
+          if (chart){ chart.data=data; chart.options=options; chart.update(); }
+          else { chart = new Chart(ctx, { type:'line', data, options }); }
+          const avgLegend = document.querySelector('.chart-legend .legend-item:nth-child(2)');
+          if (avgLegend) avgLegend.style.display='none';
+        }catch{}
+      }
+
+      document.addEventListener('grades:loaded', ()=>{ try{ renderChartFromState(); }catch{} });
+    })();
+  </script>
 </body>
 </html>

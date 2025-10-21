@@ -107,6 +107,9 @@
         Grade of Student: <span id="finalGrade">N/A</span>
         <p><em>This grade is not final unless all data of all tasks is taken into account.</em></p>
       </div>
+      <div class="chart-container">
+        <canvas id="progressChart"></canvas>
+      </div>
     </div>
     
     <div id="assessmentContent" class="tab-content">
@@ -182,9 +185,7 @@
     // Load grade data for the selected quarter
     function loadGradeData(quarter) {
       // Fetch categories to get weights
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`)
       .then(res => res.json())
       .then(categories => {
         // Set weights for each category
@@ -200,9 +201,7 @@
         
         // Fetch grade items (include childId for parents)
         const childParam = (role === 'parent' && window.selectedChildId) ? `&childId=${encodeURIComponent(window.selectedChildId)}` : '';
-        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`);
       })
       .then(res => res.json())
       .then(items => {
@@ -218,8 +217,10 @@
         populateTable('peTable', peItems, renderPERow);
         populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
         
-        // Calculate final grade
-        calculateFinalGrade(ptItems, wwItems, peItems);
+        // Calculate final graden        calculateFinalGrade(ptItems, wwItems, peItems);
+        // Update progress chart with included items only
+        const included = items.filter(i => i.included_in_final);
+        updateChart(included);
       })
       .catch(error => {
         console.error('Error loading grade data:', error);
@@ -282,6 +283,7 @@
       `;
     }
     
+    let progressChart;
     function calculateFinalGrade(ptItems, wwItems, peItems) {
       const ptWeight = parseFloat(document.getElementById('ptWeight').textContent) / 100;
       const wwWeight = parseFloat(document.getElementById('wwWeight').textContent) / 100;
@@ -292,21 +294,21 @@
       let peTotal = 0, peMax = 0;
       
       ptItems.forEach(item => {
-        if (item.score) {
+        if (item.score != null) {
           ptTotal += parseFloat(item.score);
           ptMax += parseFloat(item.max_score);
         }
       });
       
       wwItems.forEach(item => {
-        if (item.score) {
+        if (item.score != null) {
           wwTotal += parseFloat(item.score);
           wwMax += parseFloat(item.max_score);
         }
       });
       
       peItems.forEach(item => {
-        if (item.score) {
+        if (item.score != null) {
           peTotal += parseFloat(item.score);
           peMax += parseFloat(item.max_score);
         }
@@ -319,6 +321,52 @@
       if (peMax > 0) finalGrade += (peTotal / peMax) * peWeight * 100;
       
       document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
+    }
+
+    async function updateChart(allItems) {
+      try{
+        await ensureChartLib();
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        const points = [];
+        let total = 0, totalMax = 0;
+        const sorted = [...allItems].sort((a,b)=>{
+          const da = a.date_assigned ? new Date(a.date_assigned).getTime() : 0;
+          const db = b.date_assigned ? new Date(b.date_assigned).getTime() : 0;
+          return da - db;
+        });
+        sorted.forEach((it, idx)=>{
+          if (it.score != null && it.max_score) {
+            total += Number(it.score);
+            totalMax += Number(it.max_score);
+            const pct = totalMax > 0 ? (total/totalMax)*100 : 0;
+            points.push({ x: idx+1, y: Number(pct.toFixed(2)) });
+          }
+        });
+        const data = {
+          datasets: [{
+            label: 'Progress %',
+            data: points,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.2)',
+            tension: 0.25,
+            fill: true,
+          }]
+        };
+        const options = { scales: { x: { title: { display:true, text:'Task #'} }, y: { min:0, max:100, title:{ display:true, text:'%'} } } };
+        if (progressChart) { progressChart.data = data; progressChart.options = options; progressChart.update(); }
+        else { progressChart = new Chart(ctx, { type:'line', data, options }); }
+      }catch(e){ /* no-op */ }
+    }
+
+    function ensureChartLib(){
+      return new Promise((resolve)=>{
+        if (window.Chart) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+        s.onload = ()=> resolve();
+        s.onerror = ()=> resolve();
+        document.head.appendChild(s);
+      });
     }
     
     // Navigation functions
@@ -333,11 +381,32 @@
       window.location.href = 'login.html';
     }
     
+    // Real-time reload via SSE for this subject
+    (function(){
+      try{
+        const es = new EventSource(`${window.API_BASE}/api/events`);
+        es.addEventListener('scoreUpdated', (ev)=>{
+          try{
+            const p = JSON.parse(ev.data||'{}');
+            if (String(p.subjectId) === String(subjectId)) {
+              // If parent, ensure it's the selected child
+              if (role === 'parent') {
+                const sel = window.selectedChildId || localStorage.getItem('selectedChildId');
+                if (sel && String(p.student_id) !== String(sel)) return;
+              }
+              loadGradeData(currentQuarter);
+            }
+          }catch{}
+        });
+        es.onerror = ()=>{ try{ es.close(); }catch{} };
+      }catch{}
+    })();
+
     // Initialize based on role
     const isParent = role === 'parent';
     if (isParent) {
       const childSelect = document.getElementById('childSelect');
-      fetch(`${window.API_BASE}/api/children`, { headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`${window.API_BASE}/api/children`)
         .then(res => res.json())
         .then(children => {
           if (!children || children.length === 0) return;

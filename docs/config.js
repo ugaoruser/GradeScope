@@ -1,7 +1,12 @@
-window.API_BASE =
-  (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000'
-    : 'https://gradescope-a4hw.onrender.com'
+// API base resolution without hardcoded deploy URL
+window.API_BASE = (function(){
+  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+  if (isLocal) return 'http://localhost:3000';
+  // Prefer explicit global override if provided (e.g., via inline script before this file)
+  if (window.ENV_API_BASE) return window.ENV_API_BASE;
+  // Default to same-origin when served by the Node server
+  return `${location.protocol}//${location.host}`;
+})();
 
 ;(function(){
   'use strict';
@@ -20,7 +25,8 @@ window.API_BASE =
   // Session helpers
   const getToken = () => localStorage.getItem('token');
   const getRole = () => localStorage.getItem('role');
-  const authHeaders = () => ({ 'Authorization': `Bearer ${getToken()}` });
+  // Cookie-based auth; no Authorization header needed for same-origin
+  const authHeaders = () => ({ });
 
   // ---------- Auth ----------
   async function handleLogin(event){
@@ -122,6 +128,28 @@ window.API_BASE =
     if (loader){ loader.style.display = loading ? 'block' : 'none'; }
   }
 
+  // Real-time via SSE
+  let sse;
+  function connectEvents(){
+    if (sse || !getToken()) return;
+    try{
+      sse = new EventSource(`${window.API_BASE}/api/events`);
+      const refresh = debounce(()=>{
+        try{
+          if (Page.is('homepage1.html')) loadClasses();
+          if (Page.is('homepage2.html')) loadTeacherSubjects();
+        }catch(e){}
+      }, 400);
+      sse.addEventListener('classCreated', refresh);
+      sse.addEventListener('enrollmentUpdated', refresh);
+      sse.addEventListener('scoreUpdated', ()=>{
+        // handled per-page where needed
+      });
+      sse.onerror = () => { try { sse.close(); } catch{} sse = null; setTimeout(connectEvents, 2000); };
+    }catch(e){ sse = null; }
+  }
+  function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+
   // ---------- Page initializers ----------
   function initIndex(){
     const token = getToken(); const role = getRole();
@@ -144,7 +172,7 @@ window.API_BASE =
     const role = getRole(); if (!getToken() || !role){ location.href='login.html'; return; }
     if (role==='teacher'){ location.href='homepage2.html'; return; }
     document.body.dataset.role = role;
-    bindHomepage1UI(); fetchMeAndHeader(); loadClasses();
+    bindHomepage1UI(); fetchMeAndHeader(); loadClasses(); connectEvents();
   }
 
   function bindHomepage1UI(){
@@ -167,7 +195,7 @@ window.API_BASE =
 
   async function fetchMeAndHeader(){
     try{
-      const res = await fetch(`${window.API_BASE}/api/me`, { headers: authHeaders() });
+      const res = await fetch(`${window.API_BASE}/api/me`);
       const userData = await res.json();
       if (!res.ok) throw new Error('Unauthorized');
       localStorage.setItem('firstName', userData.firstName || '');
@@ -199,7 +227,7 @@ window.API_BASE =
     const accessCode = qs('#joinCode')?.value.trim(); if (!accessCode){ alert('Access code is required'); return; }
     try{
       const resp = await fetch(`${window.API_BASE}/api/subjects/join`, {
-        method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ accessCode })
+        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ accessCode })
       });
       const data = await resp.json(); if (!resp.ok) throw new Error(data.message || 'Failed to join');
       alert('Joined successfully'); toggleJoinModal(false); location.reload();
@@ -213,7 +241,7 @@ window.API_BASE =
       const isParent = getRole()==='parent'; const childId = localStorage.getItem('selectedChildId');
       let url = `${window.API_BASE}/api/classes`;
       if (isParent && childId) url += `?childId=${encodeURIComponent(childId)}`;
-      const r = await fetch(url, { headers: authHeaders() });
+      const r = await fetch(url);
       if (r.status===401){ localStorage.clear(); location.replace('login.html'); return; }
       if (!r.ok) throw new Error('Failed to load classes');
       const classes = await r.json();
@@ -239,7 +267,7 @@ window.API_BASE =
   async function switchChild(){
     if (getRole()!=='parent') return;
     try{
-      const r = await fetch(`${window.API_BASE}/api/children`, { headers: authHeaders() });
+      const r = await fetch(`${window.API_BASE}/api/children`);
       if (!r.ok) throw new Error('Failed to load children');
       const children = await r.json();
       if (children.length<=1){ alert('Only one child found in your account.'); return; }
@@ -303,6 +331,7 @@ window.API_BASE =
     setupTeacherHeader();
     loadTeacherSubjects();
     setupChatbotToggle();
+    connectEvents();
   }
 
   function bindHomepage2UI(){
@@ -326,7 +355,7 @@ window.API_BASE =
 
   async function setupTeacherHeader(){
     try{
-      const res = await fetch(`${window.API_BASE}/api/me`, { headers: authHeaders() });
+      const res = await fetch(`${window.API_BASE}/api/me`);
       const userData = await res.json();
       if (res.ok){
         localStorage.setItem('firstName', userData.firstName || '');
@@ -352,7 +381,7 @@ window.API_BASE =
     const btn = qs('#confirmCreate'); const prev = btn?.textContent; if (btn){ btn.disabled = true; btn.textContent = 'Creating...'; }
     try{
       const res = await fetch(`${window.API_BASE}/api/subjects`,{
-        method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ title: className, gradeLevel, section })
+        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ title: className, gradeLevel, section })
       });
       const data = await res.json(); if (!res.ok) throw new Error(data.message || 'Failed to create class');
       const accessCode = data.accessCode || data.access_code || data.code || '';
@@ -369,7 +398,7 @@ window.API_BASE =
     try{
       let res = await fetch(`${window.API_BASE}/api/subjects`, { headers: authHeaders() });
       let list; if (res.ok){ list = await res.json(); } else {
-        const res2 = await fetch(`${window.API_BASE}/api/classes`, { headers: authHeaders() });
+        const res2 = await fetch(`${window.API_BASE}/api/classes`);
         if (!res2.ok) throw new Error('Failed to load classes'); list = await res2.json();
       }
       renderTeacherSubjects(list);

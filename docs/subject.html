@@ -52,6 +52,18 @@
         </tbody>
       </table>
     </div>
+
+    <div id="announcements" style="max-width:800px;margin:16px auto;display:none;">
+      <div style="font-weight:800;margin-bottom:8px;">Announcements</div>
+      <div id="annList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <div id="annForm" style="display:none;">
+        <textarea id="annMessage" rows="3" placeholder="Post an update for your class" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+          <button id="postAnnBtn" class="btn-primary">Post</button>
+        </div>
+      </div>
+    </div>
+
     <div class="info-msg" id="infoMsg"></div>
   </div>
   <script>
@@ -68,9 +80,7 @@
     let currentSubjectId = null;
     if (role === 'teacher') {
       // Fetch subject details to get access code and ID
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subject)}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      })
+      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subject)}`)
         .then(res => res.json())
         .then(subjects => {
           if (subjects.length > 0) {
@@ -88,6 +98,10 @@
             const mg = document.getElementById('manageGradesBtn');
             mg.href = `teacher-grades.html?id=${encodeURIComponent(currentSubjectId)}&name=${encodeURIComponent(subject)}`;
             mg.style.display = 'inline-block';
+            // Announcements UI for teacher
+            document.getElementById('announcements').style.display = 'block';
+            document.getElementById('annForm').style.display = 'block';
+            loadAnnouncements();
             // Now load enrolled students for this subject
             loadStudents(currentSubjectId);
             // Auto-refresh list every 5s to reflect new joins
@@ -145,11 +159,31 @@
       document.getElementById('infoMsg').textContent = 'Unknown role.';
     }
 
+    async function loadAnnouncements(){
+      if (!currentSubjectId) return;
+      try{
+        const r = await fetch(`${window.API_BASE}/api/subjects/${currentSubjectId}/announcements`);
+        if (!r.ok) return; const list = await r.json();
+        const wrap = document.getElementById('annList'); wrap.innerHTML='';
+        list.forEach(a=>{ const d=document.createElement('div'); d.style.cssText='background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;'; d.innerHTML = `<div style="font-weight:700;">${a.teacher_name||'Teacher'}</div><div style="white-space:pre-wrap;">${a.message}</div><div class="small" style="color:#6b7280;margin-top:4px;">${new Date(a.created_at).toLocaleString()}</div>`; wrap.appendChild(d); });
+      }catch{}
+    }
+    document.getElementById('postAnnBtn')?.addEventListener('click', async()=>{
+      if (!currentSubjectId) return; const ta=document.getElementById('annMessage'); const msg=ta.value.trim(); if(!msg) return;
+      const btn=this; try{ const r=await fetch(`${window.API_BASE}/api/subjects/${currentSubjectId}/announcements`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ message: msg }) }); const d=await r.json(); if(!r.ok) throw new Error(d.message||'Failed'); ta.value=''; loadAnnouncements(); }catch(e){ alert(e.message); }
+    });
+
+    // Live updates via SSE for announcements/enrollments
+    try{
+      const es = new EventSource(`${window.API_BASE}/api/events`);
+      es.addEventListener('announcement', (ev)=>{ try{ const p=JSON.parse(ev.data||'{}'); if (String(p.subjectId)===String(currentSubjectId)) loadAnnouncements(); }catch{} });
+      es.addEventListener('enrollmentUpdated', (ev)=>{ try{ const p=JSON.parse(ev.data||'{}'); if (String(p.subjectId)===String(currentSubjectId)) loadStudents(currentSubjectId); }catch{} });
+      es.onerror = ()=>{ try{ es.close(); }catch{} };
+    }catch{}
+
     async function loadStudents(subjectId) {
       try {
-        const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
+        const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`);
         if (!res.ok) throw new Error('Failed to load students');
         const students = await res.json();
         renderForTeacher(students);
