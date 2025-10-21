@@ -62,10 +62,21 @@ window.API_BASE = (function(){
     hideMessages(); setLoading('#login-btn','#loading', true, 'Logging in...');
     try{
       const res = await fetch(`${window.API_BASE}/api/login`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
+      // Gracefully handle non-JSON responses (e.g., HTML error pages)
+      const ctype = res.headers.get('content-type') || '';
+      let data;
+      if (ctype.includes('application/json')){
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        const brief = (text || '').toString().slice(0,140).replace(/\s+/g,' ').trim();
+        const msg = res.status===0 ? 'Network error. Is the server running?' : `Server error (${res.status}). ${brief || 'Unexpected non-JSON response.'}`;
+        throw new Error(msg);
+      }
       if (!res.ok) throw new Error(data.message || 'Invalid email or password.');
       persistAuth(data, email);
       if (data.role === 'parent') { await parentFlow(); return; }
