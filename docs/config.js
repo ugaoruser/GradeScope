@@ -168,6 +168,58 @@ window.API_BASE = (function(){
   }
   function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
+  // Shared UI components (header/sidebar) without new files
+  const Components = {
+    renderHeader(role, title){
+      const isTeacher = role === 'teacher';
+      const btnId = isTeacher ? 'accountBtnT' : 'accountBtn';
+      return `
+        <div class="header-title">${title || 'Welcome'}</div>
+        <div class="account-menu">
+          <button class="account-btn" id="${btnId}"><span id="accountInitial">A</span></button>
+          <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
+            <div class="account-info">
+              <div id="userFullName">User Name</div>
+              <div id="userEmail"></div>
+            </div>
+            <button id="${isTeacher?'logoutBtnT':'logoutBtn'}">Log Out</button>
+          </div>
+        </div>`;
+    },
+    renderSidebar(role, active){
+      const isTeacher = role === 'teacher';
+      const homeId = isTeacher ? 'navHomeT' : 'navHome';
+      const settingsId = isTeacher ? 'navSettingsT' : 'navSettings';
+      const isHome = /homepage\d?\.html$/.test(active) || /index\.html$/.test(active);
+      return `
+        <div class="top">
+          <ul class="nav">
+            <li id="${homeId}" class="${isHome?'active':''}">Home</li>
+            <li id="${settingsId}">Settings</li>
+            <li id="aboutBtn">About</li>
+          </ul>
+        </div>
+        <div class="bottom">
+          <div class="app-version">Grade Tracker v1.0</div>
+        </div>`;
+    },
+    mount(){
+      try{
+        const role = localStorage.getItem('role');
+        const header = document.querySelector('.header[data-shared="header"]');
+        if (header){
+          const title = header.querySelector('.header-title')?.textContent || 'Welcome';
+          header.innerHTML = this.renderHeader(role, title);
+        }
+        const sidebar = document.querySelector('.sidebar[data-shared="sidebar"]');
+        if (sidebar){
+          const active = location.pathname.split('/').pop() || '';
+          sidebar.innerHTML = this.renderSidebar(role, active);
+        }
+      }catch{}
+    }
+  };
+
   // ---------- Page initializers ----------
   async function initIndex(){
     const token = getToken(); const role = getRole();
@@ -263,7 +315,11 @@ window.API_BASE = (function(){
       });
       const data = await resp.json(); if (!resp.ok) throw new Error(data.message || 'Failed to join');
       alert('Joined successfully'); toggleJoinModal(false); location.reload();
-    }catch(e){ alert('Error: ' + e.message); }
+    }catch(e){
+      const input = qs('#joinCode');
+      if (input){ input.style.borderColor = '#ef4444'; input.title = e.message; }
+      alert('Error: ' + e.message);
+    }
   }
 
   async function loadClasses(){
@@ -326,6 +382,8 @@ window.API_BASE = (function(){
 
   // ---------- Boot ----------
   document.addEventListener('DOMContentLoaded', ()=>{
+    // Build shared components if page opted-in
+    Components.mount();
     // Attach account dropdown handlers globally (any page)
     attachAccountDropdownHandlers();
     // Global logout handlers on any page

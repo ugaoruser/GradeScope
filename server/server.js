@@ -4,7 +4,6 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 import path from "path";
-import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
@@ -42,8 +41,8 @@ app.use(cors({
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "../docs"), { maxAge: '7d', etag: true })); // serve frontend
 
 // Favicon: serve a tiny fallback if /favicon.ico missing on disk
@@ -253,6 +252,13 @@ await db.query(`
   } catch (e) {
     console.error('Failed to ensure scores/announcements tables:', e);
   }
+  // Helpful indexes (ignore failures on older MySQL)
+  try{ await db.query(`CREATE INDEX idx_subjects_code ON subjects(code)`); }catch{}
+  try{ await db.query(`CREATE INDEX idx_grade_items_subject_category ON grade_items(subject_id, category_id)`); }catch{}
+  try{ await db.query(`CREATE INDEX idx_scores_item_student ON scores(grade_item_id, student_id)`); }catch{}
+  try{ await db.query(`CREATE INDEX idx_enrollments_subject_student ON enrollments(subject_id, student_id)`); }catch{}
+  try{ await db.query(`CREATE INDEX idx_grade_categories_subject_quarter ON grade_categories(subject_id, quarter)`); }catch{}
+  try{ await db.query(`CREATE INDEX idx_announcements_subject_created ON announcements(subject_id, created_at)`); }catch{}
 }
 
 await ensureStartupMigrations();
@@ -809,6 +815,11 @@ app.post("/api/subjects/:subjectId/categories", verifyToken, async (req, res) =>
     if (!categories || !Array.isArray(categories)) {
       return res.status(400).json({ message: "Categories array is required" });
     }
+    // Validate total weight per quarter sums to 100
+    try{
+      const total = categories.reduce((acc,c)=> acc + Number(c.weight||0), 0);
+      if (Math.abs(total - 100) > 0.01) return res.status(400).json({ message: 'Category weights must total 100%' });
+    }catch{}
 
     // Verify teacher owns this subject
     const [subjects] = await db.query(
