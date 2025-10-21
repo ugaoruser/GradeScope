@@ -766,6 +766,8 @@ document.getElementById('subjectTitle').textContent = subjectName;
         comments
       };
       
+      if (!confirm('Save this score?')) return;
+      
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

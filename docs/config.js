@@ -2,10 +2,25 @@
 window.API_BASE = (function(){
   const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
   if (isLocal) return 'http://localhost:3000';
-  // Prefer explicit global override if provided (e.g., via inline script before this file)
   if (window.ENV_API_BASE) return window.ENV_API_BASE;
-  // Default to same-origin when served by the Node server
   return `${location.protocol}//${location.host}`;
+})();
+
+// Ensure cookies are sent with all requests (supports cookie-based auth cross-origin)
+(function(){
+  try{
+    const of = window.fetch.bind(window);
+    window.fetch = (input, init)=>{
+      const opts = Object.assign({ credentials: 'include' }, init||{});
+      return of(input, opts).then(r=>{
+        if (r && r.status === 401) {
+          try{ localStorage.clear(); }catch{}
+          if (!location.pathname.endsWith('login.html')) location.href = 'login.html';
+        }
+        return r;
+      });
+    };
+  }catch{}
 })();
 
 ;(function(){
@@ -51,9 +66,12 @@ window.API_BASE = (function(){
 
   function persistAuth(data, email){
     const items = {
-      token: data.token, role: data.role, userId: data.userId,
+      // Do not store JWT in localStorage; rely on httpOnly cookie
+      role: data.role,
+      userId: data.userId,
       user: JSON.stringify({ name: data.name, userId: data.userId, role: data.role }),
-      email: email, fullName: data.name || ''
+      email: email,
+      fullName: data.name || ''
     };
     Object.entries(items).forEach(([k,v])=> localStorage.setItem(k, v));
   }
@@ -131,7 +149,7 @@ window.API_BASE = (function(){
   // Real-time via SSE
   let sse;
   function connectEvents(){
-    if (sse || !getToken()) return;
+    if (sse) return;
     try{
       sse = new EventSource(`${window.API_BASE}/api/events`);
       const refresh = debounce(()=>{
@@ -151,25 +169,35 @@ window.API_BASE = (function(){
   function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
   // ---------- Page initializers ----------
-  function initIndex(){
+  async function initIndex(){
     const token = getToken(); const role = getRole();
-    if (!token || !role) { location.replace('login.html'); return; }
-    redirectByRole(role);
+    if (token && role) { redirectByRole(role); return; }
+    // Try cookie session
+    try{
+      const r = await fetch(`${window.API_BASE}/api/me`);
+      if (r.ok){ const me = await r.json(); redirectByRole(me.role); return; }
+    }catch{}
+    location.replace('login.html');
   }
 
-  function initLogin(){
+  async function initLogin(){
     const token=getToken(), role=getRole(); if (token && role){ redirectByRole(role); return; }
+    try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; } }catch{}
     const form = qs('#login-form'); if (form){ form.addEventListener('submit', handleLogin); }
     qs('#email')?.focus();
   }
 
-  function initSignup(){
+  async function initSignup(){
     const token=getToken(); if (token){ redirectByRole(getRole()); return; }
+    try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; } }catch{}
     const form = qs('#signup-form'); if (form){ form.addEventListener('submit', handleSignup); }
   }
 
-  function initHomepage1(){
-    const role = getRole(); if (!getToken() || !role){ location.href='login.html'; return; }
+  async function initHomepage1(){
+    let role = getRole();
+    if (!role){ try{ const r=await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role = me.role; localStorage.setItem('role', role); } }catch{}
+    }
+    if (!role){ location.href='login.html'; return; }
     if (role==='teacher'){ location.href='homepage2.html'; return; }
     document.body.dataset.role = role;
     bindHomepage1UI(); fetchMeAndHeader(); loadClasses(); connectEvents();
@@ -226,8 +254,12 @@ window.API_BASE = (function(){
   async function joinClass(){
     const accessCode = qs('#joinCode')?.value.trim(); if (!accessCode){ alert('Access code is required'); return; }
     try{
+      const payload = { accessCode };
+      const r = localStorage.getItem('role');
+      const childId = localStorage.getItem('selectedChildId');
+      if (r === 'parent' && childId) payload.childId = childId;
       const resp = await fetch(`${window.API_BASE}/api/subjects/join`, {
-        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ accessCode })
+        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
       });
       const data = await resp.json(); if (!resp.ok) throw new Error(data.message || 'Failed to join');
       alert('Joined successfully'); toggleJoinModal(false); location.reload();
@@ -325,8 +357,12 @@ window.API_BASE = (function(){
   }
 
   // ---------- Teacher page ----------
-  function initHomepage2(){
-    const role = getRole(); if (!getToken() || role!=='teacher'){ location.href = role==='teacher' ? 'login.html' : 'homepage1.html'; return; }
+  async function initHomepage2(){
+    let role = getRole();
+    if (role!=='teacher'){
+      try{ const r=await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role = me.role; localStorage.setItem('role', role); } }catch{}
+    }
+    if (role!=='teacher'){ location.href = role==='teacher' ? 'login.html' : 'homepage1.html'; return; }
     bindHomepage2UI();
     setupTeacherHeader();
     loadTeacherSubjects();
@@ -394,7 +430,8 @@ window.API_BASE = (function(){
   }
 
   async function loadTeacherSubjects(){
-    const container = qs('#classroomTabs'); if (!container) return; container.textContent = 'Loading...';
+    const container = qs('#classroomTabs'); if (!container) return;
+    container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
     try{
       let res = await fetch(`${window.API_BASE}/api/subjects`, { headers: authHeaders() });
       let list; if (res.ok){ list = await res.json(); } else {

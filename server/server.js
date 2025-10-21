@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import compression from "compression";
+import helmet from "helmet";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,9 +38,13 @@ app.use(cors({
   credentials: true,
 }));
 
+// Security and compression
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(compression());
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "../docs"))); // serve frontend
+app.use(express.static(path.join(__dirname, "../docs"), { maxAge: '7d', etag: true })); // serve frontend
 
 // Favicon: serve a tiny fallback if /favicon.ico missing on disk
 app.get('/favicon.ico', (req, res) => {
@@ -68,7 +74,12 @@ function broadcast(event, data) {
 }
 app.get('/api/events', (req, res) => {
   try {
-    const token = req.query.token;
+    // Try Authorization header first
+    let token = null;
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) token = auth.slice(7);
+    // Then try cookies
+    if (!token) token = (req.headers.cookie||'').split(';').map(s=>s.trim()).reduce((acc,cur)=>{ const i=cur.indexOf('='); if(i>0) acc[cur.slice(0,i)] = decodeURIComponent(cur.slice(i+1)); return acc; },{}).token;
     if (!token) return res.status(401).end();
     try {
       jwt.verify(token, process.env.JWT_SECRET || 'secret');
@@ -104,13 +115,17 @@ const db = await mysql.createPool({
 async function ensureStartupMigrations() {
   try {
     // Ensure 'section', 'code', 'teacher_id', 'grade_level' columns exist on subjects
-    await db.query(`
+await db.query(`
       ALTER TABLE subjects
       ADD COLUMN IF NOT EXISTS section VARCHAR(50) NULL,
       ADD COLUMN IF NOT EXISTS code VARCHAR(32) UNIQUE NULL,
       ADD COLUMN IF NOT EXISTS teacher_id INT NULL,
       ADD COLUMN IF NOT EXISTS grade_level VARCHAR(50) NULL
     `);
+    // Try to add FK for teacher_id (ignore if fails)
+    try{
+      await db.query(`ALTER TABLE subjects ADD CONSTRAINT fk_subjects_teacher FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL`);
+    }catch(_){}
   } catch (e) {
     // Fallback for older MySQL versions without IF NOT EXISTS
     try {
@@ -126,6 +141,21 @@ async function ensureStartupMigrations() {
     } catch (inner) {
       console.error('Failed to ensure subjects columns:', inner);
     }
+  }
+  try {
+    // Ensure roles table exists and seed roles
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(50) UNIQUE NOT NULL
+      )
+    `);
+    const roles = ['student','teacher','parent'];
+    for (const r of roles){
+      try { await db.query(`INSERT IGNORE INTO roles (name) VALUES (?)`, [r]); } catch {}
+    }
+  } catch (e) {
+    console.error('Failed to ensure roles table:', e);
   }
   try {
     // Ensure grade_categories table exists
@@ -282,6 +312,18 @@ function verifyToken(req, res, next) {
   } catch (e) {
     res.status(401).json({ message: "Invalid token" });
   }
+}
+
+// Role-based access helper
+function requireRole(...roles){
+  return (req, res, next)=>{
+    try{
+      if (!req.user || !roles.includes(req.user.role)){
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      next();
+    }catch{ return res.status(403).json({ message: 'Access denied' }); }
+  };
 }
 
 // Signup route
@@ -567,7 +609,7 @@ app.get("/api/subjects", verifyToken, async (req, res) => {
 });
 
 // Create a new subject (teachers only)
-app.post("/api/subjects", verifyToken, async (req, res) => {
+app.post("/api/subjects", verifyToken, requireRole('teacher'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: "Only teachers can create subjects" });
@@ -630,8 +672,8 @@ broadcast('classCreated', { subjectId: result.insertId, title, section, teacherI
   }
 });
 
-// Join a subject (students only)
-app.post("/api/subjects/join", verifyToken, async (req, res) => {
+// Join a subject (students/parents)
+app.post("/api/subjects/join", verifyToken, requireRole('student','parent'), async (req, res) => {
   try {
     if (req.user.role !== 'student' && req.user.role !== 'parent') {
       return res.status(403).json({ message: "Only students or parents can join subjects" });
@@ -643,10 +685,16 @@ app.post("/api/subjects/join", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Access code is required" });
     }
 
+    // Validate format (6 chars uppercase alphanumeric)
+    const code = String(accessCode).trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(code)){
+      return res.status(400).json({ message: 'Invalid access code format' });
+    }
+
     // Find the subject with the given access code
     const [subjects] = await db.query(`
       SELECT * FROM subjects WHERE code = ?
-    `, [accessCode]);
+    `, [code]);
 
     if (subjects.length === 0) {
       return res.status(404).json({ message: "Invalid access code" });
@@ -963,7 +1011,7 @@ app.get("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
 });
 
 // Get students enrolled in a subject
-app.get("/api/subjects/:subjectId/students", verifyToken, async (req, res) => {
+app.get("/api/subjects/:subjectId/students", verifyToken, requireRole('teacher'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: "Only teachers can view enrolled students" });
@@ -1067,7 +1115,7 @@ app.post("/api/subjects/:subjectId/scores", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Not authorized to modify this subject" });
     }
 
-    // Check if grade item belongs to this subject
+    // Check if grade item belongs to this subject and get max_score
     const [gradeItems] = await db.query(
       `SELECT * FROM grade_items WHERE id = ? AND subject_id = ?`,
       [grade_item_id, subjectId]
@@ -1075,6 +1123,13 @@ app.post("/api/subjects/:subjectId/scores", verifyToken, async (req, res) => {
     
     if (gradeItems.length === 0) {
       return res.status(400).json({ message: "Invalid grade item" });
+    }
+
+    // Validate score range
+    const maxScore = Number(gradeItems[0].max_score);
+    const sVal = Number(score);
+    if (!Number.isFinite(sVal) || sVal < 0 || (Number.isFinite(maxScore) && sVal > maxScore)) {
+      return res.status(400).json({ message: `Score must be between 0 and ${maxScore}` });
     }
 
     // Check if student is enrolled in this subject
@@ -1092,9 +1147,9 @@ app.post("/api/subjects/:subjectId/scores", verifyToken, async (req, res) => {
       INSERT INTO scores (grade_item_id, student_id, score, comments)
       VALUES (?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)
-    `, [grade_item_id, student_id, score, comments]);
+    `, [grade_item_id, student_id, sVal, comments]);
     
-broadcast('scoreUpdated', { subjectId: Number(subjectId), student_id, grade_item_id });
+    broadcast('scoreUpdated', { subjectId: Number(subjectId), student_id, grade_item_id });
     res.json({ message: "Score saved successfully" });
   } catch (err) {
     console.error(err);
@@ -1102,8 +1157,76 @@ broadcast('scoreUpdated', { subjectId: Number(subjectId), student_id, grade_item
   }
 });
 
+// Grade summary for a subject and student
+app.get('/api/subjects/:subjectId/grade-summary', verifyToken, async (req, res) => {
+  try{
+    const { subjectId } = req.params;
+    const { quarter, studentId, childId } = req.query;
+
+    let targetStudentId = null;
+    if (req.user.role === 'student') targetStudentId = req.user.userId;
+    else if (req.user.role === 'parent') {
+      const cid = childId || studentId;
+      if (!cid) return res.status(400).json({ message: 'childId is required for parents' });
+      const [pc] = await db.query(`SELECT 1 FROM parent_child WHERE parent_id=? AND child_id=?`, [req.user.userId, cid]);
+      if (!pc.length) return res.status(403).json({ message: 'Not authorized' });
+      targetStudentId = cid;
+    } else if (req.user.role === 'teacher') {
+      targetStudentId = studentId; // optional for teacher; can be null to return class stats in future
+    }
+
+    if (!targetStudentId) return res.status(400).json({ message: 'studentId required' });
+
+    // Categories for quarter
+    const [cats] = await db.query(
+      `SELECT id, name, weight, quarter FROM grade_categories WHERE subject_id=? ${quarter? 'AND quarter=?':''} ORDER BY name`,
+      quarter ? [subjectId, quarter] : [subjectId]
+    );
+
+    // Items + scores for student
+    const params = [targetStudentId, subjectId];
+    let q = `
+      SELECT i.id, i.max_score, i.included_in_final, i.date_assigned, i.title,
+             c.id as category_id, c.name as category_name, c.weight, c.quarter,
+             s.score
+      FROM grade_items i
+      JOIN grade_categories c ON c.id = i.category_id
+      LEFT JOIN scores s ON s.grade_item_id = i.id AND s.student_id = ?
+      WHERE i.subject_id = ?`;
+    if (quarter) { q += ` AND c.quarter = ?`; params.push(quarter); }
+    q += ` ORDER BY c.name, i.date_assigned, i.id`;
+    const [rows] = await db.query(q, params);
+
+    // Aggregate
+    const summary = { categories: {}, final: 0, completion: 0 };
+    let includedCount = 0, scoredCount = 0;
+    for (const r of rows){
+      if (!summary.categories[r.category_name]) summary.categories[r.category_name] = { weight: Number(r.weight)||0, total:0, max:0 };
+      if (r.included_in_final){
+        includedCount++;
+        if (r.score != null) scoredCount++;
+        summary.categories[r.category_name].total += Number(r.score)||0;
+        summary.categories[r.category_name].max += Number(r.max_score)||0;
+      }
+    }
+    // Compute weighted final
+    for (const key of Object.keys(summary.categories)){
+      const c = summary.categories[key];
+      const pct = c.max > 0 ? (c.total/c.max) : 0;
+      summary.final += pct * (c.weight/100) * 100;
+    }
+    summary.final = Number(summary.final.toFixed(2));
+    summary.completion = includedCount>0 ? Number(((scoredCount/includedCount)*100).toFixed(1)) : 0;
+
+    res.json(summary);
+  }catch(e){
+    console.error('grade-summary error', e);
+    res.status(500).json({ message:'Server error' });
+  }
+});
+
 // Delete a grade item
-app.delete("/api/subjects/:subjectId/items/:itemId", verifyToken, async (req, res) => {
+app.delete("/api/subjects/:subjectId/items/:itemId", verifyToken, requireRole('teacher'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: "Only teachers can delete grade items" });
@@ -1132,7 +1255,7 @@ app.delete("/api/subjects/:subjectId/items/:itemId", verifyToken, async (req, re
 });
 
 // Delete a student score
-app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, async (req, res) => {
+app.delete("/api/subjects/:subjectId/scores/:scoreId", verifyToken, requireRole('teacher'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: "Only teachers can delete scores" });

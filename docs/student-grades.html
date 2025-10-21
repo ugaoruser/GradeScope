@@ -131,14 +131,15 @@
   </div>
 
   <script>
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    // Check session/role via cookie or localStorage
+    let role = localStorage.getItem('role');
     const userObj = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    if (!token || (role !== 'student' && role !== 'parent')) {
-      window.location.href = 'login.html';
+    async function ensureRole(){
+      if (role === 'student' || role === 'parent') return true;
+      try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role = me.role; localStorage.setItem('role', role); return (role==='student'||role==='parent'); } }catch{}
+      return false;
     }
+    (async()=>{ const ok = await ensureRole(); if (!ok) location.href='login.html'; })();
     
     // student name will be set below based on role
     
@@ -183,7 +184,48 @@
     });
     
     // Load grade data for the selected quarter
+    function cacheKey(q){
+      const child = (role === 'parent' && (window.selectedChildId || initialChildId)) ? `:${window.selectedChildId || initialChildId}` : '';
+      return `grades:${subjectId}:q${q}${child}`;
+    }
+    function renderFromCache(q){
+      try{
+        const raw = localStorage.getItem(cacheKey(q));
+        if (!raw) return false;
+        const cached = JSON.parse(raw);
+        if (!cached || !Array.isArray(cached.items) || !Array.isArray(cached.categories)) return false;
+        // Set weights
+        cached.categories.forEach(category => {
+          if (category.name === 'Performance Task') document.getElementById('ptWeight').textContent = category.weight;
+          else if (category.name === 'Written Works') document.getElementById('wwWeight').textContent = category.weight;
+          else if (category.name === 'Periodical Exam') document.getElementById('peWeight').textContent = category.weight;
+        });
+        // Group and render
+        const items = cached.items;
+        const ptItems = items.filter(i=> i.category_name === 'Performance Task');
+        const wwItems = items.filter(i=> i.category_name === 'Written Works');
+        const peItems = items.filter(i=> i.category_name === 'Periodical Exam');
+        const assessmentItems = items.filter(i=> !i.included_in_final);
+        populateTable('ptTable', ptItems, renderPTRow);
+        populateTable('wwTable', wwItems, renderWWRow);
+        populateTable('peTable', peItems, renderPERow);
+        populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
+        if (cached.summary){
+          document.getElementById('finalGrade').textContent = Number(cached.summary.final||0).toFixed(2);
+        }
+        updateChart(items.filter(i=> i.included_in_final));
+        return true;
+      }catch{ return false; }
+    }
+
     function loadGradeData(quarter) {
+      // Try cached render first (fast UI), then fetch fresh
+      if (!renderFromCache(quarter)){
+        document.getElementById('ptTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+        document.getElementById('wwTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+        document.getElementById('peTable').innerHTML = '<tr><td colspan="4"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+        document.getElementById('assessmentTable').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+      }
       // Fetch categories to get weights
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`)
       .then(res => res.json())
@@ -217,12 +259,43 @@
         populateTable('peTable', peItems, renderPERow);
         populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
         
-        // Calculate final graden        calculateFinalGrade(ptItems, wwItems, peItems);
+        // Calculate final grade
+        calculateFinalGrade(ptItems, wwItems, peItems);
         // Update progress chart with included items only
         const included = items.filter(i => i.included_in_final);
         updateChart(included);
+        // Fetch grade summary for completion and final confirmation
+        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/grade-summary?quarter=${quarter}${role==='parent' && window.selectedChildId?`&childId=${encodeURIComponent(window.selectedChildId)}`:''}`);
       })
-      .catch(error => {
+      .then(res => res ? res.json() : null)
+      .then(summary => {
+        if (!summary) return;
+        if (typeof summary.final === 'number') {
+          document.getElementById('finalGrade').textContent = Number(summary.final).toFixed(2);
+        }
+        // Add completion indicator
+        const header = document.querySelector('.grade-summary');
+        if (header) {
+          const pct = Number(summary.completion || 0);
+          const note = pct < 100 ? ` (Completion: ${pct}% — Not final)` : ' (Final)';
+          if (!header.querySelector('.completion-note')){
+            const span = document.createElement('span');
+            span.className = 'completion-note';
+            span.style.color = pct<100 ? '#ef4444' : '#10b981';
+            span.style.marginLeft = '6px';
+            span.textContent = note;
+            header.appendChild(span);
+          } else {
+            const span = header.querySelector('.completion-note');
+            span.style.color = pct<100 ? '#ef4444' : '#10b981';
+            span.textContent = pct<100 ? ` (Completion: ${pct}% — Not final)` : ' (Final)';
+          }
+        }
+        // Cache fresh payload
+        try{
+          localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories, items, summary, ts: Date.now() }));
+        }catch{}
+      })
         console.error('Error loading grade data:', error);
       });
     }

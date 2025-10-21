@@ -68,8 +68,8 @@
   </div>
   <script>
     // --- Routing: Only allow logged-in users ---
-    const role = localStorage.getItem('role');
-    if (!role) window.location.href = 'login.html';
+    let role = localStorage.getItem('role');
+    (async()=>{ if (!role){ try{ const r=await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role=me.role; localStorage.setItem('role', role); } }catch{} if (!role){ location.href='login.html'; } })();
 
     // --- Get subject from URL ---
     const urlParams = new URLSearchParams(window.location.search);

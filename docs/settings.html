@@ -161,6 +161,14 @@
     async function loadChildren(){
       try{ const r=await fetch(`${window.API_BASE}/api/children`); if(!r.ok) return; const children=await r.json(); const ul=document.getElementById('childrenList'); ul.innerHTML=''; children.forEach(c=>{ const li=document.createElement('li'); li.textContent=c.full_name; ul.appendChild(li); }); }catch{}
     }
+    // Live refresh when a child is linked from another device
+    (function(){
+      try{
+        const es = new EventSource(`${window.API_BASE}/api/events`);
+        es.addEventListener('parentLinkUpdated', ()=>{ try{ loadChildren(); }catch{} });
+        es.onerror = ()=>{ try{ es.close(); }catch{} };
+      }catch{}
+    })();
     document.getElementById('linkChildBtn').addEventListener('click', async()=>{
       const email = document.getElementById('childEmail').value.trim();
       const msg = document.getElementById('linkMsg'); msg.textContent='';
