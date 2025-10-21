@@ -95,6 +95,8 @@
     function showAbout(){ aboutModal.style.display = 'flex'; requestAnimationFrame(()=> aboutModal.classList.add('show')); }
     function closeAbout(){ aboutModal.classList.remove('show'); setTimeout(()=> aboutModal.style.display='none', 180); }
     aboutBtn.addEventListener('click', showAbout);
+    // Fast logout binding for settings page
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
 
     // Danger zone
     document.getElementById('deleteAccountBtn').addEventListener('click', () => {
