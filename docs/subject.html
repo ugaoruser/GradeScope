@@ -69,12 +69,26 @@
   <script>
     // --- Routing: Only allow logged-in users ---
     let role = localStorage.getItem('role');
-    (async()=>{ if (!role){ try{ const r=await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role=me.role; localStorage.setItem('role', role); } }catch{} if (!role){ location.href='login.html'; } })();
+    (async()=>{ if (!role){ try{ const r=await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); role=me.role; localStorage.setItem('role', role); // also cache name/email
+      if (me.firstName||me.lastName){ localStorage.setItem('fullName', me.fullName || `${me.firstName||''} ${me.lastName||''}`.trim()); }
+      if (me.email) localStorage.setItem('email', me.email);
+    } }catch{} if (!role){ location.href='login.html'; } })();
 
     // --- Get subject from URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const subject = urlParams.get('subject') || "Subject";
     document.getElementById('subjectTitle').textContent = subject;
+    // Populate account dropdown initials/name/email
+    (function(){
+      try{
+        const full = localStorage.getItem('fullName') || 'Teacher';
+        const email = localStorage.getItem('email') || '';
+        const init = (full.charAt(0)||'T').toUpperCase();
+        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
+        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
+        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
+      }catch{}
+    })();
 
     // Show access code for teachers and load students
     let currentSubjectId = null;
@@ -112,10 +126,11 @@
     }
 
     function goBack() {
-      if (role === 'student') {
-        window.location.href = 'homepage1.html';
-      } else {
+      const r = localStorage.getItem('role') || role || '';
+      if (r === 'teacher') {
         window.location.href = 'homepage2.html';
+      } else {
+        window.location.href = 'homepage1.html';
       }
     }
 

@@ -1,3 +1,11 @@
+// Initialize theme early so all pages respect dark mode
+(function(){
+  try{
+    const t = localStorage.getItem('theme') || 'light';
+    document.documentElement.dataset.theme = t;
+  }catch{}
+})();
+
 // API base resolution without hardcoded deploy URL
 window.API_BASE = (function(){
   const host = location.hostname;

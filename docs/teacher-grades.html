@@ -310,10 +310,17 @@
       window.location.href = 'login.html';
     }
     
-    if (userName) {
-      const uf = document.getElementById('userFullName');
-      if (uf) uf.textContent = userName;
-    }
+    // Populate account dropdown with latest cached values
+    (function(){
+      try{
+        const full = localStorage.getItem('fullName') || localStorage.getItem('userName') || 'Teacher';
+        const email = localStorage.getItem('email') || '';
+        const init = (full.charAt(0)||'T').toUpperCase();
+        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
+        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
+        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
+      }catch{}
+    })();
     
     // --- Get subject from URL ---
     const urlParams = new URLSearchParams(window.location.search);

@@ -131,6 +131,18 @@
   </div>
 
   <script>
+    // Populate account dropdown from cache (fast)
+    (function(){
+      try{
+        const full = localStorage.getItem('fullName') || JSON.parse(localStorage.getItem('user')||'{}').name || 'User';
+        const email = localStorage.getItem('email') || '';
+        const init = (full.charAt(0)||'U').toUpperCase();
+        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
+        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
+        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
+      }catch{}
+    })();
+
     // Check session/role via cookie or localStorage
     let role = localStorage.getItem('role');
     const userObj = JSON.parse(localStorage.getItem('user') || '{}');

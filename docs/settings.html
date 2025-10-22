@@ -111,13 +111,20 @@
       document.documentElement.dataset.theme = t;
     })();
 
-    // Load profile
+    // Load profile and populate header dropdown
     fetch(`${window.API_BASE}/api/me`)
       .then(r => r.json())
       .then(u => {
         document.getElementById('editFirstName').value = u.firstName || '';
         document.getElementById('editLastName').value = u.lastName || '';
-        document.getElementById('displayEmail').textContent = u.email || localStorage.getItem('email') || '';
+        const email = u.email || localStorage.getItem('email') || '';
+        document.getElementById('displayEmail').textContent = email;
+        // Update account dropdown
+        const full = u.fullName || `${u.firstName||''} ${u.lastName||''}`.trim() || localStorage.getItem('fullName') || 'User';
+        const init = (full.charAt(0) || 'U').toUpperCase();
+        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
+        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
+        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
         if (u.role === 'parent') {
           document.getElementById('parentLinkCard').style.display = 'block';
           loadChildren();

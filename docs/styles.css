@@ -489,6 +489,15 @@ button:focus, input:focus, textarea:focus { outline: 3px solid rgba(25,118,210,0
 .sidebar { color: #fff; }
 .main { background: transparent; }
 
+/* Pages without a sidebar should not reserve sidebar space */
+body.subject-page .main,
+body.student-grades-page .main,
+body.teacher-grades-page .main { margin-left: 0; }
+
+/* Center key pages for better focus */
+body.subject-page .main { max-width: 960px; margin: 0 auto; }
+body.settings-page .settings-container { max-width: 900px; margin: 0 auto; }
+
 /* CSS optimized and cleaned - all duplicates removed */
 
 /* Parent child selection UI */
