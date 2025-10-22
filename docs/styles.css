@@ -214,10 +214,13 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 /* -------------------------
    02. Main layout & header
    ------------------------- */
-.main {
+ .main {
   margin-left: var(--sidebar-width);
+  /* Ensure content doesn't overflow behind the fixed sidebar */
+  width: calc(100% - var(--sidebar-width));
+  box-sizing: border-box;
   padding: 28px;
-  transition: margin-left .25s ease;
+  transition: margin-left .25s ease, width .25s ease;
   min-height: 100vh;
 }
 .header{
@@ -555,11 +558,11 @@ body.homepage1 .header-title { color:#000 !important; font-size:1.6rem !importan
 
 /* Login / Signup pages */
 body.login-page, body.signup-page {
-  display:flex; align-items:center; justify-content:center; background:#fff;
+  display:flex; align-items:center; justify-content:center; background: var(--bg);
 }
 .login-page .auth-container,
 .signup-page .auth-container {
-  background:#fff; 
+  background: var(--card); 
   border-radius:12px; 
   padding:36px; 
   box-shadow:var(--shadow-md); 
@@ -584,8 +587,8 @@ body.settings-page .main{ padding:28px; }
 body.settings-page .settings-container { background:var(--card); padding:24px; border-radius:16px; box-shadow:var(--shadow-md); }
 body.settings-page .settings-title { font-weight:800; font-size:1.2rem; margin-bottom:16px; }
 body.settings-page .settings-grid { display:grid; grid-template-columns:1fr; gap:16px; }
-body.settings-page .settings-card { background: #fff; border:1px solid #eef2f7; border-radius:12px; padding:16px; box-shadow:0 6px 16px rgba(2,6,23,.06); }
-body.settings-page .settings-card.danger { border-color: #fdecea; background:#fff7f7; }
+body.settings-page .settings-card { background: var(--card); border:1px solid #eef2f7; border-radius:12px; padding:16px; box-shadow:0 6px 16px rgba(2,6,23,.06); }
+body.settings-page .settings-card.danger { border-color: #fdecea; background: color-mix(in oklab, var(--card), #fee2e2 40%); }
 body.settings-page .settings-section-title { font-weight:700; margin-bottom:8px; }
 body.settings-page .field-display { padding:10px 12px; border:1px dashed #dbe5f0; border-radius:8px; background:#f9fbff; }
 /* About modal visual overrides: centered text, no white panel, dimmed bg */
@@ -645,7 +648,7 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 8px 26px rgba(47,128,2
    09. Responsive adjustments
    ------------------------- */
 @media (max-width: 1050px){
-  .main{ margin-left: 0; padding:18px; }
+  .main{ margin-left: 0; width: 100%; padding:18px; }
   .sidebar{ position:relative; width:100%; height:auto; display:flex; flex-direction:row; gap:8px; padding:12px; }
   .sidebar .nav{ display:flex; gap:6px; flex-wrap:wrap; }
   .class-tab{ width:100%; }
@@ -672,7 +675,7 @@ button:focus, input:focus, textarea:focus { outline: 3px solid rgba(25,118,210,0
 /* Pages without a sidebar should not reserve sidebar space */
 body.subject-page .main,
 body.student-grades-page .main,
-body.teacher-grades-page .main { margin-left: 0; }
+body.teacher-grades-page .main { margin-left: 0; width: 100%; }
 
 /* Center key pages for better focus */
 body.subject-page .main { max-width: 960px; margin: 0 auto; }
@@ -860,9 +863,9 @@ body.settings-page .settings-container { max-width: 900px; margin: 0 auto; }
 	margin-top:8px; 
 	border-radius: 12px; 
 	overflow: hidden; 
-	background: linear-gradient(180deg,#ffffff,#fbfdff); 
+	background: var(--card); 
 	box-shadow: 0 6px 20px rgba(2,6,23,0.04); 
-} 
+}
 
 .grades-table thead th{ 
 	text-align:left; 
@@ -1133,6 +1136,6 @@ html[data-theme="dark"] .account-dropdown { background: #0f172a; color: var(--te
 html[data-theme="dark"] .class-tab { background:#0f172a; border-color:#1f2937; }
 html[data-theme="dark"] .modal-panel { background:#0f172a; }
 html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea { background:#0b1220; color:#e5e7eb; border-color:#1f2937; }
-html[data-theme="dark"] .grades-table { background:#0b1220; }
+html[data-theme="dark"] .grades-table { background:#0f172a; }
 html[data-theme="dark"] .quarter-tab, html[data-theme="dark"] .tab { background:#0b1220; color:#e5e7eb; border-color:#1f2937; }
 html[data-theme="dark"] .grade-summary { background:#0b1220; }

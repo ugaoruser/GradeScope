@@ -147,14 +147,17 @@
   </div>
 
   <script>
-    // Populate account dropdown from cache (fast)
-    (function(){
+    // Populate account dropdown from cache (fast) and backfill from /api/me if missing
+    (async function(){
       try{
-        const full = localStorage.getItem('fullName') || JSON.parse(localStorage.getItem('user')||'{}').name || 'User';
-        const email = localStorage.getItem('email') || '';
-        const init = (full.charAt(0)||'U').toUpperCase();
+        let full = localStorage.getItem('fullName') || JSON.parse(localStorage.getItem('user')||'{}').name || '';
+        let email = localStorage.getItem('email') || '';
+        if (!full){
+          try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me = await r.json(); full = me.fullName || `${me.firstName||''} ${me.lastName||''}`.trim(); email = me.email || email; if (full) localStorage.setItem('fullName', full); if (email) localStorage.setItem('email', email); } }catch{}
+        }
+        const init = (full?.charAt(0)||'U').toUpperCase();
         const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
-        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
+        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full || 'User';
         const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
       }catch{}
     })();

@@ -137,8 +137,20 @@
     function showAbout(){ aboutModal.style.display = 'flex'; requestAnimationFrame(()=> aboutModal.classList.add('show')); }
     function closeAbout(){ aboutModal.classList.remove('show'); setTimeout(()=> aboutModal.style.display='none', 180); }
     aboutBtn.addEventListener('click', showAbout);
-    // Fast logout binding for settings page
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    // Sidebar navigation (Home)
+    document.getElementById('goHome')?.addEventListener('click', ()=>{
+      const role = localStorage.getItem('role');
+      window.location.href = role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
+    });
+
+    // Fast logout binding for settings page (use App.logout if available)
+    document.getElementById('logoutBtn')?.addEventListener('click', ()=>{
+      if (window.App && typeof window.App.logout === 'function') return window.App.logout();
+      // Fallback if App.logout is not available
+      ['token','role','user','fullName','email','selectedChildId','selectedChildName','firstName','lastName','userId'].forEach(k=> localStorage.removeItem(k));
+      window.location.href = 'login.html';
+    });
 
     // Save profile
     document.getElementById('saveProfileBtn').addEventListener('click', async()=>{
