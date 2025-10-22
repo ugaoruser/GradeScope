@@ -593,21 +593,46 @@ broadcast('scoreUpdated', { subjectId, student_id: studentId, grade_item_id: gra
 // Get subjects
 app.get("/api/subjects", verifyToken, async (req, res) => {
   try {
-    const { title } = req.query;
+    const { title, id, childId } = req.query;
+    // Base query and dynamic joins
     let query = `
       SELECT s.*, u.full_name as teacher_name
       FROM subjects s
       LEFT JOIN users u ON s.teacher_id = u.id
     `;
+    const where = [];
     const params = [];
-    
-    if (title) {
-      query += ` WHERE s.title = ?`;
-      params.push(title);
+
+    // Optional filters
+    if (id) { where.push('s.id = ?'); params.push(id); }
+    if (title) { where.push('s.title = ?'); params.push(title); }
+
+    // Default scoping by role when no explicit id/title filter is provided
+    if (!id && !title) {
+      if (req.user.role === 'teacher') {
+        where.push('s.teacher_id = ?');
+        params.push(req.user.userId);
+      } else if (req.user.role === 'student') {
+        query += ' JOIN enrollments e ON e.subject_id = s.id';
+        where.push('e.student_id = ?');
+        params.push(req.user.userId);
+      } else if (req.user.role === 'parent') {
+        // Limit to classes where a linked child is enrolled
+        query += ' JOIN enrollments e ON e.subject_id = s.id';
+        query += ' JOIN parent_child pc ON pc.child_id = e.student_id';
+        if (childId) {
+          where.push('pc.parent_id = ? AND pc.child_id = ?');
+          params.push(req.user.userId, childId);
+        } else {
+          where.push('pc.parent_id = ?');
+          params.push(req.user.userId);
+        }
+      }
     }
-    
-    query += ` ORDER BY s.title`;
-    
+
+    if (where.length) query += ' WHERE ' + where.join(' AND ');
+    query += ' ORDER BY s.title';
+
     const [subjects] = await db.query(query, params);
     res.json(subjects);
   } catch (err) {
@@ -695,7 +720,7 @@ app.post("/api/subjects/join", verifyToken, requireRole('student','parent'), asy
 
     // Validate format (6 chars uppercase alphanumeric)
     const code = String(accessCode).trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(code)){
+    if (!/^[A-Z0-9]{4,16}$/.test(code)){
       return res.status(400).json({ message: 'Invalid access code format' });
     }
 
@@ -746,53 +771,30 @@ app.get('/api/classes', verifyToken, async (req, res) => {
     let classes;
     if (req.user.role === 'student') {
       [classes] = await db.query(
-        `SELECT s.id, s.title, s.grade_level as section
+        `SELECT s.id, s.title, s.grade_level, s.section
          FROM subjects s
          JOIN enrollments e ON e.subject_id = s.id
          WHERE e.student_id = ?`, [req.user.userId]);
-         
-      // Normalize section field if needed
-      classes = classes.map(cls => ({
-        ...cls,
-        section: cls.section || cls.grade_level || null
-      }));
     } else if (req.user.role === 'teacher') {
       try {
         [classes] = await db.query(
-          `SELECT s.id, s.title, s.grade_level
+          `SELECT s.id, s.title, s.grade_level, s.section
            FROM subjects s
            WHERE s.teacher_id = ?`, [req.user.userId]);
-           
-        // Normalize section field
-        classes = classes.map(cls => ({
-          ...cls,
-          section: cls.grade_level || null
-        }));
       } catch (error) {
         console.error("Error fetching teacher classes:", error);
         // Return default classes on error
-        classes = [
-          { id: 1, title: 'Mathematics', section: 'Section A' },
-          { id: 2, title: 'Science', section: 'Section B' },
-          { id: 3, title: 'English Literature', section: 'Section A' },
-          { id: 4, title: 'World History', section: 'Section C' }
-        ];
+        classes = [];
       }
     } else if (req.user.role === 'parent') {
-      // Parents can see their children's classes
+      // Parents can see their children's classes (for any linked child)
       [classes] = await db.query(
-        `SELECT s.id, s.title, s.grade_level, u.full_name as student_name, u.id as student_id
+        `SELECT s.id, s.title, s.grade_level, s.section, u.full_name as student_name, u.id as student_id
          FROM subjects s
          JOIN enrollments e ON e.subject_id = s.id
          JOIN users u ON e.student_id = u.id
          JOIN parent_child pc ON u.id = pc.child_id
          WHERE pc.parent_id = ?`, [req.user.userId]);
-         
-      // Normalize section field
-      classes = classes.map(cls => ({
-        ...cls,
-        section: cls.grade_level || null
-      }));
     } else {
       classes = [];
     }

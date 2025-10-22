@@ -743,10 +743,10 @@ window.API_BASE = (function(){
         </div>
       `;
       
-      // Navigate to grades on card click (except copy button)
+      // Navigate to class management page on card click (except copy button)
       div.addEventListener('click', (e) => {
         if (e.target.classList.contains('copy-code-btn')) return;
-        location.href = `teacher-grades.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
+        location.href = `subject.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
       });
       
       container.appendChild(div);
@@ -762,10 +762,10 @@ window.API_BASE = (function(){
       }).catch(()=>{});
       
       // Fetch class code (non-blocking)
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subj.title)}`).then(async (res)=>{
+      fetch(`${window.API_BASE}/api/subjects?id=${encodeURIComponent(subj.id)}`).then(async (res)=>{
         if (!res.ok) return null;
         const details = await res.json();
-        const classDetail = Array.isArray(details) ? details.find(d => d.title === subj.title) : details;
+        const classDetail = Array.isArray(details) ? details.find(d => d.id === subj.id) : details;
         const code = classDetail?.code || '';
         if (!code) return;
         const codeSpan = div.querySelector(`.class-code[data-sid="${subj.id}"]`);

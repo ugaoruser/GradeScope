@@ -245,7 +245,8 @@
 
     function setupRealtimeUpdates() {
       try {
-        const eventSource = new EventSource(`${window.API_BASE}/api/events`);
+        const tok = localStorage.getItem('token');
+        const eventSource = new EventSource(`${window.API_BASE}/api/events${tok?`?token=${encodeURIComponent(tok)}`:''}`);
         
         eventSource.addEventListener('enrollmentUpdated', (event) => {
           const data = JSON.parse(event.data);

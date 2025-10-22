@@ -500,7 +500,8 @@
     // Real-time reload via SSE for this subject
     (function(){
       try{
-        const es = new EventSource(`${window.API_BASE}/api/events`);
+        const tok = localStorage.getItem('token');
+        const es = new EventSource(`${window.API_BASE}/api/events${tok?`?token=${encodeURIComponent(tok)}`:''}`);
         es.addEventListener('scoreUpdated', (ev)=>{
           try{
             const p = JSON.parse(ev.data||'{}');

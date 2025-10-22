@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- =========================================================
 CREATE TABLE IF NOT EXISTS subjects (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  code VARCHAR(16) UNIQUE,          -- Join code
+  code VARCHAR(32) UNIQUE,          -- Join code
   title VARCHAR(255) NOT NULL,
   grade_level VARCHAR(50),
   section VARCHAR(50),
