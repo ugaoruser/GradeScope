@@ -119,12 +119,28 @@ window.API_BASE = (function(){
   function showParentSelection(children){
     const modal = qs('#parent-modal'); const selector = qs('#child-selector'); const btn = qs('#continue-btn');
     if (!modal || !selector || !btn) { redirectByRole('parent'); return; }
+    renderChildSelector(children);
+    // Setup link child functionality
+    const linkBtn = qs('#link-child-btn');
+    if (linkBtn) {
+      linkBtn.onclick = () => showLinkChildModal();
+    }
+    modal.style.display = 'flex';
+  }
+
+  function renderChildSelector(children) {
+    const selector = qs('#child-selector'); const btn = qs('#continue-btn');
+    if (!selector || !btn) return;
     selector.innerHTML = '';
     let selectedId = null; btn.disabled = true;
     children.forEach(child=>{
       const div = document.createElement('div');
       div.className = 'parent-child-option';
-      div.textContent = child.full_name; div.tabIndex = 0;
+      div.innerHTML = `
+        <div style="font-weight:600;margin-bottom:4px;">${child.full_name}</div>
+        <div style="font-size:0.85rem;color:#666;">${child.email || 'Student'}</div>
+      `;
+      div.tabIndex = 0;
       div.addEventListener('click', ()=>{ qsa('#child-selector > div').forEach(d=> d.classList.remove('selected')); div.classList.add('selected'); selectedId = child.id; btn.disabled = false; });
       selector.appendChild(div);
     });
@@ -133,8 +149,61 @@ window.API_BASE = (function(){
       selectedId = children[0].id; btn.disabled = false;
       const first = selector.firstElementChild; if (first) first.classList.add('selected');
     }
-    btn.onclick = ()=>{ if (!selectedId) return; const c = children.find(x=> x.id === selectedId); localStorage.setItem('selectedChildId', String(selectedId)); localStorage.setItem('selectedChildName', c?.full_name || 'Student'); modal.style.display='none'; redirectByRole('parent'); };
-    modal.style.display = 'flex';
+    btn.onclick = ()=>{ if (!selectedId) return; const c = children.find(x=> x.id === selectedId); localStorage.setItem('selectedChildId', String(selectedId)); localStorage.setItem('selectedChildName', c?.full_name || 'Student'); qs('#parent-modal').style.display='none'; redirectByRole('parent'); };
+  }
+
+  function showLinkChildModal() {
+    const linkModal = qs('#link-child-modal');
+    if (!linkModal) return;
+    linkModal.style.display = 'flex';
+    const emailInput = qs('#child-email');
+    const cancelBtn = qs('#cancel-link');
+    const confirmBtn = qs('#confirm-link');
+    
+    if (emailInput) emailInput.value = '';
+    
+    if (cancelBtn) {
+      cancelBtn.onclick = () => linkModal.style.display = 'none';
+    }
+    
+    if (confirmBtn) {
+      confirmBtn.onclick = async () => {
+        const email = emailInput?.value.trim();
+        if (!email) {
+          alert('Please enter a valid email address');
+          return;
+        }
+        
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Linking...';
+        
+        try {
+          const res = await fetch(`${window.API_BASE}/api/parent/link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ childEmail: email })
+          });
+          
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to link child');
+          
+          linkModal.style.display = 'none';
+          alert('Child linked successfully!');
+          
+          // Refresh children list
+          const childrenRes = await fetch(`${window.API_BASE}/api/children`, { headers: authHeaders() });
+          if (childrenRes.ok) {
+            const updatedChildren = await childrenRes.json();
+            renderChildSelector(updatedChildren);
+          }
+        } catch (err) {
+          alert('Error linking child: ' + err.message);
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Link Child';
+        }
+      };
+    }
   }
 
   async function handleSignup(event){
@@ -522,10 +591,91 @@ window.API_BASE = (function(){
     }catch(e){ console.error('Error loading classes:', e); container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>'; }
   }
 
-  function renderTeacherSubjects(subjects){
-    const container = qs('#classroomTabs'); if (!container) return; container.innerHTML='';
-    if (!subjects || !subjects.length){ container.innerHTML = '<div>No classes found. Click "+ Create Class" to add your first class.</div>'; return; }
-    subjects.forEach(subj=>{ const div=document.createElement('div'); div.className='class-tab'; div.innerHTML = `<div class="class-title">${subj.title}</div><div class="class-section">${subj.section||''}</div>`; div.addEventListener('click', ()=> location.href = `subject.html?subject=${encodeURIComponent(subj.title)}`); container.appendChild(div); });
+  async function renderTeacherSubjects(subjects){
+    const container = qs('#classroomTabs'); if (!container) return;
+    
+    // Show loading state
+    container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+    
+    if (!subjects || !subjects.length){ 
+      container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;background:#f8fafc;border-radius:12px;border:2px dashed #e2e8f0;">📚 No classes found.<br><span style="font-size:0.9rem;margin-top:8px;display:block;">Click "+ Create Class" to create your first class.</span></div>'; 
+      return; 
+    }
+    
+    for (const subj of subjects) {
+      const div = document.createElement('div');
+      div.className = 'class-tab';
+      
+      // Get student count and class code
+      let studentCount = 0;
+      let classCode = '';
+      
+      try {
+        // Get student count
+        const studentsRes = await fetch(`${window.API_BASE}/api/subjects/${subj.id}/students`);
+        if (studentsRes.ok) {
+          const students = await studentsRes.json();
+          studentCount = students.length;
+        }
+        
+        // Get class details including code
+        const detailsRes = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subj.title)}`);
+        if (detailsRes.ok) {
+          const details = await detailsRes.json();
+          const classDetail = Array.isArray(details) ? details.find(d => d.title === subj.title) : details;
+          classCode = classDetail?.code || '';
+        }
+      } catch (e) {
+        console.warn('Failed to load class details:', e);
+      }
+      
+      div.innerHTML = `
+        <div class="class-header">
+          <div class="class-title">${subj.title}</div>
+          <div class="class-actions">
+            ${classCode ? `<button class="copy-code-btn" data-code="${classCode}" title="Copy class code">📋</button>` : ''}
+          </div>
+        </div>
+        <div class="class-meta">
+          <div class="class-section">${subj.section || subj.grade_level || ''}</div>
+          <div class="class-stats">
+            <span class="student-count">${studentCount} student${studentCount !== 1 ? 's' : ''}</span>
+            ${classCode ? `<span class="class-code">Code: <strong>${classCode}</strong></span>` : ''}
+          </div>
+        </div>
+      `;
+      
+      // Add click handler for the main card
+      div.addEventListener('click', (e) => {
+        // Don't navigate if clicking the copy button
+        if (e.target.classList.contains('copy-code-btn')) return;
+        location.href = `teacher-grades.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
+      });
+      
+      // Add copy code functionality
+      const copyBtn = div.querySelector('.copy-code-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const code = copyBtn.dataset.code;
+          try {
+            await navigator.clipboard.writeText(code);
+            copyBtn.textContent = '✅';
+            setTimeout(() => copyBtn.textContent = '📋', 1500);
+          } catch (err) {
+            alert(`Class Code: ${code}`);
+          }
+        });
+      }
+      
+      container.appendChild(div);
+    }
+    
+    // Clear loading placeholders
+    setTimeout(() => {
+      const placeholders = container.querySelectorAll('.loading-placeholder');
+      placeholders.forEach(p => p.remove());
+    }, 100);
   }
 
   function setupChatbotToggle(){ const sidebar=qs('#chatbotSidebar'); const tog=qs('#chatbotToggle'); const close=qs('#closeChatbot'); if (tog && sidebar){ tog.addEventListener('click', ()=>{ sidebar.style.right = sidebar.style.right==='0px' ? '-360px' : '0px'; }); } if (close && sidebar){ close.addEventListener('click', ()=> sidebar.style.right='-360px'); } }

@@ -104,8 +104,24 @@
       </table>
       
       <div class="grade-summary">
-        Grade of Student: <span id="finalGrade">N/A</span>
-        <p><em>This grade is not final unless all data of all tasks is taken into account.</em></p>
+        <div class="grade-display">
+          <div class="grade-label">Estimated Final Grade:</div>
+          <div class="grade-value" id="finalGrade">N/A</div>
+        </div>
+        <div class="grade-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">0% Complete</div>
+        </div>
+        <div class="grade-disclaimer">
+          <div class="disclaimer-icon">⚠️</div>
+          <div class="disclaimer-text">
+            <strong>Important:</strong> This is an estimated grade based on currently entered scores. 
+            The final grade will be calculated when all assignments for this quarter are completed and graded.
+            <span class="completion-note" id="completionNote"></span>
+          </div>
+        </div>
       </div>
       <div class="chart-container">
         <canvas id="progressChart"></canvas>
@@ -223,7 +239,7 @@
         populateTable('peTable', peItems, renderPERow);
         populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
         if (cached.summary){
-          document.getElementById('finalGrade').textContent = Number(cached.summary.final||0).toFixed(2);
+          updateGradeSummary(cached.summary);
         }
         updateChart(items.filter(i=> i.included_in_final));
         return true;
@@ -284,27 +300,7 @@
       .then(res => res ? res.json() : null)
       .then(summary => {
         if (!summary) return;
-        if (typeof summary.final === 'number') {
-          document.getElementById('finalGrade').textContent = Number(summary.final).toFixed(2);
-        }
-        // Add completion indicator
-        const header = document.querySelector('.grade-summary');
-        if (header) {
-          const pct = Number(summary.completion || 0);
-          const note = pct < 100 ? ` (Completion: ${pct}% — Not final)` : ' (Final)';
-          if (!header.querySelector('.completion-note')){
-            const span = document.createElement('span');
-            span.className = 'completion-note';
-            span.style.color = pct<100 ? '#ef4444' : '#10b981';
-            span.style.marginLeft = '6px';
-            span.textContent = note;
-            header.appendChild(span);
-          } else {
-            const span = header.querySelector('.completion-note');
-            span.style.color = pct<100 ? '#ef4444' : '#10b981';
-            span.textContent = pct<100 ? ` (Completion: ${pct}% — Not final)` : ' (Final)';
-          }
-        }
+        updateGradeSummary(summary);
         // Cache fresh payload
         try{
           localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories: lastCategories, items: lastItems, summary, ts: Date.now() }));
@@ -369,6 +365,50 @@
       `;
     }
     
+    // Enhanced grade summary update function
+    function updateGradeSummary(summary) {
+      const finalGrade = Number(summary.final || 0).toFixed(2);
+      const completion = Number(summary.completion || 0);
+      
+      // Update grade value
+      document.getElementById('finalGrade').textContent = finalGrade;
+      
+      // Update progress bar and text
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      
+      if (progressFill) {
+        progressFill.style.width = completion + '%';
+      }
+      
+      if (progressText) {
+        progressText.textContent = `${completion}% Complete`;
+      }
+      
+      // Update completion note
+      const completionNote = document.getElementById('completionNote');
+      if (completionNote) {
+        if (completion < 100) {
+          completionNote.textContent = `Current completion: ${completion}%. This grade will change as more assignments are added and graded.`;
+          completionNote.style.color = '#dc2626';
+        } else {
+          completionNote.textContent = `All assignments for this quarter are complete (${completion}%). This is your final grade for the quarter.`;
+          completionNote.style.color = '#059669';
+        }
+      }
+      
+      // Add grade interpretation
+      const gradeValue = document.getElementById('finalGrade');
+      if (gradeValue && finalGrade !== 'N/A') {
+        const grade = parseFloat(finalGrade);
+        let gradeColor = '#059669'; // Default green
+        if (grade < 75) gradeColor = '#dc2626'; // Red for failing
+        else if (grade < 85) gradeColor = '#f59e0b'; // Orange for needs improvement
+        
+        gradeValue.style.color = gradeColor;
+      }
+    }
+
     let progressChart;
     function calculateFinalGrade(ptItems, wwItems, peItems) {
       const ptWeight = parseFloat(document.getElementById('ptWeight').textContent) / 100;

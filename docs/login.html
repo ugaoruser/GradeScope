@@ -50,10 +50,26 @@
   <!-- Parent selection modal -->
   <div id="parent-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;">
     <div style="background:#fff;border-radius:12px;padding:2rem;max-width:500px;width:90%;">
-      <h2>Select Your Child</h2>
-      <p>Choose which child's grades you'd like to view:</p>
-      <div id="child-selector" style="display:grid;gap:1rem;margin-top:1rem;"></div>
-      <button id="continue-btn" class="btn-login" style="margin-top:1rem;" disabled>Continue</button>
+      <h2 style="text-align:center;margin-bottom:1rem;">👨‍👩‍👧‍👦 Select Your Child</h2>
+      <p style="text-align:center;color:#666;margin-bottom:1.5rem;">Choose which child's grades you'd like to view:</p>
+      <div id="child-selector" style="display:grid;gap:1rem;margin:1rem 0;"></div>
+      <div style="margin-top:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+        <button id="link-child-btn" style="background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:0.9rem;">+ Link Child</button>
+        <button id="continue-btn" class="btn-login" style="flex:1;margin-left:1rem;" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link child modal -->
+  <div id="link-child-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:110;">
+    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:400px;width:90%;">
+      <h3 style="text-align:center;margin-bottom:1rem;">Link Child Account</h3>
+      <p style="color:#666;margin-bottom:1rem;font-size:0.9rem;">Enter your child's email address to link their account:</p>
+      <input type="email" id="child-email" placeholder="child@example.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;margin-bottom:1rem;">
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="cancel-link" style="background:#e5e7eb;color:#374151;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button>
+        <button id="confirm-link" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Link Child</button>
+      </div>
     </div>
   </div>
 
