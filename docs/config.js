@@ -355,17 +355,54 @@ window.API_BASE = (function(){
   }
 
   function bindHomepage1UI(){
-    qs('#navHome')?.addEventListener('click', ()=> location.href='homepage1.html');
-    qs('#navSettings')?.addEventListener('click', ()=> location.href='settings.html');
+    // Sidebar navigation
+    qs('#navHome')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      console.log('Home clicked');
+      location.href='homepage1.html';
+    });
+    qs('#navSettings')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      console.log('Settings clicked');
+      location.href='settings.html';
+    });
     // Account dropdown handled globally in attachAccountDropdownHandlers
     qs('#logoutBtn')?.addEventListener('click', logout);
-    qs('#aboutBtn')?.addEventListener('click', ()=> showAbout());
+    qs('#aboutBtn')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      showAbout();
+    });
     qs('#closeAboutBtn')?.addEventListener('click', ()=> closeAbout());
-    qs('#joinBtn')?.addEventListener('click', ()=> toggleJoinModal(true));
-    qs('#closeJoin')?.addEventListener('click', ()=> toggleJoinModal(false));
-    qs('#cancelJoin')?.addEventListener('click', ()=> toggleJoinModal(false));
-    qs('#confirmJoin')?.addEventListener('click', joinClass);
+    // Modal handlers
+    qs('#joinBtn')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleJoinModal(true);
+    });
+    qs('#closeJoin')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleJoinModal(false);
+    });
+    qs('#cancelJoin')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleJoinModal(false);
+    });
+    qs('#confirmJoin')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      joinClass();
+    });
     qs('#switchChildBtn')?.addEventListener('click', switchChild);
+    
+    // Additional safety: bind to any elements that might exist after DOM updates
+    setTimeout(() => {
+      qs('#navHome')?.addEventListener('click', (e)=> {
+        e.preventDefault();
+        location.href='homepage1.html';
+      });
+      qs('#navSettings')?.addEventListener('click', (e)=> {
+        e.preventDefault();
+        location.href='settings.html';
+      });
+    }, 100);
   }
 
   async function fetchMeAndHeader(){
@@ -396,7 +433,35 @@ window.API_BASE = (function(){
     }
   }
 
-  function toggleJoinModal(show){ const m = qs('#joinModal'); if (!m) return; m.style.display = show? 'block':'none'; }
+  function toggleJoinModal(show){ 
+    const m = qs('#joinModal'); 
+    if (!m) return; 
+    
+    if (show) {
+      document.body.classList.add('modal-open');
+      m.style.display = 'flex';
+      // Force a reflow before adding show class to prevent flash
+      m.offsetHeight;
+      requestAnimationFrame(() => {
+        m.classList.add('show');
+        m.setAttribute('aria-hidden', 'false');
+      });
+      // Clear any previous error states
+      const input = qs('#joinCode');
+      if (input) {
+        input.style.borderColor = '';
+        input.value = '';
+        input.focus();
+      }
+    } else {
+      document.body.classList.remove('modal-open');
+      m.classList.remove('show');
+      m.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        m.style.display = 'none';
+      }, 250);
+    }
+  }
 
   async function joinClass(){
     const accessCode = qs('#joinCode')?.value.trim(); if (!accessCode){ alert('Access code is required'); return; }
@@ -472,8 +537,25 @@ window.API_BASE = (function(){
     });
   }
 
-  function showAbout(){ const m=qs('#aboutModal'); if (!m) return; m.style.display='flex'; requestAnimationFrame(()=> m.classList.add('show')); }
-  function closeAbout(){ const m=qs('#aboutModal'); if (!m) return; m.classList.remove('show'); setTimeout(()=> m.style.display='none', 180); }
+  function showAbout(){ 
+    const m=qs('#aboutModal'); 
+    if (!m) return; 
+    document.body.classList.add('modal-open');
+    m.style.display='flex'; 
+    m.offsetHeight; // Force reflow
+    requestAnimationFrame(()=> {
+      m.classList.add('show');
+      m.setAttribute('aria-hidden', 'false');
+    }); 
+  }
+  function closeAbout(){ 
+    const m=qs('#aboutModal'); 
+    if (!m) return; 
+    document.body.classList.remove('modal-open');
+    m.classList.remove('show'); 
+    m.setAttribute('aria-hidden', 'true');
+    setTimeout(()=> m.style.display='none', 250); 
+  }
 
   // ---------- Boot ----------
   document.addEventListener('DOMContentLoaded', ()=>{
@@ -489,6 +571,12 @@ window.API_BASE = (function(){
       l2 && l2.addEventListener('click', logout);
     };
     bindLogout();
+    
+    // Global modal handlers to prevent stuck modals
+    setupGlobalModalHandlers();
+    
+    // Universal navigation handlers (fallback for all pages)
+    setupUniversalNavigation();
 
     if (Page.is('index.html')) return initIndex();
     if (Page.is('login.html')) return initLogin();
@@ -524,18 +612,54 @@ window.API_BASE = (function(){
   }
 
   function bindHomepage2UI(){
-    qs('#navHomeT')?.addEventListener('click', ()=> location.href='homepage2.html');
-    qs('#navSettingsT')?.addEventListener('click', ()=> location.href='settings.html');
+    // Teacher sidebar navigation
+    qs('#navHomeT')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      console.log('Teacher Home clicked');
+      location.href='homepage2.html';
+    });
+    qs('#navSettingsT')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      console.log('Teacher Settings clicked');
+      location.href='settings.html';
+    });
     // Account dropdown handled globally in attachAccountDropdownHandlers
     qs('#logoutBtnT')?.addEventListener('click', logout);
     // About modal
-    qs('#aboutBtn')?.addEventListener('click', ()=> showAbout());
+    qs('#aboutBtn')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      showAbout();
+    });
     qs('#closeAboutBtnT')?.addEventListener('click', ()=> closeAbout());
     // Add class modal
-    qs('#createClassBtn')?.addEventListener('click', ()=> toggleAddClass(true));
-    qs('#closeAddClassX')?.addEventListener('click', ()=> toggleAddClass(false));
-    qs('#cancelCreate')?.addEventListener('click', ()=> toggleAddClass(false));
-    qs('#confirmCreate')?.addEventListener('click', confirmAddClass);
+    qs('#createClassBtn')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleAddClass(true);
+    });
+    qs('#closeAddClassX')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleAddClass(false);
+    });
+    qs('#cancelCreate')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      toggleAddClass(false);
+    });
+    qs('#confirmCreate')?.addEventListener('click', (e)=> {
+      e.preventDefault();
+      confirmAddClass();
+    });
+    
+    // Additional safety binding after DOM updates
+    setTimeout(() => {
+      qs('#navHomeT')?.addEventListener('click', (e)=> {
+        e.preventDefault();
+        location.href='homepage2.html';
+      });
+      qs('#navSettingsT')?.addEventListener('click', (e)=> {
+        e.preventDefault();
+        location.href='settings.html';
+      });
+    }, 100);
   }
 
   async function setupTeacherHeader(){
@@ -666,6 +790,95 @@ window.API_BASE = (function(){
   }
 
   function setupChatbotToggle(){ const sidebar=qs('#chatbotSidebar'); const tog=qs('#chatbotToggle'); const close=qs('#closeChatbot'); if (tog && sidebar){ tog.addEventListener('click', ()=>{ sidebar.style.right = sidebar.style.right==='0px' ? '-360px' : '0px'; }); } if (close && sidebar){ close.addEventListener('click', ()=> sidebar.style.right='-360px'); } }
+
+  function setupUniversalNavigation() {
+    // Universal navigation handlers that work on any page
+    const role = getRole();
+    
+    // Home navigation
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'navHome' || e.target.id === 'navHomeT') {
+        e.preventDefault();
+        const homeUrl = role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
+        location.href = homeUrl;
+      }
+      
+      // Settings navigation
+      if (e.target.id === 'navSettings' || e.target.id === 'navSettingsT') {
+        e.preventDefault();
+        location.href = 'settings.html';
+      }
+      
+      // About modal
+      if (e.target.id === 'aboutBtn') {
+        e.preventDefault();
+        showAbout();
+      }
+      
+      // Join class button
+      if (e.target.id === 'joinBtn') {
+        e.preventDefault();
+        toggleJoinModal(true);
+      }
+    });
+    
+    // Additional safety: try to bind specific elements after a delay
+    setTimeout(() => {
+      ['navHome', 'navHomeT', 'navSettings', 'navSettingsT', 'aboutBtn', 'joinBtn'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element && !element.dataset.bound) {
+          element.dataset.bound = 'true';
+          element.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (id === 'navHome' || id === 'navHomeT') {
+              const homeUrl = role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
+              location.href = homeUrl;
+            } else if (id === 'navSettings' || id === 'navSettingsT') {
+              location.href = 'settings.html';
+            } else if (id === 'aboutBtn') {
+              showAbout();
+            } else if (id === 'joinBtn') {
+              toggleJoinModal(true);
+            }
+          });
+        }
+      });
+    }, 500);
+  }
+  
+  function setupGlobalModalHandlers() {
+    // ESC key handler
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        // Close any open modals
+        const openModals = document.querySelectorAll('.modal.show, .modal[style*="display: flex"], .modal[style*="display:flex"]');
+        openModals.forEach(modal => {
+          if (modal.id === 'joinModal') toggleJoinModal(false);
+          else if (modal.id === 'aboutModal') closeAbout();
+          else {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+          }
+        });
+        document.body.classList.remove('modal-open');
+      }
+    });
+    
+    // Click outside to close modals
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        const modalId = e.target.id;
+        if (modalId === 'joinModal') toggleJoinModal(false);
+        else if (modalId === 'aboutModal') closeAbout();
+        else {
+          e.target.classList.remove('show');
+          setTimeout(() => e.target.style.display = 'none', 250);
+          document.body.classList.remove('modal-open');
+        }
+      }
+    });
+  }
 
   // Expose minimal globals only if needed elsewhere
   window.App = { logout };
