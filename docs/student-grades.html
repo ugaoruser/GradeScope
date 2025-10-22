@@ -252,64 +252,49 @@
     function loadGradeData(quarter) {
       let lastCategories = [];
       let lastItems = [];
-      // Try cached render first (fast UI), then fetch fresh
+      // Try cached render first (fast UI), then fetch fresh in parallel
       if (!renderFromCache(quarter)){
         document.getElementById('ptTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
         document.getElementById('wwTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
         document.getElementById('peTable').innerHTML = '<tr><td colspan="4"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
         document.getElementById('assessmentTable').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
       }
-      // Fetch categories to get weights
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`)
-      .then(res => res.json())
-      .then(categories => { lastCategories = categories;
+
+      const childParam = (role === 'parent' && window.selectedChildId) ? `&childId=${encodeURIComponent(window.selectedChildId)}` : '';
+      const categoriesReq = fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`).then(r=>r.json());
+      const itemsReq = fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`).then(r=>r.json());
+      const summaryReq = fetch(`${window.API_BASE}/api/subjects/${subjectId}/grade-summary?quarter=${quarter}${role==='parent' && window.selectedChildId?`&childId=${encodeURIComponent(window.selectedChildId)}`:''}`).then(r=> r.ok ? r.json() : null).catch(()=>null);
+
+      Promise.all([categoriesReq, itemsReq, summaryReq]).then(([categories, items, summary])=>{
+        lastCategories = categories || [];
+        lastItems = items || [];
         // Set weights for each category
-        categories.forEach(category => {
-          if (category.name === 'Performance Task') {
-            document.getElementById('ptWeight').textContent = category.weight;
-          } else if (category.name === 'Written Works') {
-            document.getElementById('wwWeight').textContent = category.weight;
-          } else if (category.name === 'Periodical Exam') {
-            document.getElementById('peWeight').textContent = category.weight;
-          }
+        (categories||[]).forEach(category => {
+          if (category.name === 'Performance Task') document.getElementById('ptWeight').textContent = category.weight;
+          else if (category.name === 'Written Works') document.getElementById('wwWeight').textContent = category.weight;
+          else if (category.name === 'Periodical Exam') document.getElementById('peWeight').textContent = category.weight;
         });
-        
-        // Fetch grade items (include childId for parents)
-        const childParam = (role === 'parent' && window.selectedChildId) ? `&childId=${encodeURIComponent(window.selectedChildId)}` : '';
-        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${quarter}${childParam}`);
-      })
-      .then(res => res.json())
-      .then(items => { lastItems = items;
+
         // Group items by category
-        const ptItems = items.filter(item => item.category_name === 'Performance Task');
-        const wwItems = items.filter(item => item.category_name === 'Written Works');
-        const peItems = items.filter(item => item.category_name === 'Periodical Exam');
-        const assessmentItems = items.filter(item => !item.included_in_final);
-        
+        const ptItems = lastItems.filter(item => item.category_name === 'Performance Task');
+        const wwItems = lastItems.filter(item => item.category_name === 'Written Works');
+        const peItems = lastItems.filter(item => item.category_name === 'Periodical Exam');
+        const assessmentItems = lastItems.filter(item => !item.included_in_final);
+
         // Populate tables
         populateTable('ptTable', ptItems, renderPTRow);
         populateTable('wwTable', wwItems, renderWWRow);
         populateTable('peTable', peItems, renderPERow);
         populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
-        
-        // Calculate final grade
+
+        // Calculate final grade and update chart
         calculateFinalGrade(ptItems, wwItems, peItems);
-        // Update progress chart with included items only
-        const included = items.filter(i => i.included_in_final);
-        updateChart(included);
-        // Fetch grade summary for completion and final confirmation
-        return fetch(`${window.API_BASE}/api/subjects/${subjectId}/grade-summary?quarter=${quarter}${role==='parent' && window.selectedChildId?`&childId=${encodeURIComponent(window.selectedChildId)}`:''}`);
-      })
-      .then(res => res ? res.json() : null)
-      .then(summary => {
-        if (!summary) return;
-        updateGradeSummary(summary);
+        updateChart(lastItems.filter(i => i.included_in_final));
+
+        if (summary) updateGradeSummary(summary);
         // Cache fresh payload
-        try{
-          localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories: lastCategories, items: lastItems, summary, ts: Date.now() }));
-        }catch{}
-      })
-      .catch((error) => { console.error('Error loading grade data:', error); });
+        try{ localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories: lastCategories, items: lastItems, summary, ts: Date.now() })); }catch{}
+      }).catch((error)=>{ console.error('Error loading grade data:', error); });
     }
     
     function populateTable(tableId, items, renderRowFunc) {

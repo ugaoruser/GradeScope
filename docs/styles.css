@@ -489,11 +489,14 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
   position:fixed; right:-360px; top:0; width:360px; height:100%; background:var(--card);
   box-shadow: -3px 0 12px rgba(0,0,0,0.12); transition:right .28s ease; z-index:350; display:flex; flex-direction:column;
 }
+/* Force override any inline background to honor theme */
+#chatbotSidebar{ background: var(--card) !important; color: var(--text) !important; }
 #chatbotSidebar.open{ right:0; }
 #chatbotToggle{
   position:fixed; right:24px; bottom:24px; width:56px; height:56px; border-radius:50%;
   background:var(--primary); color:#fff; border:none; font-size:22px; box-shadow:0 6px 18px rgba(0,0,0,0.15); cursor:pointer;
 }
+#chatbotToggle{ background: var(--primary) !important; color: #fff !important; }
 
 /* Tables (grades) */
 .grades-table{

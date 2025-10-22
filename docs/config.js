@@ -663,6 +663,7 @@ window.API_BASE = (function(){
         }
       }).catch(()=>{});
     });
+  }
 
   function setupChatbotToggle(){ const sidebar=qs('#chatbotSidebar'); const tog=qs('#chatbotToggle'); const close=qs('#closeChatbot'); if (tog && sidebar){ tog.addEventListener('click', ()=>{ sidebar.style.right = sidebar.style.right==='0px' ? '-360px' : '0px'; }); } if (close && sidebar){ close.addEventListener('click', ()=> sidebar.style.right='-360px'); } }
 
