@@ -406,20 +406,316 @@ ${report.recommendations ? report.recommendations.join('\n') : 'None available'}
   }
 }
 
-// Initialize chart when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Check if Chart.js is loaded
-  if (typeof Chart === 'undefined') {
-    console.error('Chart.js is not loaded. Please include Chart.js library.');
-    return;
+/**
+ * Enhanced Grade Estimation Algorithm
+ * Calculates estimated final grades with proper category weights
+ */
+class GradeEstimator {
+  constructor() {
+    this.defaultWeights = {
+      'Performance Task': 0.50,  // 50%
+      'Written Works': 0.30,     // 30% 
+      'Periodical Exam': 0.20    // 20%
+    };
   }
 
-  // Initialize performance chart
-  window.performanceChart = new PerformanceChart();
-  
-  // Initialize chart if canvas exists
-  const chartCanvas = document.getElementById('performanceChart');
-  if (chartCanvas) {
-    window.performanceChart.initialize('performanceChart');
+  /**
+   * Calculate estimated final grade with category weights
+   * @param {Array} gradeItems - Array of grade items with scores
+   * @param {Object} categoryWeights - Custom category weights
+   * @returns {Object} Grade estimation results
+   */
+  calculateEstimatedGrade(gradeItems, categoryWeights = null) {
+    const weights = categoryWeights || this.defaultWeights;
+    
+    // Group items by category
+    const categories = {};
+    
+    gradeItems.forEach(item => {
+      if (!item.included_in_final) return;
+      
+      const categoryName = item.category_name || 'Other';
+      if (!categories[categoryName]) {
+        categories[categoryName] = {
+          items: [],
+          totalScore: 0,
+          totalMax: 0,
+          weight: weights[categoryName] || 0
+        };
+      }
+      
+      categories[categoryName].items.push(item);
+      if (item.score !== null && item.score !== undefined) {
+        categories[categoryName].totalScore += parseFloat(item.score);
+        categories[categoryName].totalMax += parseFloat(item.max_score);
+      }
+    });
+
+    // Calculate weighted final grade
+    let weightedTotal = 0;
+    let totalWeight = 0;
+    let completionItems = 0;
+    let totalItems = 0;
+
+    Object.keys(categories).forEach(categoryName => {
+      const category = categories[categoryName];
+      if (category.totalMax > 0) {
+        const categoryAverage = (category.totalScore / category.totalMax) * 100;
+        weightedTotal += categoryAverage * category.weight;
+        totalWeight += category.weight;
+      }
+      
+      totalItems += category.items.length;
+      completionItems += category.items.filter(item => 
+        item.score !== null && item.score !== undefined).length;
+    });
+
+    const estimatedGrade = totalWeight > 0 ? weightedTotal : 0;
+    const completion = totalItems > 0 ? (completionItems / totalItems) * 100 : 0;
+
+    return {
+      estimatedGrade: Math.round(estimatedGrade * 100) / 100,
+      completion: Math.round(completion * 10) / 10,
+      categories: Object.keys(categories).map(name => ({
+        name,
+        average: categories[name].totalMax > 0 ? 
+          Math.round((categories[name].totalScore / categories[name].totalMax) * 10000) / 100 : 0,
+        weight: categories[name].weight * 100,
+        itemsCount: categories[name].items.length,
+        completedCount: categories[name].items.filter(item => 
+          item.score !== null && item.score !== undefined).length
+      }))
+    };
   }
+}
+
+/**
+ * Real-time Class Management System
+ * Handles WebSocket connections for live updates
+ */
+class RealtimeClassManager {
+  constructor() {
+    this.eventSource = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
+  }
+
+  /**
+   * Initialize real-time connection
+   */
+  connect() {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const eventSourceUrl = `${window.API_BASE}/api/events?token=${encodeURIComponent(token)}`;
+      this.eventSource = new EventSource(eventSourceUrl);
+
+      this.eventSource.addEventListener('open', () => {
+        console.log('Real-time connection established');
+        this.reconnectAttempts = 0;
+        this.updateConnectionStatus(true);
+      });
+
+      this.eventSource.addEventListener('classCreated', (event) => {
+        this.handleClassCreated(JSON.parse(event.data));
+      });
+
+      this.eventSource.addEventListener('enrollmentUpdated', (event) => {
+        this.handleEnrollmentUpdated(JSON.parse(event.data));
+      });
+
+      this.eventSource.addEventListener('scoreUpdated', (event) => {
+        this.handleScoreUpdated(JSON.parse(event.data));
+      });
+
+      this.eventSource.addEventListener('error', () => {
+        this.updateConnectionStatus(false);
+        this.handleConnectionError();
+      });
+
+    } catch (error) {
+      console.error('Failed to establish real-time connection:', error);
+    }
+  }
+
+  /**
+   * Handle class creation events
+   */
+  handleClassCreated(data) {
+    console.log('New class created:', data);
+    // Refresh class list if on homepage
+    if (window.location.pathname.includes('homepage')) {
+      if (typeof loadTeacherSubjects === 'function') {
+        loadTeacherSubjects();
+      }
+    }
+  }
+
+  /**
+   * Handle student enrollment events
+   */
+  handleEnrollmentUpdated(data) {
+    console.log('Enrollment updated:', data);
+    // Show notification for teachers
+    if (localStorage.getItem('role') === 'teacher') {
+      this.showNotification('New student joined a class!', 'success');
+    }
+    // Refresh class/student lists
+    this.refreshCurrentPageData();
+  }
+
+  /**
+   * Handle grade/score update events
+   */
+  handleScoreUpdated(data) {
+    console.log('Score updated:', data);
+    // Refresh grade data if viewing grades
+    if (window.location.pathname.includes('grades')) {
+      this.refreshCurrentPageData();
+    }
+  }
+
+  /**
+   * Handle connection errors with reconnection logic
+   */
+  handleConnectionError() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      console.log(`Reconnection attempt ${this.reconnectAttempts}...`);
+      
+      setTimeout(() => {
+        this.connect();
+      }, this.reconnectDelay * this.reconnectAttempts);
+    } else {
+      console.error('Max reconnection attempts reached');
+    }
+  }
+
+  /**
+   * Update connection status indicator
+   */
+  updateConnectionStatus(connected) {
+    const indicators = document.querySelectorAll('.real-time-indicator');
+    indicators.forEach(indicator => {
+      if (connected) {
+        indicator.classList.add('connected');
+      } else {
+        indicator.classList.remove('connected');
+      }
+    });
+  }
+
+  /**
+   * Show notification to user
+   */
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease forwards';
+      setTimeout(() => notification.remove(), 300);
+    }, 4000);
+  }
+
+  /**
+   * Refresh data on current page
+   */
+  refreshCurrentPageData() {
+    const path = window.location.pathname;
+    
+    if (path.includes('homepage1') && typeof loadClasses === 'function') {
+      loadClasses();
+    } else if (path.includes('homepage2') && typeof loadTeacherSubjects === 'function') {
+      loadTeacherSubjects();
+    } else if (path.includes('student-grades') && typeof loadGradeData === 'function') {
+      const currentQuarter = parseInt(document.querySelector('.quarter-tab.active')?.dataset.quarter) || 1;
+      loadGradeData(currentQuarter);
+    } else if (path.includes('teacher-grades') && typeof loadStudentGrades === 'function') {
+      loadStudentGrades();
+    }
+  }
+
+  /**
+   * Disconnect real-time connection
+   */
+  disconnect() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+}
+
+// CSS animations for notifications
+const notificationStyles = document.createElement('style');
+notificationStyles.textContent = `
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+.real-time-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  transition: background 0.3s ease;
+}
+.real-time-indicator.connected .status-dot {
+  background: #10b981;
+}
+`;
+document.head.appendChild(notificationStyles);
+
+// Initialize systems when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Grade Estimator
+  window.gradeEstimator = new GradeEstimator();
+  
+  // Initialize Real-time Class Manager
+  window.realtimeManager = new RealtimeClassManager();
+  
+  // Connect to real-time updates if authenticated
+  const token = localStorage.getItem('token');
+  if (token) {
+    window.realtimeManager.connect();
+  }
+
+  // Initialize performance chart if Chart.js is available
+  if (typeof Chart !== 'undefined') {
+    window.performanceChart = new PerformanceChart();
+    
+    const chartCanvas = document.getElementById('performanceChart');
+    if (chartCanvas) {
+      window.performanceChart.initialize('performanceChart');
+    }
+  }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (window.realtimeManager) {
+      window.realtimeManager.disconnect();
+    }
+  });
 });

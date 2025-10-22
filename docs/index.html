@@ -3,12 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
   <title>GradeTracker</title>
 </head>
 <body class="index-page">
-  <h2>Redirecting...</h2>
+  <div class="landing-card">
+    <div style="text-align: center; padding: 40px 20px;">
+      <h1 style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem; font-weight: 800;">📚 GradeTracker</h1>
+      <div class="loading" style="display: block; margin: 20px 0;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 1.1rem; margin: 20px 0;">Checking authentication...</p>
+      <div id="manual-login" style="display: none; margin-top: 30px;">
+        <p style="color: var(--text-muted); margin-bottom: 20px;">If you're not redirected automatically:</p>
+        <a href="login.html" style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Go to Login</a>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Show manual login option after 3 seconds
+    setTimeout(() => {
+      document.getElementById('manual-login').style.display = 'block';
+    }, 3000);
+  </script>
 </body>
 </html>
