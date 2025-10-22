@@ -593,90 +593,76 @@ window.API_BASE = (function(){
 
   async function renderTeacherSubjects(subjects){
     const container = qs('#classroomTabs'); if (!container) return;
-    
-    // Show loading state
-    container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+    container.innerHTML = '';
     
     if (!subjects || !subjects.length){ 
       container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;background:#f8fafc;border-radius:12px;border:2px dashed #e2e8f0;">📚 No classes found.<br><span style="font-size:0.9rem;margin-top:8px;display:block;">Click "+ Create Class" to create your first class.</span></div>'; 
       return; 
     }
     
-    for (const subj of subjects) {
+    subjects.forEach((subj) => {
       const div = document.createElement('div');
       div.className = 'class-tab';
-      
-      // Get student count and class code
-      let studentCount = 0;
-      let classCode = '';
-      
-      try {
-        // Get student count
-        const studentsRes = await fetch(`${window.API_BASE}/api/subjects/${subj.id}/students`);
-        if (studentsRes.ok) {
-          const students = await studentsRes.json();
-          studentCount = students.length;
-        }
-        
-        // Get class details including code
-        const detailsRes = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subj.title)}`);
-        if (detailsRes.ok) {
-          const details = await detailsRes.json();
-          const classDetail = Array.isArray(details) ? details.find(d => d.title === subj.title) : details;
-          classCode = classDetail?.code || '';
-        }
-      } catch (e) {
-        console.warn('Failed to load class details:', e);
-      }
-      
       div.innerHTML = `
         <div class="class-header">
           <div class="class-title">${subj.title}</div>
           <div class="class-actions">
-            ${classCode ? `<button class="copy-code-btn" data-code="${classCode}" title="Copy class code">📋</button>` : ''}
+            <button class="copy-code-btn" data-code="" title="Copy class code" style="display:none;">📋</button>
           </div>
         </div>
         <div class="class-meta">
           <div class="class-section">${subj.section || subj.grade_level || ''}</div>
           <div class="class-stats">
-            <span class="student-count">${studentCount} student${studentCount !== 1 ? 's' : ''}</span>
-            ${classCode ? `<span class="class-code">Code: <strong>${classCode}</strong></span>` : ''}
+            <span class="student-count" data-sid="${subj.id}">—</span>
+            <span class="class-code" data-sid="${subj.id}" style="display:none;">Code: <strong></strong></span>
           </div>
         </div>
       `;
       
-      // Add click handler for the main card
+      // Navigate to grades on card click (except copy button)
       div.addEventListener('click', (e) => {
-        // Don't navigate if clicking the copy button
         if (e.target.classList.contains('copy-code-btn')) return;
         location.href = `teacher-grades.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
       });
       
-      // Add copy code functionality
-      const copyBtn = div.querySelector('.copy-code-btn');
-      if (copyBtn) {
-        copyBtn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const code = copyBtn.dataset.code;
-          try {
-            await navigator.clipboard.writeText(code);
-            copyBtn.textContent = '✅';
-            setTimeout(() => copyBtn.textContent = '📋', 1500);
-          } catch (err) {
-            alert(`Class Code: ${code}`);
-          }
-        });
-      }
-      
       container.appendChild(div);
-    }
-    
-    // Clear loading placeholders
-    setTimeout(() => {
-      const placeholders = container.querySelectorAll('.loading-placeholder');
-      placeholders.forEach(p => p.remove());
-    }, 100);
-  }
+      
+      // Fetch student count (non-blocking)
+      fetch(`${window.API_BASE}/api/subjects/${subj.id}/students`).then(async (res)=>{
+        if (!res.ok) return [];
+        return res.json();
+      }).then((students)=>{
+        const count = Array.isArray(students) ? students.length : 0;
+        const badge = div.querySelector(`.student-count[data-sid="${subj.id}"]`);
+        if (badge) badge.textContent = `${count} student${count !== 1 ? 's' : ''}`;
+      }).catch(()=>{});
+      
+      // Fetch class code (non-blocking)
+      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subj.title)}`).then(async (res)=>{
+        if (!res.ok) return null;
+        const details = await res.json();
+        const classDetail = Array.isArray(details) ? details.find(d => d.title === subj.title) : details;
+        const code = classDetail?.code || '';
+        if (!code) return;
+        const codeSpan = div.querySelector(`.class-code[data-sid="${subj.id}"]`);
+        if (codeSpan) { codeSpan.style.display='inline'; codeSpan.querySelector('strong').textContent = code; }
+        const copyBtn = div.querySelector('.copy-code-btn');
+        if (copyBtn) {
+          copyBtn.dataset.code = code;
+          copyBtn.style.display = 'inline-block';
+          copyBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+              await navigator.clipboard.writeText(code);
+              copyBtn.textContent = '✅';
+              setTimeout(() => copyBtn.textContent = '📋', 1500);
+            } catch (err) {
+              alert(`Class Code: ${code}`);
+            }
+          });
+        }
+      }).catch(()=>{});
+    });
 
   function setupChatbotToggle(){ const sidebar=qs('#chatbotSidebar'); const tog=qs('#chatbotToggle'); const close=qs('#closeChatbot'); if (tog && sidebar){ tog.addEventListener('click', ()=>{ sidebar.style.right = sidebar.style.right==='0px' ? '-360px' : '0px'; }); } if (close && sidebar){ close.addEventListener('click', ()=> sidebar.style.right='-360px'); } }
 
