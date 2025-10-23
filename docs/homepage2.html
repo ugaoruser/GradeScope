@@ -150,6 +150,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function processMessage(message) {
     const lower = message.toLowerCase();
+    // Quick UI intents
+    if (/(open|show)\s+(chat|assistant)/i.test(lower)) { document.getElementById('chatbotSidebar').style.right='0px'; return 'Opening assistant.'; }
+    if (/(close|hide)\s+(chat|assistant)/i.test(lower)) { document.getElementById('closeChatbot')?.click(); return 'Hiding assistant.'; }
+    if (/create\s+class/i.test(lower)) { document.getElementById('createClassBtn')?.click(); return 'Opening Create Class.'; }
+    if (/show\s+about/i.test(lower)) { document.getElementById('aboutBtn')?.click(); return 'Opening About.'; }
+
     // Average calculation
     if (lower.includes('average')) {
       const nums = message.match(/\d+(?:\.\d+)?/g);
@@ -171,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${res.feedback}${suggestion}`;
       }catch{ /* fallback */ }
     }
-    return "I can help with: average calculations (e.g., 'Average of 85, 90, 78') and generating comments (e.g., 'Comment for Ana in Math, score 88').";
+    return "I can help with: average calculations (e.g., 'Average of 85, 90, 78'), generating comments (e.g., 'Comment for Ana in Math, score 88'), and quick UI actions like 'create class' or 'show about'.";
   }
 });
 </script>

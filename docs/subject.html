@@ -111,8 +111,8 @@
 
     // Get subject from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const subjectName = urlParams.get('subject') || 'Unknown Subject';
-    let subjectId = null;
+    const subjectName = urlParams.get('subject') || urlParams.get('name') || 'Unknown Subject';
+    let subjectId = urlParams.get('id');
     let accessCode = '';
 
     // Initialize page
@@ -139,11 +139,18 @@
 
     async function loadSubjectDetails() {
       try {
-        const res = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`);
-        if (!res.ok) throw new Error('Failed to load subject details');
-        
-        const subjects = await res.json();
-        const subject = Array.isArray(subjects) ? subjects.find(s => s.title === subjectName) : subjects;
+        let subject;
+        if (subjectId) {
+          const res = await fetch(`${window.API_BASE}/api/subjects?id=${encodeURIComponent(subjectId)}`);
+          if (!res.ok) throw new Error('Failed to load subject details');
+          const subjects = await res.json();
+          subject = Array.isArray(subjects) ? subjects.find(s => String(s.id) === String(subjectId)) : subjects;
+        } else {
+          const res = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`);
+          if (!res.ok) throw new Error('Failed to load subject details');
+          const subjects = await res.json();
+          subject = Array.isArray(subjects) ? subjects.find(s => s.title === subjectName) : subjects;
+        }
         
         if (subject) {
           subjectId = subject.id;

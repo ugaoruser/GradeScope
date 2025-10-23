@@ -74,7 +74,6 @@ window.API_BASE = (function(){
         headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
         body: JSON.stringify({ email, password })
       });
-      // Gracefully handle non-JSON responses (e.g., HTML error pages)
       const ctype = res.headers.get('content-type') || '';
       let data;
       if (ctype.includes('application/json')){
@@ -86,11 +85,17 @@ window.API_BASE = (function(){
         throw new Error(msg);
       }
       if (!res.ok) throw new Error(data.message || 'Invalid email or password.');
+      // Immediately persist and stop loading for snappier UX
       persistAuth(data, email);
-      if (data.role === 'parent') { await parentFlow(); return; }
-      showSuccess('Login successful!'); redirectByRole(data.role);
-    }catch(err){ console.error(err); showError(err.message || 'Server unreachable.'); }
-    finally{ setLoading('#login-btn','#loading', false, 'Log In'); }
+      setLoading('#login-btn','#loading', false, 'Log In');
+      if (data.role === 'parent') {
+        // Don't block UI; show selection modal asynchronously
+        parentFlow();
+        return;
+      }
+      // Redirect immediately for students/teachers
+      redirectByRole(data.role);
+    }catch(err){ console.error(err); showError(err.message || 'Server unreachable.'); setLoading('#login-btn','#loading', false, 'Log In'); }
   }
 
   function persistAuth(data, email){
