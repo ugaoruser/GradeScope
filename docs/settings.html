@@ -44,12 +44,12 @@
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-            <li><strong>First Name:</strong> <input id="editFirstName" class="field-display" style="display:inline-block; margin-left:8px;" /></li>
-            <li><strong>Last Name:</strong> <input id="editLastName" class="field-display" style="display:inline-block; margin-left:8px;" /></li>
+            <li><strong>First Name:</strong> <input id="editFirstName" class="field-display" style="display:inline-block; margin-left:8px;" readonly disabled /></li>
+            <li><strong>Last Name:</strong> <input id="editLastName" class="field-display" style="display:inline-block; margin-left:8px;" readonly disabled /></li>
             <li><strong>Email:</strong> <span id="displayEmail" class="field-display" style="display:inline-block; margin-left:8px;"></span></li>
           </ul>
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button id="saveProfileBtn" class="btn btn-primary">Save Profile</button>
+            <button id="saveProfileBtn" class="btn btn-primary" disabled title="Profile fields are synced from your account">Save Profile</button>
           </div>
           <div id="profileMsg" class="small" style="margin-top:6px;color:#2563eb;"></div>
         </div>

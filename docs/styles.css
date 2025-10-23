@@ -184,6 +184,14 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 .btn { padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; transition: transform var(--transition-fast), box-shadow var(--transition-fast); }
 .btn:hover{ transform: translateY(-3px); }
 
+/* Modal styling for consistent About UI */
+.modal { color: var(--text); }
+.modal .modal-panel { background: var(--surface); color: var(--text); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.modal .modal-header { display:flex; align-items:center; justify-content:space-between; background: linear-gradient(90deg,#3f51b5,#5c6bc0); color:#fff; padding: 12px 16px; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
+.modal .modal-title { font-weight:700; color:#fff; }
+.modal .modal-close { color:#fff; background:none; border:none; cursor:pointer; font-size:20px; }
+.modal .modal-body { padding: 16px; color: var(--text); background: var(--surface); }
+
 /* -------------------------
    01. Sidebar (shared)
    ------------------------- */
