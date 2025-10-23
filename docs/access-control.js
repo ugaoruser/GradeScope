@@ -131,7 +131,15 @@ async function verifyAuthentication() {
     }
     
     const data = await response.json();
-    return data.ok;
+    // Persist fresh user info when available
+    try {
+      if (data && typeof data === 'object') {
+        if (data.role) localStorage.setItem('role', data.role);
+        if (data.fullName) localStorage.setItem('fullName', data.fullName);
+        if (data.email) localStorage.setItem('email', data.email);
+      }
+    } catch {}
+    return true;
   } catch (error) {
     console.error('Authentication error:', error);
     clearUserSession();

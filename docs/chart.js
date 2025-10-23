@@ -28,7 +28,7 @@ class PerformanceChart {
     }
 
     const ctx = canvas.getContext('2d');
-    this.chart = new Chart(ctx, {
+    this.chart = new (window.Chart)(ctx, {
       type: this.chartType,
       data: {
         labels: [],
@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Initialize performance chart if Chart.js is available
-  if (typeof Chart !== 'undefined') {
+  if (window.Chart) {
     window.performanceChart = new PerformanceChart();
     
     const chartCanvas = document.getElementById('performanceChart');
