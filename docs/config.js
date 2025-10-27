@@ -339,14 +339,30 @@ window.API_BASE = (function(){
   async function initLogin(){
     const token=getToken(), role=getRole(); if (token && role){ redirectByRole(role); return; }
     try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; } }catch{}
-    const form = qs('#login-form'); if (form){ form.addEventListener('submit', handleLogin); }
+    const form = qs('#login-form');
+    if (form){
+      // Robust binding and default navigation guard
+      form.setAttribute('novalidate','novalidate');
+      form.setAttribute('action','javascript:void(0)');
+      form.addEventListener('submit', handleLogin);
+      // Fallback: ensure button click also triggers login
+      const btn = qs('#login-btn');
+      btn && btn.addEventListener('click', (e)=>{ e.preventDefault(); handleLogin(e); });
+    }
     qs('#email')?.focus();
   }
 
   async function initSignup(){
     const token=getToken(); if (token){ redirectByRole(getRole()); return; }
     try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; } }catch{}
-    const form = qs('#signup-form'); if (form){ form.addEventListener('submit', handleSignup); }
+    const form = qs('#signup-form');
+    if (form){
+      form.setAttribute('novalidate','novalidate');
+      form.setAttribute('action','javascript:void(0)');
+      form.addEventListener('submit', handleSignup);
+      const btn = qs('#signup-btn');
+      btn && btn.addEventListener('click', (e)=>{ e.preventDefault(); handleSignup(e); });
+    }
   }
 
   async function initHomepage1(){
