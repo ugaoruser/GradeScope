@@ -31,222 +31,251 @@
   </header>
   
   <div class="container">
-    <button class="back-button" onclick="goBack()">← Back to Subjects</button>
-    
-    <div class="class-header">
-      <h2 id="subjectTitle">Subject Name</h2>
-      <div class="class-code" id="sectionCode">Section: </div>
-    </div>
-    
-    <div class="student-selector">
-      <label for="studentSelect">Select Student:</label>
-      <select id="studentSelect" onchange="loadStudentGrades()">
-        <option value="">All Students</option>
-      </select>
-    </div>
-    
-    <div class="quarter-tabs">
-      <button class="tab-button active" data-quarter="1" onclick="switchQuarter(1)">Quarter 1</button>
-      <button class="tab-button" data-quarter="2" onclick="switchQuarter(2)">Quarter 2</button>
-      <button class="tab-button" data-quarter="3" onclick="switchQuarter(3)">Quarter 3</button>
-      <button class="tab-button" data-quarter="4" onclick="switchQuarter(4)">Quarter 4</button>
-    </div>
-    
-    <!-- AI Chatbot Assistant -->
-    <div class="chatbot-assistant">
-      <div class="chatbot-header">
-        <h3>AI Feedback Assistant</h3>
-        <button id="toggleChatbot" class="toggle-chatbot">Show</button>
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="navigation-header">
+        <button class="back-button" onclick="goBack()">← Back to Subjects</button>
+        <div class="subject-info">
+          <h1 id="subjectTitle">Subject Name</h1>
+          <div class="section-info" id="sectionCode">Section: </div>
+        </div>
       </div>
-      <div class="chatbot-content" style="display: none;">
-        <div class="feedback-form">
-          <h4>Generate Feedback</h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="feedbackScore">Score</label>
-              <input type="number" id="feedbackScore" min="0" max="100" value="85">
+      
+      <div class="control-bar">
+        <div class="student-quarter-controls">
+          <div class="student-selector">
+            <label for="studentSelect">Select Student:</label>
+            <select id="studentSelect" onchange="loadStudentGrades()">
+              <option value="">Loading students...</option>
+            </select>
+          </div>
+          
+          <div class="quarter-tabs">
+            <button class="tab-button active" data-quarter="1" onclick="switchQuarter(1)">Quarter 1</button>
+            <button class="tab-button" data-quarter="2" onclick="switchQuarter(2)">Quarter 2</button>
+            <button class="tab-button" data-quarter="3" onclick="switchQuarter(3)">Quarter 3</button>
+            <button class="tab-button" data-quarter="4" onclick="switchQuarter(4)">Quarter 4</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Student Dashboard Section -->
+    <div class="student-dashboard-card">
+      <div class="dashboard-header">
+        <h2>Student Dashboard</h2>
+        <button id="exportReport" class="btn-primary">Export Report</button>
+      </div>
+      
+      <div class="dashboard-content">
+        <div class="selected-student-info">
+          <div class="student-display">
+            <span id="selectedStudentName">Select a student to view details</span>
+          </div>
+        </div>
+        
+        <div class="ai-feedback-section">
+          <h3>AI Feedback Assistant</h3>
+          <div class="feedback-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="feedbackScore">Score</label>
+                <input type="number" id="feedbackScore" min="0" max="100" value="85">
+              </div>
+              <div class="form-group">
+                <label for="feedbackTopic">Topic</label>
+                <input type="text" id="feedbackTopic" placeholder="e.g., Algebra, Essay Writing">
+              </div>
+              <div class="form-group">
+                <button id="generateFeedback" class="btn-primary">Generate</button>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="feedbackTopic">Topic</label>
-              <input type="text" id="feedbackTopic" placeholder="e.g., Algebra, Essay Writing">
-            </div>
-            <div class="form-group">
-              <button id="generateFeedback" class="btn-primary">Generate</button>
+            <div class="feedback-results">
+              <div class="feedback-message">
+                <h4>Personalized Feedback</h4>
+                <p id="personalizedFeedback">Generate feedback to see results</p>
+              </div>
+              <div class="feedback-suggestions">
+                <h4>Teaching Suggestions</h4>
+                <ul id="improvementSuggestions">
+                  <li>Generate feedback to see suggestions</li>
+                </ul>
+              </div>
+              <button id="copyFeedback" class="btn-secondary">Copy to Comments</button>
             </div>
           </div>
         </div>
-        <div class="feedback-results">
-          <div class="feedback-message">
-            <h4>Personalized Feedback</h4>
-            <p id="personalizedFeedback">Generate feedback to see results</p>
+        
+        <div class="performance-trends">
+          <h3>Performance Trend per Quarter</h3>
+          <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
           </div>
-          <div class="feedback-suggestions">
-            <h4>Teaching Suggestions</h4>
-            <ul id="improvementSuggestions">
-              <li>Generate feedback to see suggestions</li>
-            </ul>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
+              <div class="legend-label">Selected Student</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
+              <div class="legend-label">Class Average</div>
+            </div>
           </div>
-          <button id="copyFeedback" class="btn-secondary">Copy to Comments</button>
         </div>
       </div>
     </div>
     
-    <!-- Performance Visualization Section -->
-    <div class="performance-visualization">
-      <div class="visualization-header">
-        <h3>Student Performance Trends</h3>
-        <div class="visualization-controls">
-          <select id="chartType">
-            <option value="line">Line Chart</option>
-            <option value="bar">Bar Chart</option>
-            <option value="radar">Radar Chart</option>
-          </select>
-          <select id="timeRange">
-            <option value="quarter">Current Quarter</option>
-            <option value="year">Full Year</option>
-          </select>
-          <button id="exportReport" class="btn-primary">Export Report</button>
+    <!-- Grade Category Weights Section -->
+    <div class="grade-weights-card">
+      <h2>Grade Category Weights</h2>
+      <div class="weights-grid">
+        <div class="weight-input-group">
+          <label for="weightPT">Performance Task (%):</label>
+          <input type="number" id="weightPT" min="0" max="100" value="50">
+        </div>
+        <div class="weight-input-group">
+          <label for="weightWW">Written Works (%):</label>
+          <input type="number" id="weightWW" min="0" max="100" value="30">
+        </div>
+        <div class="weight-input-group">
+          <label for="weightPE">Periodical Exam (%):</label>
+          <input type="number" id="weightPE" min="0" max="100" value="20">
         </div>
       </div>
-      <div class="chart-container">
-        <canvas id="performanceChart"></canvas>
-      </div>
-      <div class="chart-legend">
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
-          <div class="legend-label">Selected Student</div>
+      <div class="weights-footer">
+        <div class="total-weight">
+          <span>Total: <strong id="totalWeight">100%</strong></span>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
-          <div class="legend-label">Class Average</div>
-        </div>
+        <button class="btn-primary save-weights" onclick="saveWeights()" id="saveWeightsBtn">Save Weights</button>
       </div>
     </div>
     
-    <div class="weights-container">
-      <div class="weights-title">Grade Category Weights</div>
-      <div id="categoryWeights">
-        <div class="category-weight">
-          <label>Performance Task:</label>
-          <input type="number" id="weightPT" min="0" max="100" value="50">%
+    <!-- Grade Tables Section -->
+    <div class="grade-tables-section">
+      <h2>Grade Items</h2>
+      
+      <!-- Add New Grade Item Form -->
+      <div class="add-grade-form-card" id="addGradeForm" style="display: none;">
+        <h3>Add New Grade Item</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="itemTitle">Title</label>
+            <input type="text" id="itemTitle" placeholder="e.g. Quiz 1">
+          </div>
+          <div class="form-group">
+            <label for="itemTopic">Topic</label>
+            <input type="text" id="itemTopic" placeholder="e.g. Algebra">
+          </div>
+          <div class="form-group">
+            <label for="itemType">Type</label>
+            <select id="itemType">
+              <option value="Quiz">Quiz</option>
+              <option value="Project">Project</option>
+              <option value="Homework">Homework</option>
+              <option value="Exam">Exam</option>
+              <option value="Assessment">Assessment</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="maxScore">Max Score</label>
+            <input type="number" id="maxScore" value="100">
+          </div>
+          <div class="form-group">
+            <label for="dateAssigned">Date Assigned</label>
+            <input type="date" id="dateAssigned">
+          </div>
+          <div class="form-group">
+            <label for="includedInFinal">Include in Final Grade</label>
+            <select id="includedInFinal">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
         </div>
-        <div class="category-weight">
-          <label>Written Works:</label>
-          <input type="number" id="weightWW" min="0" max="100" value="30">%
-        </div>
-        <div class="category-weight">
-          <label>Periodical Exam:</label>
-          <input type="number" id="weightPE" min="0" max="100" value="20">%
-        </div>
-        <button class="btn-submit" onclick="saveWeights()" id="saveWeightsBtn">Save Weights</button>
-      </div>
-    </div>
-    
-    <div class="category-tabs">
-      <button class="tab-button active" data-category="pt" onclick="switchCategory('pt')">Performance Tasks</button>
-      <button class="tab-button" data-category="ww" onclick="switchCategory('ww')">Written Works</button>
-      <button class="tab-button" data-category="pe" onclick="switchCategory('pe')">Periodical Exam</button>
-    </div>
-    
-    <div class="add-grade-form" id="addGradeForm">
-      <h3>Add New Grade Item</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="itemTitle">Title</label>
-          <input type="text" id="itemTitle" placeholder="e.g. Quiz 1">
-        </div>
-        <div class="form-group">
-          <label for="itemTopic">Topic</label>
-          <input type="text" id="itemTopic" placeholder="e.g. Algebra">
-        </div>
-        <div class="form-group">
-          <label for="itemType">Type</label>
-          <select id="itemType">
-            <option value="Quiz">Quiz</option>
-            <option value="Project">Project</option>
-            <option value="Homework">Homework</option>
-            <option value="Exam">Exam</option>
-            <option value="Assessment">Assessment</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="maxScore">Maximum Score</label>
-          <input type="number" id="maxScore" value="100">
-        </div>
-        <div class="form-group">
-          <label for="dateAssigned">Date Assigned</label>
-          <input type="date" id="dateAssigned">
-        </div>
-        <div class="form-group">
-          <label for="includedInFinal">Include in Final Grade</label>
-          <select id="includedInFinal">
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleAddForm(false)">Cancel</button>
+          <button class="btn-primary" onclick="saveGradeItem()">Save Grade Item</button>
         </div>
       </div>
-      <div class="form-actions">
-        <button class="btn-cancel" onclick="toggleAddForm(false)">Cancel</button>
-        <button class="btn-submit" onclick="saveGradeItem()">Save Grade Item</button>
+      
+      <div class="add-item-controls">
+        <button class="btn-primary" onclick="toggleAddForm(true)" id="addItemBtn">+ Add New Grade Item</button>
       </div>
-    </div>
-    
-    <button class="action-btn" onclick="toggleAddForm(true)" id="addItemBtn">Add New Grade Item</button>
-    
-    <div id="ptContent" class="category-content">
-      <h3>Performance Tasks</h3>
-      <table class="grade-table" id="ptTable">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Topic</th>
-            <th>Max Score</th>
-            <th>Date Assigned</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Will be populated by JavaScript -->
-        </tbody>
-      </table>
-    </div>
-    
-    <div id="wwContent" class="category-content hidden">
-      <h3>Written Works</h3>
-      <table class="grade-table" id="wwTable">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Topic</th>
-            <th>Max Score</th>
-            <th>Date Assigned</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Will be populated by JavaScript -->
-        </tbody>
-      </table>
-    </div>
-    
-    <div id="peContent" class="category-content hidden">
-      <h3>Periodical Exam</h3>
-      <table class="grade-table" id="peTable">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Topic</th>
-            <th>Max Score</th>
-            <th>Date Assigned</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Will be populated by JavaScript -->
-        </tbody>
-      </table>
+      
+      <!-- Performance Tasks Table -->
+      <div class="grade-table-card" id="ptContent">
+        <div class="table-header">
+          <h3>Performance Tasks</h3>
+          <button class="btn-secondary" onclick="showAddFormForCategory('pt')">+ Add Task</button>
+        </div>
+        <div class="table-container">
+          <table class="grade-table" id="ptTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Topic</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" class="loading-text">Loading grade items...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Written Works Table -->
+      <div class="grade-table-card" id="wwContent">
+        <div class="table-header">
+          <h3>Written Works</h3>
+          <button class="btn-secondary" onclick="showAddFormForCategory('ww')">+ Add Work</button>
+        </div>
+        <div class="table-container">
+          <table class="grade-table" id="wwTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Topic</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" class="loading-text">Loading grade items...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Periodical Exam Table -->
+      <div class="grade-table-card" id="peContent">
+        <div class="table-header">
+          <h3>Periodical Exam</h3>
+          <button class="btn-secondary" onclick="showAddFormForCategory('pe')">+ Add Exam</button>
+        </div>
+        <div class="table-container">
+          <table class="grade-table" id="peTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Topic</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" class="loading-text">Loading grade items...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
     
     <div id="studentGradesSection" class="hidden">
@@ -399,57 +428,119 @@ document.getElementById('subjectTitle').textContent = subjectName;
       }
     }
     
-    function switchCategory(category) {
+    // Helper functions for the new layout
+    function showErrorMessage(message) {
+      // Create or update error banner
+      let errorBanner = document.getElementById('errorBanner');
+      if (!errorBanner) {
+        errorBanner = document.createElement('div');
+        errorBanner.id = 'errorBanner';
+        errorBanner.className = 'error-banner';
+        errorBanner.style.cssText = 'background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin: 16px 0; display: flex; align-items: center; justify-content: space-between;';
+        document.querySelector('.container').insertBefore(errorBanner, document.querySelector('.student-dashboard-card'));
+      }
+      
+      errorBanner.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px;">&times;</button>
+      `;
+      errorBanner.style.display = 'flex';
+    }
+    
+    function updateSelectedStudentDisplay() {
+      const selectedStudentName = document.getElementById('selectedStudentName');
+      const select = document.getElementById('studentSelect');
+      if (selectedStudentName && select) {
+        const selectedOption = select.options[select.selectedIndex];
+        if (select.value && selectedOption) {
+          selectedStudentName.textContent = selectedOption.textContent;
+        } else {
+          selectedStudentName.textContent = 'Select a student to view details';
+        }
+      }
+    }
+    
+    function showAddFormForCategory(category) {
       currentCategory = category;
+      toggleAddForm(true);
+    }
+    
+    function updateTotalWeight() {
+      const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
+      const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
+      const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
+      const total = ptWeight + wwWeight + peWeight;
       
-      // Update active tab
-      document.querySelectorAll('.category-tabs .tab-button').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.querySelector(`.category-tabs .tab-button[data-category="${category}"]`).classList.add('active');
-      
-      // Show/hide content
-      document.querySelectorAll('.category-content').forEach(content => {
-        content.classList.add('hidden');
-      });
-      document.getElementById(`${category}Content`).classList.remove('hidden');
+      const totalElement = document.getElementById('totalWeight');
+      if (totalElement) {
+        totalElement.textContent = `${total}%`;
+        totalElement.style.color = total === 100 ? '#059669' : '#dc2626';
+      }
     }
     
     // --- Data loading functions ---
     function loadStudents() {
       const select = document.getElementById('studentSelect');
-      while (select.options.length > 1) { select.remove(1); }
-      const placeholder = document.createElement('option'); placeholder.disabled = true; placeholder.text='Loading...'; select.appendChild(placeholder);
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load students');
-        return res.json();
-      })
-      .then(data => {
-        students = data;
-        const select = document.getElementById('studentSelect');
+      // Clear all options first
+      select.innerHTML = '<option value="">Loading students...</option>';
+      
+      // Use fallback URLs if primary fails
+      const urls = [
+        `${window.API_BASE}/api/subjects/${subjectId}/students`,
+        `${window.API_BASE}/api/classes/${subjectId}/students`,
+        `${window.API_BASE}/api/enrollments?subject_id=${subjectId}`
+      ];
+      
+      async function tryLoadStudents() {
+        let lastError;
         
-        // Clear existing options except the first one
-        while (select.options.length > 1) {
-          select.remove(1);
+        for (const url of urls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              students = Array.isArray(data) ? data : data.students || [];
+              
+              // Clear and populate select
+              select.innerHTML = '<option value="">All Students</option>';
+              
+              if (students.length === 0) {
+                const option = document.createElement('option');
+                option.disabled = true;
+                option.textContent = 'No students enrolled';
+                select.appendChild(option);
+              } else {
+                students.forEach(student => {
+                  const option = document.createElement('option');
+                  option.value = student.id;
+                  option.textContent = student.full_name || student.name || 'Unknown Student';
+                  select.appendChild(option);
+                });
+                
+                // Preselect from URL if provided
+                if (initialStudentId) {
+                  select.value = initialStudentId;
+                  loadStudentGrades();
+                }
+              }
+              
+              updateSelectedStudentDisplay();
+              return; // Success, exit
+            }
+          } catch (err) {
+            lastError = err;
+            console.warn(`Failed to load from ${url}:`, err);
+          }
         }
         
-        // Add student options
-        students.forEach(student => {
-          const option = document.createElement('option');
-          option.value = student.id;
-          option.textContent = student.full_name;
-          select.appendChild(option);
-        });
-        // Preselect from URL and load
-        if (initialStudentId) {
-          select.value = initialStudentId;
-          loadStudentGrades();
-        }
-      })
-      .catch(err => {
+        // All URLs failed
+        throw lastError || new Error('All student loading endpoints failed');
+      }
+      
+      tryLoadStudents().catch(err => {
         console.error('Error loading students:', err);
-        alert('Failed to load students. Please try again.');
+        select.innerHTML = '<option value="">Failed to load students</option>';
+        showErrorMessage('Unable to load students. Please refresh the page or contact support.');
       });
     }
     
@@ -477,120 +568,202 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     function loadGradeItems() {
-      document.querySelector('#ptTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-      document.querySelector('#wwTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-      document.querySelector('#peTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`)
-      .then(async res => {
-        if (!res.ok) {
-          let msg = 'Failed to load grade items';
-          try{ const d = await res.json(); if (d && d.message) msg = d.message; }catch{}
-          throw new Error(msg);
+      // Show loading state in all tables
+      const tables = ['ptTable', 'wwTable', 'peTable'];
+      tables.forEach(tableId => {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="6" class="loading-text">Loading grade items...</td></tr>';
         }
-        return res.json();
-      })
-      .then(data => {
-        gradeItems = data;
+      });
+      
+      // Try multiple endpoints
+      const urls = [
+        `${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/classes/${subjectId}/items?quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/grade-items?subject_id=${subjectId}&quarter=${currentQuarter}`
+      ];
+      
+      async function tryLoadGradeItems() {
+        let lastError;
         
-        // Clear tables
-        document.querySelector('#ptTable tbody').innerHTML = '';
-        document.querySelector('#wwTable tbody').innerHTML = '';
-        document.querySelector('#peTable tbody').innerHTML = '';
+        for (const url of urls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              gradeItems = Array.isArray(data) ? data : data.items || [];
+              
+              // Clear all tables first
+              tables.forEach(tableId => {
+                const tbody = document.querySelector(`#${tableId} tbody`);
+                if (tbody) tbody.innerHTML = '';
+              });
+              
+              if (gradeItems.length === 0) {
+                tables.forEach(tableId => {
+                  const tbody = document.querySelector(`#${tableId} tbody`);
+                  if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No grade items found for this quarter</td></tr>';
+                  }
+                });
+              } else {
+                // Populate tables by category
+                gradeItems.forEach(item => {
+                  const categoryName = gradeCategories.find(cat => cat.id === item.category_id)?.name;
+                  let tableId;
+                  
+                  if (categoryName === 'Performance Task') tableId = 'ptTable';
+                  else if (categoryName === 'Written Works') tableId = 'wwTable';
+                  else if (categoryName === 'Periodical Exam') tableId = 'peTable';
+                  else return;
+                  
+                  const tbody = document.querySelector(`#${tableId} tbody`);
+                  if (!tbody) return;
+                  
+                  // Clear empty state if this is the first item for this table
+                  if (tbody.querySelector('.empty-state')) {
+                    tbody.innerHTML = '';
+                  }
+                  
+                  const row = document.createElement('tr');
+                  const dateAssigned = item.date_assigned ? new Date(item.date_assigned).toLocaleDateString() : 'N/A';
+                  
+                  row.innerHTML = `
+                    <td>${item.title || 'Untitled'}</td>
+                    <td>${item.topic || 'N/A'}</td>
+                    <td>${item.max_score || 0}</td>
+                    <td>${dateAssigned}</td>
+                    <td>${categoryName || 'N/A'}</td>
+                    <td class="action-buttons">
+                      <button class="btn-edit" onclick="editGradeItem(${item.id})">Edit</button>
+                      <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
+                    </td>
+                  `;
+                  
+                  tbody.appendChild(row);
+                });
+                
+                // Set empty state for tables that have no items
+                tables.forEach(tableId => {
+                  const tbody = document.querySelector(`#${tableId} tbody`);
+                  if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No items in this category</td></tr>';
+                  }
+                });
+              }
+              
+              // Update grade item select for student scoring
+              updateGradeItemSelect();
+              return; // Success, exit
+            }
+          } catch (err) {
+            lastError = err;
+            console.warn(`Failed to load from ${url}:`, err);
+          }
+        }
         
-        // Populate tables
-        gradeItems.forEach(item => {
-          const categoryName = gradeCategories.find(cat => cat.id === item.category_id)?.name;
-          let tableId;
-          
-          if (categoryName === 'Performance Task') tableId = 'ptTable';
-          else if (categoryName === 'Written Works') tableId = 'wwTable';
-          else if (categoryName === 'Periodical Exam') tableId = 'peTable';
-          else return;
-          
-          const tbody = document.querySelector(`#${tableId} tbody`);
-          const row = document.createElement('tr');
-          
-          const dateAssigned = item.date_assigned ? new Date(item.date_assigned).toLocaleDateString() : 'N/A';
-          
-          row.innerHTML = `
-            <td>${item.title}</td>
-            <td>${item.topic || 'N/A'}</td>
-            <td>${item.max_score}</td>
-            <td>${dateAssigned}</td>
-            <td class="action-buttons">
-              <button class="btn-edit" onclick="editGradeItem(${item.id})">Edit</button>
-              <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
-            </td>
-          `;
-          
-          tbody.appendChild(row);
-        });
-        
-        // Update grade item select in score form
-        updateGradeItemSelect();
-      })
-      .catch(err => {
+        throw lastError || new Error('All grade items endpoints failed');
+      }
+      
+      tryLoadGradeItems().catch(err => {
         console.error('Error loading grade items:', err);
-        alert('Failed to load grade items. Please try again.');
+        tables.forEach(tableId => {
+          const tbody = document.querySelector(`#${tableId} tbody`);
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
+          }
+        });
+        showErrorMessage('Unable to load grade items. Please refresh the page or contact support.');
       });
     }
     
     function loadStudentGrades() {
       selectedStudentId = document.getElementById('studentSelect').value;
+      updateSelectedStudentDisplay();
       
       const tbody = document.querySelector('#studentGradesTable tbody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div><div class="loading-placeholder" style="height:16px"></div><div class="loading-placeholder" style="height:16px"></div></td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="loading-text">Loading student grades...</td></tr>';
 
       if (!selectedStudentId) {
         document.getElementById('studentGradesSection').classList.add('hidden');
+        updateSelectedStudentDisplay();
         return;
       }
       
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`)
-      .then(async res => {
-        if (!res.ok) {
-          let msg = 'Failed to load student grades';
-          try{ const d = await res.json(); if (d && d.message) msg = d.message; }catch{}
-          throw new Error(msg);
+      // Try multiple endpoints
+      const urls = [
+        `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/student-grades?subject_id=${subjectId}&student_id=${selectedStudentId}&quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/grades?subject=${subjectId}&student=${selectedStudentId}&quarter=${currentQuarter}`
+      ];
+      
+      async function tryLoadStudentGrades() {
+        let lastError;
+        
+        for (const url of urls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              const scores = Array.isArray(data) ? data : data.scores || [];
+              
+              const tbody = document.querySelector('#studentGradesTable tbody');
+              if (!tbody) return;
+              
+              tbody.innerHTML = '';
+              
+              if (scores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No grades recorded for this student</td></tr>';
+              } else {
+                scores.forEach(score => {
+                  const item = gradeItems.find(item => item.id === score.grade_item_id);
+                  if (!item) return;
+                  
+                  // Filter by view mode if specified
+                  const included = !!item.included_in_final;
+                  if (viewMode === 'final' && !included) return;
+                  if (viewMode === 'assessment' && included) return;
+                  
+                  const row = document.createElement('tr');
+                  const percentage = item.max_score > 0 ? ((score.score / item.max_score) * 100).toFixed(1) : '0.0';
+                  
+                  row.innerHTML = `
+                    <td>${item.title || 'Untitled'}</td>
+                    <td>${score.score || 0}</td>
+                    <td>${item.max_score || 0}</td>
+                    <td>${percentage}%</td>
+                    <td>${score.comments || ''}</td>
+                    <td class="action-buttons">
+                      <button class="btn-edit" onclick="editStudentScore(${score.id}, ${score.grade_item_id}, ${score.score}, \`${(score.comments || '').replace(/`/g, '\\`')}\`)">Edit</button>
+                      <button class="btn-delete" onclick="deleteStudentScore(${score.id})">Delete</button>
+                    </td>
+                  `;
+                  
+                  tbody.appendChild(row);
+                });
+              }
+              
+              document.getElementById('studentGradesSection').classList.remove('hidden');
+              document.dispatchEvent(new Event('grades:loaded'));
+              return; // Success
+            }
+          } catch (err) {
+            lastError = err;
+            console.warn(`Failed to load from ${url}:`, err);
+          }
         }
-        return res.json();
-      })
-      .then(data => {
-        const tbody = document.querySelector('#studentGradesTable tbody');
-        tbody.innerHTML = '';
         
-        data.forEach(score => {
-          const item = gradeItems.find(item => item.id === score.grade_item_id);
-          if (!item) return;
-          // filter by view mode
-          const included = !!item.included_in_final;
-          if (viewMode === 'final' && !included) return;
-          if (viewMode === 'assessment' && included) return;
-          
-          const row = document.createElement('tr');
-          const percentage = ((score.score / item.max_score) * 100).toFixed(1);
-          
-          row.innerHTML = `
-            <td>${item.title}</td>
-            <td>${score.score}</td>
-            <td>${item.max_score}</td>
-            <td>${percentage}%</td>
-            <td>${score.comments || ''}</td>
-            <td class="action-buttons">
-              <button class="btn-edit" onclick="editStudentScore(${score.id}, ${score.grade_item_id}, ${score.score}, \`${score.comments || ''}\`)">Edit</button>
-              <button class="btn-delete" onclick="deleteStudentScore(${score.id})">Delete</button>
-            </td>
-          `;
-          
-          tbody.appendChild(row);
-        });
-        
-        document.getElementById('studentGradesSection').classList.remove('hidden');
-        document.dispatchEvent(new Event('grades:loaded'));
-      })
-      .catch(err => {
+        throw lastError || new Error('All student grades endpoints failed');
+      }
+      
+      tryLoadStudentGrades().catch(err => {
         console.error('Error loading student grades:', err);
-        alert('Failed to load student grades. Please try again.');
+        const tbody = document.querySelector('#studentGradesTable tbody');
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load student grades. Please try again.</td></tr>';
+        }
+        showErrorMessage('Unable to load student grades. Please refresh the page or contact support.');
       });
     }
     
@@ -878,18 +1051,50 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     // Initialize the page
-    document.getElementById('gradeItemSelect').addEventListener('change', updateMaxScore);
-    // Apply read-only mode if requested
-    if (readOnlyMode) {
-      document.querySelectorAll('.action-buttons').forEach(el => el.style.display = 'none');
-      const addItemBtn = document.getElementById('addItemBtn'); if (addItemBtn) addItemBtn.style.display = 'none';
-      const addScoreBtn = document.getElementById('addScoreBtn'); if (addScoreBtn) addScoreBtn.style.display = 'none';
-      const saveWeightsBtn = document.getElementById('saveWeightsBtn'); if (saveWeightsBtn) saveWeightsBtn.style.display = 'none';
-      document.getElementById('weightPT').readOnly = true;
-      document.getElementById('weightWW').readOnly = true;
-      document.getElementById('weightPE').readOnly = true;
-    }
-    init();
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add event listeners for weight inputs
+      const weightInputs = ['weightPT', 'weightWW', 'weightPE'];
+      weightInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+          input.addEventListener('input', updateTotalWeight);
+          input.addEventListener('change', updateTotalWeight);
+        }
+      });
+      
+      // Add event listener for student selection
+      const studentSelect = document.getElementById('studentSelect');
+      if (studentSelect) {
+        studentSelect.addEventListener('change', function() {
+          loadStudentGrades();
+          updateSelectedStudentDisplay();
+        });
+      }
+      
+      // Add event listener for grade item select
+      const gradeItemSelect = document.getElementById('gradeItemSelect');
+      if (gradeItemSelect) {
+        gradeItemSelect.addEventListener('change', updateMaxScore);
+      }
+      
+      // Apply read-only mode if requested
+      if (readOnlyMode) {
+        document.querySelectorAll('.action-buttons').forEach(el => el.style.display = 'none');
+        const addItemBtn = document.getElementById('addItemBtn'); if (addItemBtn) addItemBtn.style.display = 'none';
+        const addScoreBtn = document.getElementById('addScoreBtn'); if (addScoreBtn) addScoreBtn.style.display = 'none';
+        const saveWeightsBtn = document.getElementById('saveWeightsBtn'); if (saveWeightsBtn) saveWeightsBtn.style.display = 'none';
+        weightInputs.forEach(id => {
+          const input = document.getElementById(id);
+          if (input) input.readOnly = true;
+        });
+      }
+      
+      // Initialize page data
+      init();
+      
+      // Update total weight on page load
+      updateTotalWeight();
+    });
   </script>
   <script>
     // Lazy-load Chart.js and render based on table data
