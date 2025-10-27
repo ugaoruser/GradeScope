@@ -245,8 +245,20 @@ window.API_BASE = (function(){
 
   function setLoading(btnSel, loaderSel, loading, label){
     const btn = qs(btnSel), loader = qs(loaderSel);
-    if (btn){ btn.disabled = !!loading; if (label && loading) btn.textContent = label; if (!loading && btn.dataset.defaultText) btn.textContent = btn.dataset.defaultText; }
-    if (loader){ loader.style.display = loading ? 'block' : 'none'; }
+    // Always hide external loader blocks in favor of inline spinner
+    if (loader) loader.style.display = 'none';
+    if (!btn) return;
+    btn.disabled = !!loading;
+    if (loading){
+      // Preserve original HTML to restore later
+      if (!btn.dataset.defaultHtml) btn.dataset.defaultHtml = btn.innerHTML || btn.textContent || '';
+      const lbl = label || btn.textContent || 'Loading...';
+      btn.classList.add('is-loading');
+      btn.innerHTML = `<span class="spinner-inline" aria-hidden="true"></span><span>${lbl}</span>`;
+    } else {
+      btn.classList.remove('is-loading');
+      if (btn.dataset.defaultHtml){ btn.innerHTML = btn.dataset.defaultHtml; }
+    }
   }
 
   // Real-time via SSE

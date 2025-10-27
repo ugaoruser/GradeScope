@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Grade Management — GradeTracker</title>
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pacifico&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -480,8 +481,12 @@ document.getElementById('subjectTitle').textContent = subjectName;
       document.querySelector('#wwTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
       document.querySelector('#peTable tbody').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load grade items');
+      .then(async res => {
+        if (!res.ok) {
+          let msg = 'Failed to load grade items';
+          try{ const d = await res.json(); if (d && d.message) msg = d.message; }catch{}
+          throw new Error(msg);
+        }
         return res.json();
       })
       .then(data => {
@@ -542,8 +547,12 @@ document.getElementById('subjectTitle').textContent = subjectName;
       }
       
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load student grades');
+      .then(async res => {
+        if (!res.ok) {
+          let msg = 'Failed to load student grades';
+          try{ const d = await res.json(); if (d && d.message) msg = d.message; }catch{}
+          throw new Error(msg);
+        }
         return res.json();
       })
       .then(data => {

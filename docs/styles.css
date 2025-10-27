@@ -528,13 +528,33 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 #chatbotToggle{ background: var(--primary) !important; color: #fff !important; }
 
 /* Tables (grades) */
-.grades-table{
-  width:100%; border-collapse:collapse; margin-top:8px; border-radius:10px; overflow:hidden; background:linear-gradient(180deg,#fff,#fbfdff);
+.grades-table,
+.grade-table{
+  width:100%; border-collapse:separate; border-spacing:0; margin-top:8px; border-radius:10px; overflow:hidden; background:linear-gradient(180deg,#fff,#fbfdff);
   box-shadow: 0 6px 20px rgba(2,6,23,0.04);
 }
-.grades-table thead th{ text-align:left; padding:12px 14px; font-weight:800; font-size:13px; color:#24323b; border-bottom:1px solid rgba(14,32,50,0.06); background:linear-gradient(180deg,#fafbfc,#f4f8ff); }
-.grades-table tbody td{ padding:12px 14px; font-size:14px; color:#12202b; border-bottom:1px solid rgba(14,32,50,0.03); }
-.grades-table tbody tr:hover{ background: rgba(47,128,237,0.03); }
+.grades-table thead th,
+.grade-table thead th{ text-align:left; padding:12px 14px; font-weight:800; font-size:13px; color:#24323b; border-bottom:1px solid rgba(14,32,50,0.06); background:linear-gradient(180deg,#fafbfc,#f4f8ff); position:sticky; top:0; z-index:1; }
+.grades-table tbody td,
+.grade-table tbody td{ padding:12px 14px; font-size:14px; color:#12202b; border-bottom:1px solid rgba(14,32,50,0.03); }
+.grades-table tbody tr:hover,
+.grade-table tbody tr:hover{ background: rgba(47,128,237,0.03); }
+/* Teacher grade manager UI polish */
+.quarter-tabs{ display:flex; gap:8px; margin:10px 0 16px; }
+.quarter-tabs .tab-button{ padding:8px 12px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:600; color:#374151; transition:all .18s ease; }
+.quarter-tabs .tab-button.active{ background: var(--primary); color:#fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(25,118,210,.2); }
+.category-tabs{ display:flex; gap:8px; margin:8px 0 12px; flex-wrap:wrap; }
+.category-tabs .tab-button{ padding:8px 12px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:700; color:#111827; }
+.category-tabs .tab-button.active{ background:#111827; color:#fff; border-color:#111827; }
+.category-content{ background: var(--card); border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow: var(--shadow-sm); }
+.action-buttons{ display:flex; gap:8px; }
+.btn-edit{ background:#2563eb; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+.btn-delete{ background:#ef4444; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+.add-grade-form, #addScoreForm{ background: var(--surface); border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow: var(--shadow-sm); }
+.add-grade-form .form-row, #addScoreForm .form-row{ display:flex; flex-wrap:wrap; gap:12px; }
+.add-grade-form .form-group, #addScoreForm .form-group{ flex:1 1 200px; min-width:200px; }
+.add-grade-form input, .add-grade-form select, .add-grade-form textarea, #addScoreForm input, #addScoreForm select, #addScoreForm textarea{ width:100%; padding:10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff; }
+.add-grade-form .form-actions, #addScoreForm .form-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
 /* Small helpers */
 .label-muted { color:var(--muted); font-size:0.9rem; }
@@ -601,6 +621,10 @@ body.login-page, body.signup-page {
   width:100%; 
   max-width:430px;
 }
+/* Inline button loading spinner */
+.spinner-inline{ width:16px; height:16px; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; border-right-color:#fff; border-radius:50%; display:inline-block; margin-right:8px; animation:spin .8s linear infinite; vertical-align:middle; }
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.btn-login.is-loading, .btn-signup.is-loading{ opacity:0.9; pointer-events:none; }
 
 .login-page .auth-header, .signup-page .auth-header { text-align:center; margin-bottom: 20px; }
 .login-page .auth-footer, .signup-page .auth-footer { text-align:center; margin-top: 16px; }
