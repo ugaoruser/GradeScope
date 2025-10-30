@@ -44,15 +44,12 @@
       <div class="settings-grid">
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
-          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-            <li><strong>First Name:</strong> <input id="editFirstName" class="field-display" style="display:inline-block; margin-left:8px;" readonly disabled /></li>
-            <li><strong>Last Name:</strong> <input id="editLastName" class="field-display" style="display:inline-block; margin-left:8px;" readonly disabled /></li>
-            <li><strong>Email:</strong> <span id="displayEmail" class="field-display" style="display:inline-block; margin-left:8px;"></span></li>
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;">
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">First Name:</strong> <span id="displayFirstName" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Last Name:</strong> <span id="displayLastName" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Email:</strong> <span id="displayEmail" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
           </ul>
-          <div style="display:flex; gap:8px; margin-top:10px;">
-            <button id="saveProfileBtn" class="btn btn-primary" disabled title="Profile fields are synced from your account">Save Profile</button>
-          </div>
-          <div id="profileMsg" class="small" style="margin-top:6px;color:#2563eb;"></div>
+          <div id="profileMsg" class="small" style="margin-top:6px;color:#64748b;font-style:italic;">Profile information is synced from your account</div>
         </div>
 
         <div class="settings-card" id="themeCard">
@@ -85,7 +82,7 @@
   
   <div id="toast" style="position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#111827;color:#fff;padding:10px 14px;border-radius:8px;display:none;z-index:500;"></div>
   
-  <!-- About Modal (no profile info) -->
+  <!-- About Modal -->
 <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
@@ -112,25 +109,62 @@
       document.documentElement.dataset.theme = t;
     })();
 
-    // Load profile and populate header dropdown
-    fetch(`${window.API_BASE}/api/me`)
-      .then(r => r.json())
-      .then(u => {
-        document.getElementById('editFirstName').value = u.firstName || '';
-        document.getElementById('editLastName').value = u.lastName || '';
-        const email = u.email || localStorage.getItem('email') || '';
-        document.getElementById('displayEmail').textContent = email;
-        // Update account dropdown
-        const full = u.fullName || `${u.firstName||''} ${u.lastName||''}`.trim() || localStorage.getItem('fullName') || 'User';
-        const init = (full.charAt(0) || 'U').toUpperCase();
-        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
-        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
-        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
-        if (u.role === 'parent') {
-          document.getElementById('parentLinkCard').style.display = 'block';
-          loadChildren();
+    // Load profile and populate fields
+    async function loadUserProfile() {
+      try {
+        const response = await fetch(`${window.API_BASE}/api/me`);
+        const userData = await response.json();
+        
+        if (response.ok) {
+          // Update profile display fields
+          const firstName = userData.firstName || localStorage.getItem('firstName') || 'N/A';
+          const lastName = userData.lastName || localStorage.getItem('lastName') || 'N/A';
+          const email = userData.email || localStorage.getItem('email') || 'N/A';
+          
+          document.getElementById('displayFirstName').textContent = firstName;
+          document.getElementById('displayLastName').textContent = lastName;
+          document.getElementById('displayEmail').textContent = email;
+          
+          // Update localStorage for future use
+          localStorage.setItem('firstName', firstName);
+          localStorage.setItem('lastName', lastName);
+          localStorage.setItem('email', email);
+          
+          // Update account dropdown
+          const fullName = userData.fullName || `${firstName} ${lastName}`.replace(/N\/A/g, '').trim() || 'User';
+          const initial = (fullName.charAt(0) || 'U').toUpperCase();
+          
+          const initialEl = document.getElementById('accountInitial');
+          const nameEl = document.getElementById('userFullName');
+          const emailEl = document.getElementById('userEmail');
+          
+          if (initialEl) initialEl.textContent = initial;
+          if (nameEl) nameEl.textContent = fullName;
+          if (emailEl) emailEl.textContent = email;
+          
+          // Show parent card if user is a parent
+          if (userData.role === 'parent') {
+            document.getElementById('parentLinkCard').style.display = 'block';
+            loadChildren();
+          }
+        } else {
+          throw new Error('Failed to load profile');
         }
-      });
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        // Fallback to localStorage if API fails
+        const firstName = localStorage.getItem('firstName') || 'N/A';
+        const lastName = localStorage.getItem('lastName') || 'N/A';
+        const email = localStorage.getItem('email') || 'N/A';
+        
+        document.getElementById('displayFirstName').textContent = firstName;
+        document.getElementById('displayLastName').textContent = lastName;
+        document.getElementById('displayEmail').textContent = email;
+      }
+    }
+    
+    // Load profile on page load
+    loadUserProfile();
 
     // About modal
     const aboutBtn = document.getElementById('aboutBtn');
@@ -153,20 +187,7 @@
       window.location.href = 'login.html';
     });
 
-    // Save profile
-    document.getElementById('saveProfileBtn').addEventListener('click', async()=>{
-      const fn = document.getElementById('editFirstName').value.trim();
-      const ln = document.getElementById('editLastName').value.trim();
-      const msg = document.getElementById('profileMsg');
-      msg.textContent='';
-      if (!fn || !ln) { msg.textContent = 'First and last name are required.'; return; }
-      try{
-        const r = await fetch(`${window.API_BASE}/api/me/update`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ firstName: fn, lastName: ln }) });
-        const d = await r.json(); if(!r.ok) throw new Error(d.message||'Failed to save');
-        localStorage.setItem('fullName', d.fullName || `${fn} ${ln}`);
-        msg.style.color = '#059669'; msg.textContent = 'Saved!';
-      }catch(e){ msg.style.color = '#ef4444'; msg.textContent = e.message; }
-    });
+    // Save profile button removed - profile is read-only
 
     // Theme toggle
     document.getElementById('toggleThemeBtn').addEventListener('click', ()=>{

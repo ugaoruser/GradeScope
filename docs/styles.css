@@ -56,7 +56,7 @@
 /* Role-based and layout vars */
 :root{
   /* Role-based colors */
-  --student-primary: #059669;
+  --student-primary: #3f51b5;
   --teacher-primary: #2563eb;
   --parent-primary: #7c3aed;
   /* Shadows with better performance */
@@ -572,7 +572,7 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
   /* Ensure content doesn't overflow behind the fixed sidebar */
   width: calc(100% - var(--sidebar-width));
   box-sizing: border-box;
-  padding: 0 28px 28px 28px;
+  padding: 0;
   transition: margin-left .25s ease, width .25s ease;
   min-height: 100vh;
 }
@@ -581,9 +581,11 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
   width: 100%;
   background: linear-gradient(90deg,#3f51b5,#5c6bc0);
   color:#fff;
-  padding: 14px 24px;
-  margin-top: 0;
+  padding: 16px 24px;
+  margin: 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  border-radius: 0;
+  gap: 0;
 }
 .header-title { font-weight:700; font-size:1.25rem; }
 
@@ -903,7 +905,17 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 .back-button { padding:8px 14px; border-radius:8px; border:none; background:#e8eef7; cursor:pointer; }
 
 /* Header actions alignment */
-.header-actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 8px; }
+.header-actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 28px 8px 28px; }
+
+/* Content area padding (everything below header) */
+.main > *:not(.header) {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.main > .header + * {
+  padding-top: 20px;
+}
 
 /* -------------------------
    04. Role / page-specific theme overrides
@@ -943,8 +955,7 @@ body.homepage2 .btn-primary { background: var(--page-primary); color:#fff; }
 /* Header color accent if you want */
 body.homepage1 .modal-header { background: var(--page-primary); }
 body.homepage2 .modal-header { background: var(--page-primary); }
-/* Homepage1 header title override */
-body.homepage1 .header-title { color:#000 !important; font-size:1.6rem !important; }
+/* Homepage1 header title should be white like homepage2 */
 
 /* -------------------------
    05. Page-specific layout tweaks (scoped)
