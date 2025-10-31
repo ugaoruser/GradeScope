@@ -24,8 +24,8 @@
   </div>
   
   <div class="main">
-    <header class="header" data-shared="header" style="margin-bottom:16px;">
-      <div class="header-title">Settings</div>
+    <header class="header" data-shared="header">
+      <div class="header-title" style="color: white;">Settings</div>
       <div class="account-menu">
         <button class="account-btn" id="accountBtn"><span id="accountInitial">A</span></button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
@@ -38,16 +38,16 @@
       </div>
     </header>
     
-    <div class="settings-container">
+    <div class="settings-container" style="margin: 20px 28px;">
       <div class="settings-title">Account Settings</div>
-      
-      <div class="settings-grid">
+    
+    <div class="settings-container" style="margin: 20px 28px;">
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;">
-            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">First Name:</strong> <span id="displayFirstName" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
-            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Last Name:</strong> <span id="displayLastName" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
-            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Email:</strong> <span id="displayEmail" class="field-display" style="margin-left:8px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">First Name:</strong> <span id="displayFirstName" class="field-display" style="margin-left:8px; color:#000000 !important; background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Last Name:</strong> <span id="displayLastName" class="field-display" style="margin-left:8px; color:#000000 !important; background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
+            <li style="display:flex; align-items:center;"><strong style="min-width:100px;">Email:</strong> <span id="displayEmail" class="field-display" style="margin-left:8px; color:#000000 !important; background:#f8fafc; padding:8px 12px; border-radius:6px; flex:1;">Loading...</span></li>
           </ul>
           <div id="profileMsg" class="small" style="margin-top:6px;color:#64748b;font-style:italic;">Profile information is synced from your account</div>
         </div>
@@ -82,7 +82,7 @@
   
   <div id="toast" style="position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#111827;color:#fff;padding:10px 14px;border-radius:8px;display:none;z-index:500;"></div>
   
-  <!-- About Modal -->
+  <!-- About Modal (no profile info) -->
 <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
@@ -90,7 +90,7 @@
         <button class="modal-close" id="closeAboutBtn" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a faster way. It can be used by students, teachers, and parents.</p>
+        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
       </div>

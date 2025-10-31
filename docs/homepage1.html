@@ -38,8 +38,8 @@
         </button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
-            <div id="userFullName">User Name</div>
-            <div id="userEmail"></div>
+            <div id="userFullName">Loading...</div>
+            <div id="userEmail">Loading...</div>
           </div>
           <button id="logoutBtn">Log Out</button>
         </div>
@@ -88,7 +88,7 @@
     </div>
   </div>
 
-  <!-- About modal (no profile info) -->
+  <!-- About Modal (no profile info) -->
 <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" style="display:none;">
     <div class="modal-panel">
       <div class="modal-header">
@@ -96,10 +96,64 @@
         <button class="modal-close" id="closeAboutBtn" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a faster way. It can be used by students, teachers, and parents.</p>
+        <p>This website acts as a Grade Tracker to track the quizzes and scores of students in a more faster way. It can be used by students, teachers, and parents.</p>
         <p><strong>Version:</strong> V1.0</p>
         <p><strong>Developed by:</strong> Group 4 Practical Research Group [12-Lovelace]</p>
       </div>
   </div>
+  
+<script>
+// Ensure user data is loaded immediately on homepage1
+document.addEventListener('DOMContentLoaded', function() {
+  async function loadUserData() {
+    try {
+      const response = await fetch(`${window.API_BASE}/api/me`);
+      const userData = await response.json();
+      
+      if (response.ok) {
+        const firstName = userData.firstName || localStorage.getItem('firstName') || '';
+        const lastName = userData.lastName || localStorage.getItem('lastName') || '';
+        const email = userData.email || localStorage.getItem('email') || '';
+        const fullName = userData.fullName || `${firstName} ${lastName}`.trim() || 'User';
+        
+        // Update localStorage
+        localStorage.setItem('firstName', firstName);
+        localStorage.setItem('lastName', lastName);
+        localStorage.setItem('email', email);
+        localStorage.setItem('fullName', fullName);
+        
+        // Update UI elements
+        const initialEl = document.getElementById('accountInitial');
+        const nameEl = document.getElementById('userFullName');
+        const emailEl = document.getElementById('userEmail');
+        
+        if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+        if (nameEl) nameEl.textContent = fullName;
+        if (emailEl) emailEl.textContent = email;
+      } else {
+        throw new Error('Failed to load user data');
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      // Fallback to localStorage
+      const firstName = localStorage.getItem('firstName') || '';
+      const lastName = localStorage.getItem('lastName') || '';
+      const email = localStorage.getItem('email') || '';
+      const fullName = localStorage.getItem('fullName') || `${firstName} ${lastName}`.trim() || 'User';
+      
+      const initialEl = document.getElementById('accountInitial');
+      const nameEl = document.getElementById('userFullName');
+      const emailEl = document.getElementById('userEmail');
+      
+      if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+      if (nameEl) nameEl.textContent = fullName;
+      if (emailEl) emailEl.textContent = email;
+    }
+  }
+  
+  // Load user data immediately
+  loadUserData();
+});
+</script>
 </body>
 </html>
