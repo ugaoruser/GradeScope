@@ -132,12 +132,33 @@ document.addEventListener('DOMContentLoaded', function() {
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChat(); });
   }
 
-  function handleChat() {
+  async function handleChat() {
     const message = chatInput.value.trim();
     if (!message) return;
     addMessage(message, 'user');
     chatInput.value = '';
-    setTimeout(() => { addMessage(processMessage(message), 'bot'); }, 300);
+    
+    // Show typing indicator
+    addMessage('Thinking...', 'bot');
+    
+    try {
+      const response = await agent.processMessage(message);
+      // Remove typing indicator
+      const messages = chatLog.querySelectorAll('div');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.textContent === 'Thinking...') {
+        lastMessage.remove();
+      }
+      addMessage(response, 'bot');
+    } catch (error) {
+      // Remove typing indicator and show error
+      const messages = chatLog.querySelectorAll('div');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.textContent === 'Thinking...') {
+        lastMessage.remove();
+      }
+      addMessage(processMessage(message), 'bot'); // Fallback to local processing
+    }
   }
 
   function addMessage(text, sender) {

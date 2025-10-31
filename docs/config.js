@@ -461,6 +461,11 @@ window.API_BASE = (function(){
       } else { userNameEl.textContent = display; }
     }
     if (emailEl){ emailEl.textContent = localStorage.getItem('email') || ''; }
+    
+    // Force update localStorage for cross-page consistency
+    localStorage.setItem('displayName', display);
+    localStorage.setItem('displayEmail', localStorage.getItem('email') || '');
+    localStorage.setItem('displayInitial', init);
     if (isParent && selectedChildName){
       const pc = qs('#parentContext'); if (pc){ pc.style.display='block'; qs('#childNameDisplay').textContent = selectedChildName; qs('#classesHeader').textContent = `${selectedChildName}'s Classes`; }
     }
@@ -912,6 +917,56 @@ window.API_BASE = (function(){
       }
     });
   }
+
+  // Global account dropdown updater for all pages
+  window.updateAccountDropdown = async function() {
+    try {
+      const response = await fetch(`${window.API_BASE}/api/me`);
+      const userData = await response.json();
+      
+      if (response.ok) {
+        const firstName = userData.firstName || localStorage.getItem('firstName') || '';
+        const lastName = userData.lastName || localStorage.getItem('lastName') || '';
+        const email = userData.email || localStorage.getItem('email') || '';
+        const fullName = userData.fullName || `${firstName} ${lastName}`.trim() || 'User';
+        
+        // Update localStorage
+        localStorage.setItem('firstName', firstName);
+        localStorage.setItem('lastName', lastName);
+        localStorage.setItem('email', email);
+        localStorage.setItem('fullName', fullName);
+        
+        // Update UI elements on ALL pages
+        const initialEl = document.getElementById('accountInitial');
+        const nameEl = document.getElementById('userFullName');
+        const emailEl = document.getElementById('userEmail');
+        
+        if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+        if (nameEl) nameEl.textContent = fullName;
+        if (emailEl) emailEl.textContent = email;
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      // Fallback to localStorage
+      const firstName = localStorage.getItem('firstName') || '';
+      const lastName = localStorage.getItem('lastName') || '';
+      const email = localStorage.getItem('email') || '';
+      const fullName = localStorage.getItem('fullName') || `${firstName} ${lastName}`.trim() || 'User';
+      
+      const initialEl = document.getElementById('accountInitial');
+      const nameEl = document.getElementById('userFullName');
+      const emailEl = document.getElementById('userEmail');
+      
+      if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+      if (nameEl) nameEl.textContent = fullName;
+      if (emailEl) emailEl.textContent = email;
+    }
+  };
+  
+  // Auto-call on every page load
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(window.updateAccountDropdown, 100);
+  });
 
   // Expose minimal globals only if needed elsewhere
   window.App = { logout };

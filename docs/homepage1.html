@@ -151,8 +151,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Load user data immediately
+  // Load user data immediately and ensure proper formatting
   loadUserData();
+  
+  // Also ensure data loads from existing config.js initialization
+  if (typeof window.fetchMeAndHeader === 'function') {
+    window.fetchMeAndHeader();
+  }
 });
 </script>
 </body>

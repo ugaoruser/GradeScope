@@ -30,8 +30,8 @@
         <button class="account-btn" id="accountBtn"><span id="accountInitial">A</span></button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
-            <div id="userFullName">User Name</div>
-            <div id="userEmail"></div>
+            <div id="userFullName">Loading...</div>
+            <div id="userEmail">Loading...</div>
           </div>
           <button id="logoutBtn" class="logout-btn">Log Out</button>
         </div>
@@ -41,7 +41,7 @@
     <div class="settings-container" style="margin: 20px 28px;">
       <div class="settings-title">Account Settings</div>
     
-    <div class="settings-container" style="margin: 20px 28px;">
+    <div class="settings-container">
         <div class="settings-card">
           <div class="settings-section-title">Profile Information</div>
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;">
@@ -71,11 +71,6 @@
           </div>
         </div>
 
-        <div class="settings-card danger">
-          <div class="settings-section-title">Danger Zone</div>
-          <p>Once you delete your account, there is no going back. Please be certain.</p>
-          <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
-        </div>
       </div>
     </div>
   </div>
@@ -221,10 +216,6 @@
       }catch(e){ msg.textContent = e.message; }
     });
 
-    // Danger zone
-    document.getElementById('deleteAccountBtn').addEventListener('click', () => {
-      alert('Account deletion is not enabled in this demo.');
-    });
     // Removed undefined element handlers
     
     // Profile editing disabled - display only
@@ -245,6 +236,54 @@
       const r = localStorage.getItem('role');
       location.href = r === 'teacher' ? 'homepage2.html' : 'homepage1.html';
     });
+    
+    // Ensure account dropdown shows proper user data like homepage2
+    async function updateAccountDropdown() {
+      try {
+        const response = await fetch(`${window.API_BASE}/api/me`);
+        const userData = await response.json();
+        
+        if (response.ok) {
+          const firstName = userData.firstName || localStorage.getItem('firstName') || '';
+          const lastName = userData.lastName || localStorage.getItem('lastName') || '';
+          const email = userData.email || localStorage.getItem('email') || '';
+          const fullName = userData.fullName || `${firstName} ${lastName}`.trim() || 'User';
+          
+          // Update localStorage
+          localStorage.setItem('firstName', firstName);
+          localStorage.setItem('lastName', lastName);
+          localStorage.setItem('email', email);
+          localStorage.setItem('fullName', fullName);
+          
+          // Update account dropdown elements
+          const initialEl = document.getElementById('accountInitial');
+          const nameEl = document.getElementById('userFullName');
+          const emailEl = document.getElementById('userEmail');
+          
+          if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+          if (nameEl) nameEl.textContent = fullName;
+          if (emailEl) emailEl.textContent = email;
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        // Fallback to localStorage
+        const firstName = localStorage.getItem('firstName') || '';
+        const lastName = localStorage.getItem('lastName') || '';
+        const email = localStorage.getItem('email') || '';
+        const fullName = localStorage.getItem('fullName') || `${firstName} ${lastName}`.trim() || 'User';
+        
+        const initialEl = document.getElementById('accountInitial');
+        const nameEl = document.getElementById('userFullName');
+        const emailEl = document.getElementById('userEmail');
+        
+        if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
+        if (nameEl) nameEl.textContent = fullName;
+        if (emailEl) emailEl.textContent = email;
+      }
+    }
+    
+    // Load account dropdown data on page load
+    updateAccountDropdown();
   </script>
 </body>
 </html>

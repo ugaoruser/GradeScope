@@ -927,9 +927,9 @@ body:not(.homepage1):not(.homepage2) { --page-primary: var(--primary); }
 
 /* Student / Parent */
 body.homepage1{
-  --page-primary: #43a047; /* green */
-  --sidebar-bg: linear-gradient(to bottom, #2e7d32, #388e3c);
-  --sidebar-accent: #81c784;
+  --page-primary: #3f51b5; /* blue - same as homepage2 */
+  --sidebar-bg: linear-gradient(to bottom, #1a237e, #283593);
+  --sidebar-accent: #64b5f6;
 }
 /* Teacher */
 body.homepage2{
@@ -952,9 +952,36 @@ body.homepage2 .add-class-btn,
 body.homepage2 .join-class-btn,
 body.homepage2 .btn-primary { background: var(--page-primary); color:#fff; }
 
-/* Header color accent if you want */
-body.homepage1 .modal-header { background: var(--page-primary); }
-body.homepage2 .modal-header { background: var(--page-primary); }
+/* Force ALL modals to use blue header like homepage2 */
+.modal .modal-header,
+body.homepage1 .modal .modal-header,
+body.homepage2 .modal .modal-header,
+body.settings-page .modal .modal-header {
+  background: linear-gradient(90deg,#3f51b5,#5c6bc0) !important;
+  color: #fff !important;
+}
+
+.modal .modal-title,
+body.homepage1 .modal .modal-title,
+body.homepage2 .modal .modal-title,
+body.settings-page .modal .modal-title {
+  color: #fff !important;
+}
+
+.modal .modal-close,
+body.homepage1 .modal .modal-close,
+body.homepage2 .modal .modal-close,
+body.settings-page .modal .modal-close {
+  color: #fff !important;
+}
+
+.modal .modal-body,
+body.homepage1 .modal .modal-body,
+body.homepage2 .modal .modal-body,
+body.settings-page .modal .modal-body {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
 /* Homepage1 header title should be white like homepage2 */
 
 /* -------------------------
@@ -992,7 +1019,6 @@ body.index-page { display:flex; align-items:center; justify-content:center; }
 .index-page .landing-card{ background:var(--card); padding:32px; border-radius:12px; box-shadow:var(--shadow-md); }
 
 /* Settings page specifics */
-body.settings-page .main{ padding:28px; }
 body.settings-page .settings-container { background:var(--card); padding:24px; border-radius:16px; box-shadow:var(--shadow-md); }
 body.settings-page .settings-title { font-weight:800; font-size:1.2rem; margin-bottom:16px; }
 body.settings-page .settings-grid { display:grid; grid-template-columns:1fr; gap:16px; }
@@ -1000,12 +1026,7 @@ body.settings-page .settings-card { background: var(--card); border:1px solid #e
 body.settings-page .settings-card.danger { border-color: #fdecea; background: color-mix(in oklab, var(--card), #fee2e2 40%); }
 body.settings-page .settings-section-title { font-weight:700; margin-bottom:8px; }
 body.settings-page .field-display { padding:10px 12px; border:1px dashed #dbe5f0; border-radius:8px; background:#f9fbff; }
-/* About modal visual overrides: centered text, no white panel, dimmed bg */
-body.settings-page #aboutModal .modal-panel{ background: transparent; box-shadow:none; border:none; }
-body.settings-page #aboutModal .modal-header{ background: transparent; color:#fff; border:none; justify-content:center; }
-body.settings-page #aboutModal .modal-title{ color:#fff; text-align:center; }
-body.settings-page #aboutModal .modal-body{ background: transparent; color:#fff; text-align:center; }
-body.settings-page #aboutModal .modal-close{ color:#fff; }
+/* Settings modal should use the same styling as other pages */
 
 /* Student grades page */
 body.student-grades-page .header { background: linear-gradient(90deg,#3f51b5,#5c6bc0); color:#fff; padding:16px 32px; border-radius:8px; }
