@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Class Management - GradeTracker</title>
+  <title>Subject Management - GradeTracker</title>
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,45 +12,41 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
+  <script src="chart.js" defer></script>
+  <script src="chatbot.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body class="subject-page">
   <header class="header">
-    <div class="header-title" id="subjectTitle">Class Management</div>
-    <div class="account-menu">
+    <div class="header-title" id="subjectTitle">Subject Management</div>
+    <div class="account-menu" style="display:flex; align-items:center; gap:10px;">
+      <span id="teacherName"></span>
       <button class="account-btn" id="accountBtn"><span id="accountInitial">T</span></button>
       <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
         <div class="account-info">
           <div id="userFullName">Teacher</div>
           <div id="userEmail"></div>
         </div>
-        <button id="logoutBtn">Log Out</button>
+        <button id="logoutBtn" class="logout-btn" onclick="logout()">Log Out</button>
       </div>
     </div>
   </header>
+  
   <div class="main">
     <button class="back-btn" onclick="goBack()">← Back to Classes</button>
     
-    <div class="class-info-header">
-      <div class="class-details">
-        <h1 id="classTitle">Class Name</h1>
-        <div class="class-metadata">
-          <span id="classSection">Section</span>
-          <span class="separator">•</span>
-          <span id="studentCount">0 students</span>
-          <span class="separator">•</span>
-          <span class="access-code-display">
-            Code: <strong id="accessCode">------</strong>
-            <button id="copyCodeBtn" title="Copy access code">📋</button>
-          </span>
-        </div>
-      </div>
-      <div class="class-actions">
-        <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
-        <button class="btn btn-ghost" id="viewReportsBtn">View Reports</button>
-      </div>
+    <div class="quarter-tabs" id="quarterTabs">
+      <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
+      <div class="quarter-tab" data-quarter="2">Quarter 2</div>
+      <div class="quarter-tab" data-quarter="3">Quarter 3</div>
+      <div class="quarter-tab" data-quarter="4">Quarter 4</div>
     </div>
-
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="graded">Graded Components</div>
+      <div class="tab" data-tab="assessment">Assessment</div>
+    </div>
+    
     <div class="students-section">
       <div class="section-header">
         <h2>Enrolled Students</h2>
@@ -73,31 +69,27 @@
         <button class="btn btn-primary" id="copyEmptyCodeBtn">Copy Class Code</button>
       </div>
     </div>
-
-    <div class="quick-actions">
-      <div class="action-card">
-        <div class="action-icon">📊</div>
-        <div class="action-content">
-          <h3>Grade Management</h3>
-          <p>Add assignments, manage categories, and input grades</p>
-          <button class="btn btn-primary" onclick="goToGrades()">Manage Grades</button>
-        </div>
+    
+    <div class="class-actions" style="margin-top: 20px;">
+      <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
+    </div>
+    
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+    <!-- Chatbot Sidebar -->
+    <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
+      <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:600;">Assistant</div>
+        <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
       </div>
-      
-      <div class="action-card">
-        <div class="action-icon">📈</div>
-        <div class="action-content">
-          <h3>Class Analytics</h3>
-          <p>View class performance trends and statistics</p>
-          <button class="btn btn-ghost" onclick="showAnalytics()">View Analytics</button>
-        </div>
+      <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
+        <div style="color:#666;">I can help you draft comments and estimate student progress. Ask me something like "Create a comment for Maria in Algebra, score 82" or "Average of 78, 85, 90".</div>
       </div>
-      
-      <div class="action-card">
-        <div class="action-icon">📢</div>
-        <div class="action-content">
-          <h3>Announcements</h3>
-          <p>Send announcements and updates to your students</p>
+      <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
+        <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+        <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
+      </div>
+    </div>
           <button class="btn btn-ghost" onclick="showAnnouncements()">Announcements</button>
         </div>
       </div>

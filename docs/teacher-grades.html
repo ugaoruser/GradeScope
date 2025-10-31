@@ -13,41 +13,138 @@
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
   <script src="chart.js" defer></script>
+  <script src="chatbot.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body class="teacher-grades-page">
   <header class="header">
-    <div class="header-title">Welcome</div>
-    <div class="account-menu">
+    <div class="header-title" id="subjectTitle">Subject Grades</div>
+    <div class="account-menu" style="display:flex; align-items:center; gap:10px;">
+      <span id="teacherName"></span>
       <button class="account-btn" id="accountBtnT"><span id="accountInitial">T</span></button>
       <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
         <div class="account-info">
           <div id="userFullName">User Name</div>
           <div id="userEmail"></div>
         </div>
-        <button id="logoutBtnT">Log Out</button>
+        <button id="logoutBtnT" class="logout-btn">Log Out</button>
       </div>
     </div>
   </header>
   
-  <div class="container">
-    <!-- Header Section -->
-    <div class="header-section">
-      <div class="navigation-header">
-        <button class="back-button" onclick="goBack()">← Back to Subjects</button>
-        <div class="subject-info">
-          <h1 id="subjectTitle">Subject Name</h1>
-          <div class="section-info" id="sectionCode">Section: </div>
-        </div>
+  <div class="main">
+    <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
+    
+    <div class="control-bar" style="margin-bottom: 20px;">
+      <div class="student-selector" style="margin-right: 20px;">
+        <label for="studentSelect">Select Student:</label>
+        <select id="studentSelect" onchange="loadStudentGrades()">
+          <option value="">Loading students...</option>
+        </select>
       </div>
       
-      <div class="control-bar">
-        <div class="student-quarter-controls">
-          <div class="student-selector">
-            <label for="studentSelect">Select Student:</label>
-            <select id="studentSelect" onchange="loadStudentGrades()">
-              <option value="">Loading students...</option>
-            </select>
+      <div class="quarter-tabs" id="quarterTabs">
+        <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
+        <div class="quarter-tab" data-quarter="2">Quarter 2</div>
+        <div class="quarter-tab" data-quarter="3">Quarter 3</div>
+        <div class="quarter-tab" data-quarter="4">Quarter 4</div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="graded">Graded Components</div>
+      <div class="tab" data-tab="assessment">Assessment</div>
+    </div>
+    
+    <div id="gradedContent" class="tab-content active">
+      <!-- Performance Tasks Section -->
+      <div class="category-header">
+        <span>Performance Tasks (<span id="ptWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Name of Performance Task</th>
+            <th>Topic(s) Involved</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+          </tr>
+        </thead>
+        <tbody id="ptTable">
+          <tr><td colspan="5">No data available</td></tr>
+        </tbody>
+      </table>
+      
+      <!-- Written Works Section -->
+      <div class="category-header">
+        <span>Written Works (<span id="wwWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Status</th>
+            <th>Topic(s)</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+          </tr>
+        </thead>
+        <tbody id="wwTable">
+          <tr><td colspan="5">No data available</td></tr>
+        </tbody>
+      </table>
+      
+      <!-- Periodical Exam Section -->
+      <div class="category-header">
+        <span>Periodical Exam (<span id="peWeight">0</span>%)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Topics</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+          </tr>
+        </thead>
+        <tbody id="peTable">
+          <tr><td colspan="3">No data available</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="assessmentContent" class="tab-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Index No.</th>
+            <th>Topic(s) of Task</th>
+            <th>Score</th>
+            <th>Highest Possible Score</th>
+          </tr>
+        </thead>
+        <tbody id="assessmentTable">
+          <tr><td colspan="4">No data available</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+    <!-- Chatbot Sidebar -->
+    <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
+      <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:600;">Assistant</div>
+        <button id="closeChatbot" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+      <div id="chatLog" style="flex:1; padding: 12px; overflow:auto;">
+        <div style="color:#666;">I can help you draft comments and estimate student progress. Ask me something like "Create a comment for Maria in Algebra, score 82" or "Average of 78, 85, 90".</div>
+      </div>
+      <div style="padding: 12px; border-top:1px solid #eee; display:flex; gap:8px;">
+        <input id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+        <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
+      </div>
+    </div>
           </div>
           
           <div class="quarter-tabs">
