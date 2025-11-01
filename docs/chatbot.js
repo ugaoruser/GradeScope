@@ -1,8 +1,3 @@
-/**
- * WitAI Chatbot - AI assistant using Wit.ai API for natural language processing
- * Helps teachers with grading tasks and educational assistance
- */
-
 class WitAIChatbot {
   constructor() {
     // Wit.ai API configuration

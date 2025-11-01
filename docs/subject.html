@@ -33,6 +33,7 @@
   </header>
   
   <div class="main">
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
     <button class="back-btn" onclick="goBack()">← Back to Classes</button>
     
     <div class="quarter-tabs" id="quarterTabs">
@@ -50,10 +51,6 @@
     <div class="students-section">
       <div class="section-header">
         <h2>Enrolled Students</h2>
-        <div class="real-time-indicator" id="realtimeStatus">
-          <div class="status-dot"></div>
-          <span>Real-time updates</span>
-        </div>
       </div>
 
       <div class="students-grid" id="studentsGrid">
@@ -72,10 +69,11 @@
     
     <div class="class-actions" style="margin-top: 20px;">
       <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
+      <button class="btn btn-ghost" onclick="showAnnouncements()">Announcements</button>
     </div>
     
     <!-- Chatbot Toggle Button -->
-    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px; display: flex; align-items: center; justify-content: center;">💬</button>
     <!-- Chatbot Sidebar -->
     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -90,7 +88,6 @@
         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
       </div>
     </div>
-          <button class="btn btn-ghost" onclick="showAnnouncements()">Announcements</button>
         </div>
       </div>
     </div>
@@ -113,7 +110,6 @@
       setupHeader();
       await loadSubjectDetails();
       await loadStudents();
-      setupRealtimeUpdates();
     });
 
     function setupHeader() {
@@ -243,32 +239,7 @@
       });
     }
 
-    function setupRealtimeUpdates() {
-      try {
-        const tok = localStorage.getItem('token');
-        const eventSource = new EventSource(`${window.API_BASE}/api/events${tok?`?token=${encodeURIComponent(tok)}`:''}`);
-        
-        eventSource.addEventListener('enrollmentUpdated', (event) => {
-          const data = JSON.parse(event.data);
-          if (data.subjectId == subjectId) {
-            loadStudents(); // Refresh student list
-            // Show notification
-            showNotification('New student joined the class!', 'success');
-          }
-        });
-        
-        eventSource.addEventListener('open', () => {
-          document.getElementById('realtimeStatus').classList.add('connected');
-        });
-        
-        eventSource.addEventListener('error', () => {
-          document.getElementById('realtimeStatus').classList.remove('connected');
-        });
-        
-      } catch (error) {
-        console.error('Failed to setup real-time updates:', error);
-      }
-    }
+
 
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
@@ -412,25 +383,7 @@
       color: var(--text);
     }
 
-    .real-time-indicator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-    }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ef4444;
-      transition: background 0.3s ease;
-    }
-
-    .real-time-indicator.connected .status-dot {
-      background: #10b981;
-    }
 
     .students-grid {
       display: grid;
