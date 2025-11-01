@@ -868,6 +868,7 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 #chatbotToggle{
   position:fixed; right:24px; bottom:24px; width:56px; height:56px; border-radius:50%;
   background:var(--primary); color:#fff; border:none; font-size:22px; box-shadow:0 6px 18px rgba(0,0,0,0.15); cursor:pointer;
+  display: flex; align-items: center; justify-content: center;
 }
 #chatbotToggle{ background: var(--primary) !important; color: #fff !important; }
 
@@ -1005,6 +1006,28 @@ body.login-page, body.signup-page {
 .spinner-inline{ width:16px; height:16px; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; border-right-color:#fff; border-radius:50%; display:inline-block; margin-right:8px; animation:spin .8s linear infinite; vertical-align:middle; }
 @keyframes spin{ to{ transform: rotate(360deg); } }
 .btn-login.is-loading, .btn-signup.is-loading{ opacity:0.9; pointer-events:none; }
+
+/* Loading spinner styles */
+.loading {
+  display: none;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #424242;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .login-page .auth-header, .signup-page .auth-header { text-align:center; margin-bottom: 20px; }
 .login-page .auth-footer, .signup-page .auth-footer { text-align:center; margin-top: 16px; }
