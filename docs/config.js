@@ -228,7 +228,7 @@ window.API_BASE = (function(){
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
       showSuccess('Account created successfully! Redirecting to login...');
-      setTimeout(()=> location.href='login.html', 800);
+      setTimeout(()=> location.href='login.html', 2000);
     }catch(e){ showError(e.message || 'Network error. Please try again.'); }
     finally{ setLoading('#signup-btn','#loading', false, 'Create Account'); }
   }
@@ -621,6 +621,8 @@ window.API_BASE = (function(){
     if (Page.is('signup.html')) return initSignup();
     if (Page.is('homepage1.html')) return initHomepage1();
     if (Page.is('homepage2.html')) return initHomepage2();
+    if (Page.is('subject.html')) return initSubject();
+    if (Page.is('teacher-grades.html')) return initTeacherGrades();
   });
 
   function attachAccountDropdownHandlers(){
@@ -989,6 +991,315 @@ window.API_BASE = (function(){
       await new Promise(resolve => setTimeout(resolve, minDelay));
     }
   };
+
+  // ---------- Subject page ----------
+  async function initSubject() {
+    let role = getRole();
+    if (!role) { 
+      try { 
+        const r = await fetch(`${window.API_BASE}/api/me`); 
+        if (r.ok) { 
+          const me = await r.json(); 
+          role = me.role; 
+          localStorage.setItem('role', role); 
+        } 
+      } catch{}
+    }
+    if (!role) { location.href = 'login.html'; return; }
+    if (role !== 'teacher') { location.href = 'homepage1.html'; return; }
+    
+    document.body.dataset.role = role;
+    setupSubjectPage();
+    loadEnrolledStudents();
+    setupChatbotToggle();
+    connectEvents();
+  }
+
+  function setupSubjectPage() {
+    const params = new URLSearchParams(window.location.search);
+    const subjectId = params.get('id');
+    const subjectName = params.get('name') || 'Subject';
+    
+    // Update page title and header
+    document.title = `${subjectName} - GradeTracker`;
+    const titleEl = document.getElementById('subjectTitle');
+    if (titleEl) titleEl.textContent = subjectName;
+    
+    // Setup back button
+    const backBtn = document.querySelector('.back-btn');
+    if (backBtn) {
+      backBtn.onclick = () => {
+        window.location.href = 'homepage2.html';
+      };
+    }
+    
+    // Setup manage grades buttons
+    setupManageGradesButtons(subjectId);
+  }
+
+  function setupManageGradesButtons(subjectId) {
+    const manageGradeBtns = document.querySelectorAll('.btn-primary');
+    manageGradeBtns.forEach(btn => {
+      if (btn.textContent.includes('Manage Grades')) {
+        btn.onclick = () => {
+          const params = new URLSearchParams(window.location.search);
+          const subjectName = params.get('name') || 'Subject';
+          window.location.href = `teacher-grades.html?subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
+        };
+      }
+    });
+  }
+
+  async function loadEnrolledStudents() {
+    const params = new URLSearchParams(window.location.search);
+    const subjectId = params.get('id');
+    
+    if (!subjectId) {
+      showEmptyStudents();
+      return;
+    }
+    
+    const studentsGrid = document.getElementById('studentsGrid');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Show loading
+    if (loadingState) loadingState.style.display = 'block';
+    if (studentsGrid) studentsGrid.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    try {
+      const response = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`);
+      if (!response.ok) throw new Error('Failed to load students');
+      
+      const students = await response.json();
+      
+      // Hide loading
+      if (loadingState) loadingState.style.display = 'none';
+      
+      if (Array.isArray(students) && students.length > 0) {
+        renderStudents(students, subjectId);
+        if (studentsGrid) studentsGrid.style.display = 'grid';
+      } else {
+        showEmptyStudents();
+      }
+      
+    } catch (error) {
+      console.error('Error loading students:', error);
+      if (loadingState) loadingState.style.display = 'none';
+      showEmptyStudents();
+    }
+  }
+
+  function renderStudents(students, subjectId) {
+    const studentsGrid = document.getElementById('studentsGrid');
+    if (!studentsGrid) return;
+    
+    studentsGrid.innerHTML = students.map(student => `
+      <div class="student-card">
+        <div class="student-header">
+          <i class="ri-user-3-line student-icon"></i>
+          <div class="student-name">${student.firstName} ${student.lastName}</div>
+        </div>
+        <div class="student-meta">
+          Student ID: ${student.id} • Email: ${student.email}
+        </div>
+        <div class="student-actions">
+          <button class="action-btn" onclick="viewStudentGrades('${student.id}', '${student.firstName} ${student.lastName}', '${subjectId}')" title="View Grades">
+            <i class="ri-eye-line"></i>
+          </button>
+          <button class="action-btn" onclick="manageStudentGrades('${student.id}', '${student.firstName} ${student.lastName}', '${subjectId}')" title="Manage Grades">
+            <i class="ri-edit-line"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function showEmptyStudents() {
+    const studentsGrid = document.getElementById('studentsGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (studentsGrid) studentsGrid.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'block';
+  }
+
+  // Global functions for student actions
+  window.viewStudentGrades = function(studentId, studentName, subjectId) {
+    const params = new URLSearchParams();
+    params.set('studentId', studentId);
+    params.set('studentName', studentName);
+    params.set('subjectId', subjectId);
+    window.location.href = `student-grades.html?${params.toString()}`;
+  };
+
+  window.manageStudentGrades = function(studentId, studentName, subjectId) {
+    const params = new URLSearchParams();
+    params.set('studentId', studentId);
+    params.set('studentName', studentName);
+    params.set('subjectId', subjectId);
+    const subjectName = new URLSearchParams(window.location.search).get('name') || 'Subject';
+    params.set('subjectName', subjectName);
+    window.location.href = `teacher-grades.html?${params.toString()}`;
+  };
+
+  window.goBack = function() {
+    window.location.href = 'homepage2.html';
+  };
+
+  // ---------- Teacher Grades page ----------
+  async function initTeacherGrades() {
+    let role = getRole();
+    if (!role) { 
+      try { 
+        const r = await fetch(`${window.API_BASE}/api/me`); 
+        if (r.ok) { 
+          const me = await r.json(); 
+          role = me.role; 
+          localStorage.setItem('role', role); 
+        } 
+      } catch{}
+    }
+    if (!role) { location.href = 'login.html'; return; }
+    if (role !== 'teacher') { location.href = 'homepage1.html'; return; }
+    
+    document.body.dataset.role = role;
+    setupTeacherGradesPage();
+    loadStudentsForGrading();
+    setupChatbotToggle();
+    connectEvents();
+  }
+
+  function setupTeacherGradesPage() {
+    const params = new URLSearchParams(window.location.search);
+    const subjectName = params.get('subjectName') || 'Subject';
+    const studentName = params.get('studentName');
+    
+    // Update page title and header
+    document.title = `${subjectName} Grades - GradeTracker`;
+    const titleEl = document.getElementById('subjectTitle');
+    if (titleEl) {
+      if (studentName) {
+        titleEl.textContent = `${subjectName} - ${studentName}`;
+      } else {
+        titleEl.textContent = `${subjectName} Grades`;
+      }
+    }
+    
+    // Setup back button
+    const backBtn = document.querySelector('.back-btn');
+    if (backBtn) {
+      backBtn.onclick = () => {
+        const subjectId = params.get('subjectId');
+        if (subjectId) {
+          window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}`;
+        } else {
+          window.location.href = 'homepage2.html';
+        }
+      };
+    }
+  }
+
+  async function loadStudentsForGrading() {
+    const params = new URLSearchParams(window.location.search);
+    const subjectId = params.get('subjectId');
+    const studentId = params.get('studentId');
+    
+    if (!subjectId) return;
+    
+    const studentSelect = document.getElementById('studentSelect');
+    if (!studentSelect) return;
+    
+    try {
+      const response = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`);
+      if (!response.ok) throw new Error('Failed to load students');
+      
+      const students = await response.json();
+      
+      studentSelect.innerHTML = '<option value="">Select a student...</option>';
+      
+      if (Array.isArray(students)) {
+        students.forEach(student => {
+          const option = document.createElement('option');
+          option.value = student.id;
+          option.textContent = `${student.firstName} ${student.lastName}`;
+          if (studentId && student.id.toString() === studentId) {
+            option.selected = true;
+          }
+          studentSelect.appendChild(option);
+        });
+        
+        // If a specific student was selected, load their grades
+        if (studentId) {
+          loadStudentGrades();
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error loading students:', error);
+      studentSelect.innerHTML = '<option value="">Error loading students</option>';
+    }
+  }
+
+  window.loadStudentGrades = async function() {
+    const studentSelect = document.getElementById('studentSelect');
+    const selectedStudentId = studentSelect?.value;
+    
+    if (!selectedStudentId) {
+      clearGradesDisplay();
+      return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const subjectId = params.get('subjectId');
+    
+    try {
+      const response = await fetch(`${window.API_BASE}/api/students/${selectedStudentId}/grades?subjectId=${subjectId}`);
+      if (!response.ok) throw new Error('Failed to load grades');
+      
+      const grades = await response.json();
+      displayStudentGrades(grades, selectedStudentId, subjectId);
+      
+    } catch (error) {
+      console.error('Error loading student grades:', error);
+      clearGradesDisplay();
+    }
+  };
+
+  function displayStudentGrades(grades, studentId, subjectId) {
+    // This would display the grades in the appropriate sections
+    // For now, show a simple message
+    const gradesContainer = document.querySelector('.grades-container') || document.querySelector('.main');
+    if (gradesContainer) {
+      const existingGradesSection = gradesContainer.querySelector('.grades-display');
+      if (existingGradesSection) {
+        existingGradesSection.remove();
+      }
+      
+      const gradesSection = document.createElement('div');
+      gradesSection.className = 'grades-display';
+      gradesSection.innerHTML = `
+        <div class="control-card">
+          <h3>Student Grades</h3>
+          <p>Grades for student ID: ${studentId}</p>
+          <p>Subject ID: ${subjectId}</p>
+          <p>Total grades: ${Array.isArray(grades) ? grades.length : 0}</p>
+        </div>
+      `;
+      
+      gradesContainer.appendChild(gradesSection);
+    }
+  }
+
+  function clearGradesDisplay() {
+    const gradesContainer = document.querySelector('.grades-container') || document.querySelector('.main');
+    if (gradesContainer) {
+      const existingGradesSection = gradesContainer.querySelector('.grades-display');
+      if (existingGradesSection) {
+        existingGradesSection.remove();
+      }
+    }
+  }
 
   // Expose minimal globals only if needed elsewhere
   window.App = { logout };
