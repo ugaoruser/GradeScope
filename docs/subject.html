@@ -42,9 +42,15 @@
       </div>
 
       <div class="students-grid" id="studentsGrid">
-        <div class="loading-placeholder" style="height:120px;border-radius:12px;"></div>
-        <div class="loading-placeholder" style="height:120px;border-radius:12px;"></div>
-        <div class="loading-placeholder" style="height:120px;border-radius:12px;"></div>
+        <!-- Loading skeleton will be dynamically inserted -->
+      </div>
+      
+      <div class="loading-state" id="loadingState" style="display: none;">
+        <div class="students-grid">
+          <div class="loading-placeholder"></div>
+          <div class="loading-placeholder"></div>
+          <div class="loading-placeholder"></div>
+        </div>
       </div>
 
       <div class="empty-state" id="emptyState" style="display:none;">
@@ -57,7 +63,6 @@
     
     <div class="class-actions" style="margin-top: 20px;">
       <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
-      <button class="btn btn-ghost" onclick="loadStudents()" style="margin-left: 10px;">Reload Students</button>
     </div>
     
     <!-- Chatbot Toggle Button -->
@@ -173,9 +178,10 @@
     async function loadStudents() {
       const grid = document.getElementById('studentsGrid');
       const emptyState = document.getElementById('emptyState');
+      const loadingState = document.getElementById('loadingState');
       
-      // Clear loading placeholders
-      grid.innerHTML = '';
+      // Show loading state
+      showLoadingState();
       
       console.log('URL params:', window.location.search);
       console.log('Subject ID:', subjectId);
@@ -183,7 +189,9 @@
       
       if (!subjectId) {
         console.warn('No subject ID found, using mock data');
-        // Use mock data as fallback
+        // Simulate loading delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
         const mockStudents = [
           { id: 1, full_name: "John Smith", enrolled_at: "2024-01-15" },
           { id: 2, full_name: "Emma Johnson", enrolled_at: "2024-01-16" },
@@ -192,9 +200,8 @@
           { id: 5, full_name: "William Wilson", enrolled_at: "2024-01-19" }
         ];
         
-        emptyState.style.display = 'none';
-        grid.style.display = 'grid';
-        renderStudents(mockStudents);
+        hideLoadingState();
+        showStudentsContent(mockStudents);
         return;
       }
       
@@ -219,21 +226,24 @@
         const students = await res.json();
         console.log('Students loaded:', students);
         
+        hideLoadingState();
+        
         if (students.length === 0) {
           console.log('No students found, showing empty state');
-          grid.style.display = 'none';
-          emptyState.style.display = 'block';
+          showEmptyState();
         } else {
           console.log('Rendering', students.length, 'students');
-          emptyState.style.display = 'none';
-          grid.style.display = 'grid';
-          renderStudents(students);
+          showStudentsContent(students);
         }
         
       } catch (error) {
         console.error('Error loading students:', error);
         // Fallback to mock data on API failure
         console.log('API failed, using mock data');
+        
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const mockStudents = [
           { id: 1, full_name: "John Smith", enrolled_at: "2024-01-15" },
           { id: 2, full_name: "Emma Johnson", enrolled_at: "2024-01-16" },
@@ -242,10 +252,43 @@
           { id: 5, full_name: "William Wilson", enrolled_at: "2024-01-19" }
         ];
         
-        emptyState.style.display = 'none';
-        grid.style.display = 'grid';
-        renderStudents(mockStudents);
+        hideLoadingState();
+        showStudentsContent(mockStudents);
       }
+    }
+
+    // Helper functions for loading state management
+    function showLoadingState() {
+      const grid = document.getElementById('studentsGrid');
+      const emptyState = document.getElementById('emptyState');
+      const loadingState = document.getElementById('loadingState');
+      
+      grid.style.display = 'none';
+      emptyState.style.display = 'none';
+      loadingState.style.display = 'block';
+    }
+
+    function hideLoadingState() {
+      const loadingState = document.getElementById('loadingState');
+      loadingState.style.display = 'none';
+    }
+
+    function showStudentsContent(students) {
+      const grid = document.getElementById('studentsGrid');
+      const emptyState = document.getElementById('emptyState');
+      
+      emptyState.style.display = 'none';
+      grid.style.display = 'grid';
+      renderStudents(students);
+    }
+
+    function showEmptyState() {
+      const grid = document.getElementById('studentsGrid');
+      const emptyState = document.getElementById('emptyState');
+      
+      grid.style.display = 'none';
+      emptyState.style.display = 'block';
+    }
     }
 
     function renderStudents(students) {

@@ -1,10 +1,3 @@
-/**
- * Role-based Access Control System for GradeTracker
- * This file provides centralized access control functionality
- */
-
-// Define permission levels for different roles
-
 const API_BASE = window.API_BASE;
 
 const PERMISSIONS = {

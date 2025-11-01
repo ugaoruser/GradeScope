@@ -968,6 +968,28 @@ window.API_BASE = (function(){
     setTimeout(window.updateAccountDropdown, 100);
   });
 
+  // Loading utilities for consistent UX
+  window.LoadingUtils = {
+    show: function(loadingElementId, contentElementId) {
+      const loading = document.getElementById(loadingElementId);
+      const content = document.getElementById(contentElementId);
+      if (loading) loading.style.display = 'block';
+      if (content) content.style.display = 'none';
+    },
+    
+    hide: function(loadingElementId, contentElementId) {
+      const loading = document.getElementById(loadingElementId);
+      const content = document.getElementById(contentElementId);
+      if (loading) loading.style.display = 'none';
+      if (content) content.style.display = 'block';
+    },
+    
+    showWithDelay: async function(loadingElementId, contentElementId, minDelay = 300) {
+      this.show(loadingElementId, contentElementId);
+      await new Promise(resolve => setTimeout(resolve, minDelay));
+    }
+  };
+
   // Expose minimal globals only if needed elsewhere
   window.App = { logout };
 })();

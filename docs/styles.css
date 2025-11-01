@@ -155,9 +155,10 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
   background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, #f0f0f0 63%);
   background-size: 400% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
-  border-radius: var(--radius-md);
-  height: 1rem;
-  margin: 0.25rem 0;
+  border-radius: 12px;
+  height: 120px;
+  margin: 0;
+  border: 1px solid #e2e8f0;
 }
 
 @keyframes skeleton-loading {
