@@ -1,8 +1,3 @@
-/**
- * Debug script to test navigation and modal functionality
- * Add to any page to test if elements are working
- */
-
 console.log('🔍 GradeTracker Debug Script Loaded');
 
 // Test element existence and event binding
