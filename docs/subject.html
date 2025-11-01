@@ -36,18 +36,6 @@
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
     <button class="back-btn" onclick="goBack()">← Back to Classes</button>
     
-    <div class="quarter-tabs" id="quarterTabs">
-      <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
-      <div class="quarter-tab" data-quarter="2">Quarter 2</div>
-      <div class="quarter-tab" data-quarter="3">Quarter 3</div>
-      <div class="quarter-tab" data-quarter="4">Quarter 4</div>
-    </div>
-    
-    <div class="tabs">
-      <div class="tab active" data-tab="graded">Graded Components</div>
-      <div class="tab" data-tab="assessment">Assessment</div>
-    </div>
-    
     <div class="students-section">
       <div class="section-header">
         <h2>Enrolled Students</h2>
@@ -69,7 +57,6 @@
     
     <div class="class-actions" style="margin-top: 20px;">
       <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
-      <button class="btn btn-ghost" onclick="showAnnouncements()">Announcements</button>
     </div>
     
     <!-- Chatbot Toggle Button -->
@@ -187,6 +174,9 @@
       
       const grid = document.getElementById('studentsGrid');
       const emptyState = document.getElementById('emptyState');
+      
+      // Clear loading placeholders
+      grid.innerHTML = '';
       
       try {
         const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`);

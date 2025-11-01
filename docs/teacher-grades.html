@@ -32,17 +32,24 @@
     </div>
   </header>
   
-  <div class="main">
+  <div class="main" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 24px 0;">
     <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
     
-    <div class="control-bar" style="margin-bottom: 20px;">
-      <div class="student-selector" style="margin-right: 20px;">
-        <label for="studentSelect">Select Student:</label>
-        <select id="studentSelect" onchange="loadStudentGrades()">
+    <!-- Student Selection Card -->
+    <div class="control-card">
+      <h3 class="control-card-title">Student Selection</h3>
+      <div class="student-selector">
+        <label for="studentSelect" class="selector-label">Select Student:</label>
+        <select id="studentSelect" onchange="loadStudentGrades()" class="student-select">
           <option value="">Loading students...</option>
         </select>
       </div>
-      
+    </div>
+    
+    <!-- Quarter Selection Card -->
+    <div class="control-card">
+      <h3 class="control-card-title">Academic Quarter</h3>
       <div class="quarter-tabs" id="quarterTabs">
         <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
         <div class="quarter-tab" data-quarter="2">Quarter 2</div>
@@ -51,86 +58,109 @@
       </div>
     </div>
     
-    <div class="tabs">
-      <div class="tab active" data-tab="graded">Graded Components</div>
-      <div class="tab" data-tab="assessment">Assessment</div>
+    <!-- Content Type Selection -->
+    <div class="control-card">
+      <h3 class="control-card-title">Grade Categories</h3>
+      <div class="tabs">
+        <div class="tab active" data-tab="graded">Graded Components</div>
+        <div class="tab" data-tab="assessment">Assessment</div>
+      </div>
     </div>
     
     <div id="gradedContent" class="tab-content active">
       <!-- Performance Tasks Section -->
-      <div class="category-header">
-        <span>Performance Tasks (<span id="ptWeight">0</span>%)</span>
+      <div class="grade-section">
+        <div class="category-header">
+          <h4 class="category-title">Performance Tasks (<span id="ptWeight">0</span>%)</h4>
+        </div>
+        <div class="table-container">
+          <table class="grades-table">
+            <thead>
+              <tr>
+                <th>Index No.</th>
+                <th>Name of Performance Task</th>
+                <th>Topic(s) Involved</th>
+                <th>Score</th>
+                <th>Highest Possible Score</th>
+              </tr>
+            </thead>
+            <tbody id="ptTable">
+              <tr><td colspan="5">No data available</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Index No.</th>
-            <th>Name of Performance Task</th>
-            <th>Topic(s) Involved</th>
-            <th>Score</th>
-            <th>Highest Possible Score</th>
-          </tr>
-        </thead>
-        <tbody id="ptTable">
-          <tr><td colspan="5">No data available</td></tr>
-        </tbody>
-      </table>
       
       <!-- Written Works Section -->
-      <div class="category-header">
-        <span>Written Works (<span id="wwWeight">0</span>%)</span>
+      <div class="grade-section">
+        <div class="category-header">
+          <h4 class="category-title">Written Works (<span id="wwWeight">0</span>%)</h4>
+        </div>
+        <div class="table-container">
+          <table class="grades-table">
+            <thead>
+              <tr>
+                <th>Index No.</th>
+                <th>Status</th>
+                <th>Topic(s)</th>
+                <th>Score</th>
+                <th>Highest Possible Score</th>
+              </tr>
+            </thead>
+            <tbody id="wwTable">
+              <tr><td colspan="5">No data available</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Index No.</th>
-            <th>Status</th>
-            <th>Topic(s)</th>
-            <th>Score</th>
-            <th>Highest Possible Score</th>
-          </tr>
-        </thead>
-        <tbody id="wwTable">
-          <tr><td colspan="5">No data available</td></tr>
-        </tbody>
-      </table>
       
       <!-- Periodical Exam Section -->
-      <div class="category-header">
-        <span>Periodical Exam (<span id="peWeight">0</span>%)</span>
+      <div class="grade-section">
+        <div class="category-header">
+          <h4 class="category-title">Periodical Exam (<span id="peWeight">0</span>%)</h4>
+        </div>
+        <div class="table-container">
+          <table class="grades-table">
+            <thead>
+              <tr>
+                <th>Topics</th>
+                <th>Score</th>
+                <th>Highest Possible Score</th>
+              </tr>
+            </thead>
+            <tbody id="peTable">
+              <tr><td colspan="3">No data available</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Topics</th>
-            <th>Score</th>
-            <th>Highest Possible Score</th>
-          </tr>
-        </thead>
-        <tbody id="peTable">
-          <tr><td colspan="3">No data available</td></tr>
-        </tbody>
-      </table>
     </div>
     
     <div id="assessmentContent" class="tab-content">
-      <table>
-        <thead>
-          <tr>
-            <th>Index No.</th>
-            <th>Topic(s) of Task</th>
-            <th>Score</th>
-            <th>Highest Possible Score</th>
-          </tr>
-        </thead>
-        <tbody id="assessmentTable">
-          <tr><td colspan="4">No data available</td></tr>
-        </tbody>
-      </table>
+      <div class="grade-section">
+        <div class="category-header">
+          <h4 class="category-title">Assessment Tasks</h4>
+        </div>
+        <div class="table-container">
+          <table class="grades-table">
+            <thead>
+              <tr>
+                <th>Index No.</th>
+                <th>Topic(s) of Task</th>
+                <th>Score</th>
+                <th>Highest Possible Score</th>
+              </tr>
+            </thead>
+            <tbody id="assessmentTable">
+              <tr><td colspan="4">No data available</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
     
     <!-- Chatbot Toggle Button -->
-    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px;">💬</button>
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px; display: flex; align-items: center; justify-content: center;">💬</button>
     <!-- Chatbot Sidebar -->
     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -1238,5 +1268,221 @@ document.getElementById('subjectTitle').textContent = subjectName;
       document.addEventListener('grades:loaded', ()=>{ try{ renderChartFromState(); }catch{} });
     })();
   </script>
+  
+  <style>
+    /* Enhanced styling for teacher grades page */
+    .control-card {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .control-card:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+    
+    .control-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .control-card-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 2px;
+      margin-right: 12px;
+    }
+    
+    .student-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .selector-label {
+      font-weight: 500;
+      color: var(--text);
+      min-width: 120px;
+    }
+    
+    .student-select {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    
+    .student-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .quarter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .quarter-tab {
+      padding: 10px 18px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .quarter-tab:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    
+    .quarter-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      padding: 12px 20px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .tab:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    
+    .tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .grade-section {
+      margin-bottom: 32px;
+    }
+    
+    .category-header {
+      margin-bottom: 16px;
+    }
+    
+    .category-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-container {
+      border: 1px solid #e2e8f0;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .grades-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+    }
+    
+    .grades-table th {
+      background: #f8fafc;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .grades-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text);
+      vertical-align: middle;
+    }
+    
+    .grades-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .grades-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .control-card {
+        padding: 16px;
+      }
+      
+      .student-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      
+      .selector-label {
+        min-width: auto;
+      }
+      
+      .quarter-tabs, .tabs {
+        justify-content: center;
+      }
+      
+      .quarter-tab, .tab {
+        flex: 1;
+        text-align: center;
+        min-width: 80px;
+      }
+      
+      .grades-table {
+        font-size: 0.85rem;
+      }
+      
+      .grades-table th, .grades-table td {
+        padding: 10px 8px;
+      }
+    }
+  </style>
 </body>
 </html>
