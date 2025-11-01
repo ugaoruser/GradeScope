@@ -11,7 +11,6 @@ GradeTracker is a Google Classroom-like web application for managing grades and 
   - **Parents**: Monitor their children's academic progress
 - **Google Classroom-like UI**: Modern, responsive interface
 - **Grade Management**: Teachers can add grades with comments for low scores
-- **Subject Management**: Admins can manage subjects and enrollments
 
 ## Prerequisites
 - Node.js (v14 or higher)
