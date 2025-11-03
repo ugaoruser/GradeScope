@@ -337,7 +337,7 @@
         // Ensure subjectId is available
         let sid = subjectId || new URLSearchParams(location.search).get('id') || '';
         const sname = typeof subjectName !== 'undefined' ? subjectName : (new URLSearchParams(location.search).get('name')||'');
-        const url = `teacher-grades.html?id=${encodeURIComponent(String(sid))}&name=${encodeURIComponent(String(sname||''))}&studentId=${encodeURIComponent(String(studentId||''))}&studentName=${encodeURIComponent(String(studentName||''))}`;
+        const url = `teacher-grades.html?id=${encodeURIComponent(String(sid))}&name=${encodeURIComponent(String(sname||''))}&student_id=${encodeURIComponent(String(studentId||''))}&studentName=${encodeURIComponent(String(studentName||''))}`;
         location.href = url;
       }catch(e){ console.error('Failed to navigate to teacher-grades:', e); }
     }
