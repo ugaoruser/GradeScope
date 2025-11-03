@@ -604,6 +604,8 @@ body[data-role="parent"] { --current-role-primary: var(--parent-primary); }
 .account-dropdown.show{ display:block; }
 .account-dropdown .account-info { padding:12px 16px; border-bottom:1px solid #eee; }
 .account-dropdown button{ width:100%; border:none; padding:10px; background:transparent; cursor:pointer; }
+/* Hide email from account dropdown globally */
+.account-dropdown #userEmail { display: none !important; }
 
 /* -------------------------
    03. Shared UI components
