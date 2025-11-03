@@ -321,7 +321,7 @@
             <div class="student-meta">Email: ${email || '-'}</div>
           </div>
           <div class="student-actions">
-            <button class="action-btn" onclick="viewStudentGrades(${JSON.stringify(studentId)}, '${(firstName + ' ' + lastName).replace(/'/g, "\'")}')" title="Edit">✏️</button>
+            <button class="action-btn" onclick="goToTeacherGrades(${JSON.stringify(studentId)}, '${(firstName + ' ' + lastName).replace(/'/g, "\'")}')" title="Edit">✏️</button>
           </div>
         `;
         
@@ -329,7 +329,7 @@
       });
     }
 
-    function viewStudentGrades(studentId, studentName){
+    function goToTeacherGrades(studentId, studentName){
       try{
         // Ensure subjectId is available
         let sid = subjectId || new URLSearchParams(location.search).get('id') || '';
