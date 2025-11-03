@@ -180,75 +180,7 @@
         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
       </div>
     </div>
-          </div>
-        </div>
-      </div>
-    </div>
     
-    <!-- Student Dashboard Section -->
-    <div class="student-dashboard-card">
-      <div class="dashboard-header">
-        <h2>Student Dashboard</h2>
-        <button id="exportReport" class="btn-primary">Export Report</button>
-      </div>
-      
-      <div class="dashboard-content">
-        <div class="selected-student-info">
-          <div class="student-display">
-            <span id="selectedStudentName">Select a student to view details</span>
-          </div>
-        </div>
-        
-        <div class="ai-feedback-section">
-          <h3>AI Feedback Assistant</h3>
-          <div class="feedback-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="feedbackScore">Score</label>
-                <input type="number" id="feedbackScore" min="0" max="100" value="85">
-              </div>
-              <div class="form-group">
-                <label for="feedbackTopic">Topic</label>
-                <input type="text" id="feedbackTopic" placeholder="e.g., Algebra, Essay Writing">
-              </div>
-              <div class="form-group">
-                <button id="generateFeedback" class="btn-primary">Generate</button>
-              </div>
-            </div>
-            <div class="feedback-results">
-              <div class="feedback-message">
-                <h4>Personalized Feedback</h4>
-                <p id="personalizedFeedback">Generate feedback to see results</p>
-              </div>
-              <div class="feedback-suggestions">
-                <h4>Teaching Suggestions</h4>
-                <ul id="improvementSuggestions">
-                  <li>Generate feedback to see suggestions</li>
-                </ul>
-              </div>
-              <button id="copyFeedback" class="btn-secondary">Copy to Comments</button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="performance-trends">
-          <h3>Performance Trend per Quarter</h3>
-          <div class="chart-container">
-            <canvas id="performanceChart"></canvas>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
-              <div class="legend-label">Selected Student</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
-              <div class="legend-label">Class Average</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     
     <!-- Grade Category Weights Section -->
     <div class="grade-weights-card">
@@ -379,6 +311,71 @@
       </div>
       
       <button class="action-btn" onclick="toggleScoreForm(true)" id="addScoreBtn">Add New Score</button>
+    </div>
+    
+    <!-- Student Dashboard Section (moved below Student Grades) -->
+    <div class="student-dashboard-card">
+      <div class="dashboard-header">
+        <h2>Student Dashboard</h2>
+        <button id="exportReport" class="btn-primary">Export Report</button>
+      </div>
+      
+      <div class="dashboard-content">
+        <div class="selected-student-info">
+          <div class="student-display">
+            <span id="selectedStudentName">Select a student to view details</span>
+          </div>
+        </div>
+        
+        <div class="ai-feedback-section">
+          <h3>AI Feedback Assistant</h3>
+          <div class="feedback-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="feedbackScore">Score</label>
+                <input type="number" id="feedbackScore" min="0" max="100" value="85">
+              </div>
+              <div class="form-group">
+                <label for="feedbackTopic">Topic</label>
+                <input type="text" id="feedbackTopic" placeholder="e.g., Algebra, Essay Writing">
+              </div>
+              <div class="form-group">
+                <button id="generateFeedback" class="btn-primary">Generate</button>
+              </div>
+            </div>
+            <div class="feedback-results">
+              <div class="feedback-message">
+                <h4>Personalized Feedback</h4>
+                <p id="personalizedFeedback">Generate feedback to see results</p>
+              </div>
+              <div class="feedback-suggestions">
+                <h4>Teaching Suggestions</h4>
+                <ul id="improvementSuggestions">
+                  <li>Generate feedback to see suggestions</li>
+                </ul>
+              </div>
+              <button id="copyFeedback" class="btn-secondary">Copy to Comments</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="performance-trends">
+          <h3>Performance Trend per Quarter</h3>
+          <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
+              <div class="legend-label">Selected Student</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
+              <div class="legend-label">Class Average</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
