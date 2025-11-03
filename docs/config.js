@@ -9,7 +9,16 @@
 // API base resolution without hardcoded deploy URL
 window.API_BASE = (function(){
   // Allow explicit override first
-  if (window.ENV_API_BASE) return window.ENV_API_BASE;
+  if (window.ENV_API_BASE) {
+    try { localStorage.setItem('API_BASE_OVERRIDE', String(window.ENV_API_BASE)); } catch {}
+    return window.ENV_API_BASE;
+  }
+
+  // Persistent override via localStorage
+  try {
+    const saved = localStorage.getItem('API_BASE_OVERRIDE');
+    if (saved) return saved;
+  } catch {}
 
   const host = location.hostname || '';
   const port = String(location.port || '');
