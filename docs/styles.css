@@ -1053,7 +1053,7 @@ body.settings-page .field-display { padding:10px 12px; border:1px dashed #dbe5f0
 /* Settings modal should use the same styling as other pages */
 
 /* Student grades page */
-body.student-grades-page .header { background: linear-gradient(90deg,#3f51b5,#5c6bc0); color:#fff; padding:16px 32px; border-radius:8px; }
+body.student-grades-page .header { background: linear-gradient(90deg,#3f51b5,#5c6bc0); color:#fff; padding:16px 24px; border-radius:0; }
 body.student-grades-page .tab, .student-grades-page .quarter-tab { cursor:pointer; padding:12px 18px; }
 
 /* Teacher grades page */

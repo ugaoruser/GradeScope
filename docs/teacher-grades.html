@@ -1,13 +1,3 @@
-      // Tab switching for graded vs assessment
-      document.querySelectorAll('.tabs .tab').forEach(tab=>{
-        tab.addEventListener('click', ()=>{
-          document.querySelectorAll('.tabs .tab').forEach(t=> t.classList.remove('active'));
-          tab.classList.add('active');
-          const which = tab.dataset.tab;
-          document.getElementById('gradedContent').classList.toggle('active', which==='graded');
-          document.getElementById('assessmentContent').classList.toggle('active', which==='assessment');
-        });
-      });
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,17 +35,6 @@
   <div class="main" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 24px 0;">
     <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
-    
-    <!-- Student Selection Card -->
-    <div class="control-card">
-      <h3 class="control-card-title">Student Selection</h3>
-      <div class="student-selector">
-        <label for="studentSelect" class="selector-label">Select Student:</label>
-        <select id="studentSelect" onchange="loadStudentGrades()" class="student-select">
-          <option value="">Loading students...</option>
-        </select>
-      </div>
-    </div>
     
     <!-- Quarter Selection Card -->
     <div class="control-card">
@@ -167,10 +146,11 @@
                 <th>Topic(s) of Task</th>
                 <th>Score</th>
                 <th>Highest Possible Score</th>
+                <th>Comments</th>
               </tr>
             </thead>
             <tbody id="assessmentTable">
-              <tr><td colspan="4">No data available</td></tr>
+              <tr><td colspan="5">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -269,7 +249,7 @@
       
       <div class="add-item-controls">
         <button class="btn-primary" onclick="toggleAddForm(true)" id="addItemBtn">+ Add New Grade Item</button>
-        <button class="btn-secondary" onclick="toggleAssessmentForm(true)" id="addAssessmentBtn" style="margin-left:12px;">+ Add Assessment Item</button>
+        <button class="btn-primary" onclick="toggleAssessmentForm(true)" id="addAssessmentBtn" style="margin-left:12px;">+ Add Assessment Item</button>
       </div>
       
       <!-- Add Assessment Item Form -->
@@ -295,6 +275,10 @@
           <div class="form-group">
             <label for="assessMax">Highest Possible Score</label>
             <input type="number" id="assessMax" placeholder="e.g. 20" value="100">
+          </div>
+          <div class="form-group">
+            <label for="assessComment">Comment</label>
+            <input type="text" id="assessComment" placeholder="Short comment">
           </div>
         </div>
         <div class="form-actions">
@@ -403,6 +387,7 @@
       const dateAssigned = document.getElementById('assessDate').value;
       const score = parseFloat(document.getElementById('assessScore').value);
       const max = parseFloat(document.getElementById('assessMax').value);
+      const comment = (document.getElementById('assessComment')?.value || '').trim();
       if (!title || !topic || !dateAssigned || isNaN(score) || isNaN(max)){
         alert('Please fill out all assessment fields');
         return;
@@ -411,7 +396,7 @@
       if (tbody){
         const idx = tbody.children.length + 1;
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${idx}</td><td>${topic}</td><td>${score}</td><td>${max}</td>`;
+        tr.innerHTML = `<td>${idx}</td><td>${topic}</td><td>${score}</td><td>${max}</td><td>${comment}</td>`;
         if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
         tbody.appendChild(tr);
       }
@@ -557,6 +542,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
     // --- Data loading functions ---
     function loadStudents() {
       const select = document.getElementById('studentSelect');
+      if (!select) { return; }
       // Clear all options first
       select.innerHTML = '<option value="">Loading students...</option>';
       
@@ -1184,6 +1170,22 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       // Update total weight on page load
       updateTotalWeight();
+
+      // Initialize tab switching for graded vs assessment
+      const tabs = document.querySelectorAll('.tabs .tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const which = tab.getAttribute('data-tab');
+          const graded = document.getElementById('gradedContent');
+          const assess = document.getElementById('assessmentContent');
+          if (graded && assess){
+            graded.classList.toggle('active', which === 'graded');
+            assess.classList.toggle('active', which === 'assessment');
+          }
+        });
+      });
     });
   </script>
   <script>
