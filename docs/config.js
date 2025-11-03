@@ -30,7 +30,10 @@ window.API_BASE = (function(){
       return of(input, opts).then(r=>{
         if (r && r.status === 401) {
           try{ localStorage.clear(); }catch{}
-          if (!location.pathname.endsWith('login.html')) location.href = 'login.html';
+          const path = location.pathname;
+          const isLogin = path.endsWith('login.html');
+          const isSignup = path.endsWith('signup.html');
+          if (!isLogin && !isSignup) location.href = 'login.html';
         }
         return r;
       });
