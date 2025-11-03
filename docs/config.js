@@ -1138,11 +1138,12 @@ window.API_BASE = (function(){
 
   window.manageStudentGrades = function(studentId, studentName, subjectId) {
     const params = new URLSearchParams();
-    params.set('studentId', studentId);
-    params.set('studentName', studentName);
-    params.set('subjectId', subjectId);
+    // teacher-grades.html expects: id (subject), name (subject title), and student_id
     const subjectName = new URLSearchParams(window.location.search).get('name') || 'Subject';
-    params.set('subjectName', subjectName);
+    params.set('id', subjectId);
+    params.set('name', subjectName);
+    params.set('student_id', studentId);
+    params.set('studentName', studentName);
     window.location.href = `teacher-grades.html?${params.toString()}`;
   };
 
