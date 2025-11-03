@@ -1,3 +1,13 @@
+      // Tab switching for graded vs assessment
+      document.querySelectorAll('.tabs .tab').forEach(tab=>{
+        tab.addEventListener('click', ()=>{
+          document.querySelectorAll('.tabs .tab').forEach(t=> t.classList.remove('active'));
+          tab.classList.add('active');
+          const which = tab.dataset.tab;
+          document.getElementById('gradedContent').classList.toggle('active', which==='graded');
+          document.getElementById('assessmentContent').classList.toggle('active', which==='assessment');
+        });
+      });
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,7 +73,7 @@
       <h3 class="control-card-title">Grade Categories</h3>
       <div class="tabs">
         <div class="tab active" data-tab="graded">Graded Components</div>
-        <div class="tab" data-tab="assessment">Assessment</div>
+        <div class="tab" data-tab="assessment">Formative Assessments</div>
       </div>
     </div>
     
@@ -82,11 +92,12 @@
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
+                <th>Comment</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="6">No data available</td></tr>
+              <tr><td colspan="7">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -106,11 +117,12 @@
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
+                <th>Comment</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="6">No data available</td></tr>
+              <tr><td colspan="7">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -130,11 +142,12 @@
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
+                <th>Comment</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="6">No data available</td></tr>
+              <tr><td colspan="7">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -144,7 +157,7 @@
     <div id="assessmentContent" class="tab-content">
       <div class="grade-section">
         <div class="category-header">
-          <h4 class="category-title">Assessment Tasks</h4>
+          <h4 class="category-title">Formative Assessments</h4>
         </div>
         <div class="table-container">
           <table class="grades-table">
@@ -226,15 +239,13 @@
           <div class="form-group">
             <label for="itemType">Type</label>
             <select id="itemType">
-              <option value="Quiz">Quiz</option>
-              <option value="Project">Project</option>
-              <option value="Homework">Homework</option>
-              <option value="Exam">Exam</option>
-              <option value="Assessment">Assessment</option>
+              <option value="Performance Task">Performance Task</option>
+              <option value="Written Works">Written Works</option>
+              <option value="Periodical Exam">Periodical Exam</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="maxScore">Max Score</label>
+            <label for="maxScore">Highest Possible Score</label>
             <input type="number" id="maxScore" value="100">
           </div>
           <div class="form-group">
@@ -242,11 +253,12 @@
             <input type="date" id="dateAssigned">
           </div>
           <div class="form-group">
-            <label for="includedInFinal">Include in Final Grade</label>
-            <select id="includedInFinal">
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
+            <label for="itemScore">Score</label>
+            <input type="number" id="itemScore" placeholder="e.g. 85">
+          </div>
+          <div class="form-group">
+            <label for="itemComment">Comment</label>
+            <input type="text" id="itemComment" placeholder="Short comment">
           </div>
         </div>
         <div class="form-actions">
@@ -257,8 +269,39 @@
       
       <div class="add-item-controls">
         <button class="btn-primary" onclick="toggleAddForm(true)" id="addItemBtn">+ Add New Grade Item</button>
+        <button class="btn-secondary" onclick="toggleAssessmentForm(true)" id="addAssessmentBtn" style="margin-left:12px;">+ Add Assessment Item</button>
       </div>
       
+      <!-- Add Assessment Item Form -->
+      <div class="add-grade-form-card" id="addAssessmentForm" style="display:none;">
+        <h3>Add Assessment Item</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="assessTitle">Title</label>
+            <input type="text" id="assessTitle" placeholder="e.g. Practice Quiz 1">
+          </div>
+          <div class="form-group">
+            <label for="assessTopic">Topic</label>
+            <input type="text" id="assessTopic" placeholder="e.g. Algebra">
+          </div>
+          <div class="form-group">
+            <label for="assessDate">Date Assigned</label>
+            <input type="date" id="assessDate">
+          </div>
+          <div class="form-group">
+            <label for="assessScore">Score</label>
+            <input type="number" id="assessScore" placeholder="e.g. 18">
+          </div>
+          <div class="form-group">
+            <label for="assessMax">Highest Possible Score</label>
+            <input type="number" id="assessMax" placeholder="e.g. 20" value="100">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleAssessmentForm(false)">Cancel</button>
+          <button class="btn-primary" onclick="saveAssessmentItem()">Save Assessment Item</button>
+        </div>
+      </div>
 
     </div>
     
@@ -313,52 +356,9 @@
       <button class="action-btn" onclick="toggleScoreForm(true)" id="addScoreBtn">Add New Score</button>
     </div>
     
-    <!-- Student Dashboard Section (moved below Student Grades) -->
+    <!-- Performance Trends (keep only chart) -->
     <div class="student-dashboard-card">
-      <div class="dashboard-header">
-        <h2>Student Dashboard</h2>
-        <button id="exportReport" class="btn-primary">Export Report</button>
-      </div>
-      
       <div class="dashboard-content">
-        <div class="selected-student-info">
-          <div class="student-display">
-            <span id="selectedStudentName">Select a student to view details</span>
-          </div>
-        </div>
-        
-        <div class="ai-feedback-section">
-          <h3>AI Feedback Assistant</h3>
-          <div class="feedback-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="feedbackScore">Score</label>
-                <input type="number" id="feedbackScore" min="0" max="100" value="85">
-              </div>
-              <div class="form-group">
-                <label for="feedbackTopic">Topic</label>
-                <input type="text" id="feedbackTopic" placeholder="e.g., Algebra, Essay Writing">
-              </div>
-              <div class="form-group">
-                <button id="generateFeedback" class="btn-primary">Generate</button>
-              </div>
-            </div>
-            <div class="feedback-results">
-              <div class="feedback-message">
-                <h4>Personalized Feedback</h4>
-                <p id="personalizedFeedback">Generate feedback to see results</p>
-              </div>
-              <div class="feedback-suggestions">
-                <h4>Teaching Suggestions</h4>
-                <ul id="improvementSuggestions">
-                  <li>Generate feedback to see suggestions</li>
-                </ul>
-              </div>
-              <button id="copyFeedback" class="btn-secondary">Copy to Comments</button>
-            </div>
-          </div>
-        </div>
-        
         <div class="performance-trends">
           <h3>Performance Trend per Quarter</h3>
           <div class="chart-container">
@@ -366,12 +366,12 @@
           </div>
           <div class="chart-legend">
             <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
-              <div class="legend-label">Selected Student</div>
+              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
+              <div class="legend-label">Written Works</div>
             </div>
             <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
-              <div class="legend-label">Class Average</div>
+              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
+              <div class="legend-label">Performance Tasks</div>
             </div>
           </div>
         </div>
@@ -391,6 +391,31 @@
       window.location.href = 'login.html';
     } else if (role !== 'teacher') {
       window.location.href = 'homepage1.html';
+    }
+    // Assessment form handlers (front-end only for now)
+    function toggleAssessmentForm(show){
+      const form = document.getElementById('addAssessmentForm');
+      form.style.display = show ? 'block' : 'none';
+    }
+    function saveAssessmentItem(){
+      const title = document.getElementById('assessTitle').value.trim();
+      const topic = document.getElementById('assessTopic').value.trim();
+      const dateAssigned = document.getElementById('assessDate').value;
+      const score = parseFloat(document.getElementById('assessScore').value);
+      const max = parseFloat(document.getElementById('assessMax').value);
+      if (!title || !topic || !dateAssigned || isNaN(score) || isNaN(max)){
+        alert('Please fill out all assessment fields');
+        return;
+      }
+      const tbody = document.getElementById('assessmentTable');
+      if (tbody){
+        const idx = tbody.children.length + 1;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${idx}</td><td>${topic}</td><td>${score}</td><td>${max}</td>`;
+        if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+        tbody.appendChild(tr);
+      }
+      toggleAssessmentForm(false);
     }
     
     // Populate account dropdown with latest cached values
@@ -686,6 +711,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                     <td>${item.max_score || 0}</td>
                     <td>${dateAssigned}</td>
                     <td>${categoryName || 'N/A'}</td>
+                    <td>${(item.comment || '').toString().slice(0,140)}</td>
                     <td class="action-buttons">
                       <button class="btn-edit" onclick="editGradeItem(${item.id})">Edit</button>
                       <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
@@ -923,10 +949,13 @@ document.getElementById('subjectTitle').textContent = subjectName;
     function saveGradeItem() {
       const title = document.getElementById('itemTitle').value.trim();
       const topic = document.getElementById('itemTopic').value.trim();
-      const itemType = document.getElementById('itemType').value;
+      const itemType = document.getElementById('itemType').value; // 'Performance Task' | 'Written Works' | 'Periodical Exam'
       const maxScore = parseFloat(document.getElementById('maxScore').value);
       const dateAssigned = document.getElementById('dateAssigned').value;
-      const includedInFinal = document.getElementById('includedInFinal').value === 'true';
+      const scoreValue = parseFloat(document.getElementById('itemScore').value);
+      const comment = document.getElementById('itemComment').value.trim();
+      // Assessments are handled in a separate form; here all are included_in_final
+      const includedInFinal = true;
       
       if (!title) {
         alert('Title is required');
@@ -938,13 +967,13 @@ document.getElementById('subjectTitle').textContent = subjectName;
         return;
       }
       
-      // Determine category ID based on current tab
+      // Determine category ID based on Type selection
       let categoryId;
-      if (currentCategory === 'pt') {
+      if (itemType === 'Performance Task') {
         categoryId = gradeCategories.find(cat => cat.name === 'Performance Task')?.id;
-      } else if (currentCategory === 'ww') {
+      } else if (itemType === 'Written Works') {
         categoryId = gradeCategories.find(cat => cat.name === 'Written Works')?.id;
-      } else if (currentCategory === 'pe') {
+      } else if (itemType === 'Periodical Exam') {
         categoryId = gradeCategories.find(cat => cat.name === 'Periodical Exam')?.id;
       }
       
@@ -960,7 +989,8 @@ document.getElementById('subjectTitle').textContent = subjectName;
         max_score: maxScore,
         date_assigned: dateAssigned,
         included_in_final: includedInFinal,
-        category_id: categoryId
+        category_id: categoryId,
+        comment
       };
       
       const items = [item];
@@ -974,10 +1004,20 @@ document.getElementById('subjectTitle').textContent = subjectName;
         if (!res.ok) throw new Error('Failed to save grade item');
         return res.json();
       })
-      .then(() => {
+      .then(async (saved) => {
         alert('Grade item saved successfully');
         toggleAddForm(false);
         loadGradeItems();
+        // Optionally create a score for the selected student if provided
+        if (selectedStudentId && !isNaN(scoreValue)){
+          try{
+            await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ grade_item_id: (saved?.items?.[0]?.id) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment })
+            });
+            loadStudentGrades();
+          }catch{}
+        }
       })
       .catch(err => {
         console.error('Error saving grade item:', err);
@@ -1097,12 +1137,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
       })
       .catch(err => {
         console.error('Error deleting score:', err);
-        alert('Failed to delete score. Please try again.');
       });
     }
     
     // Initialize the page
-    document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
       // Add event listeners for weight inputs
       const weightInputs = ['weightPT', 'weightWW', 'weightPE'];
       weightInputs.forEach(id => {
@@ -1167,25 +1206,38 @@ document.getElementById('subjectTitle').textContent = subjectName;
       window.renderChartFromState = function(){
         try{
           if (!window.Chart) return;
-          const tbody = document.querySelector('#studentGradesTable tbody');
-          if (!tbody) return;
+          // Build datasets from in-memory gradeItems + latest loaded scores
           const labels = [];
-          const series = [];
+          const ptSeries = [];
+          const wwSeries = [];
+          // Map item id -> score percentage for selected student
+          const scorePct = {};
           document.querySelectorAll('#studentGradesTable tbody tr').forEach((tr)=>{
             const tds = tr.querySelectorAll('td');
             if (tds.length >= 4){
-              labels.push(tds[0].textContent.trim());
+              const title = tds[0].textContent.trim();
               const pct = (tds[3].textContent||'0').replace('%','').trim();
-              const v = Number(pct) || 0; series.push(v);
+              scorePct[title] = Number(pct) || 0;
+            }
+          });
+          // Use gradeItems list to separate PT vs WW
+          (gradeItems||[]).forEach(item=>{
+            const catName = (gradeCategories.find(c=> c.id===item.category_id)||{}).name;
+            if (catName==='Performance Task' || catName==='Written Works'){
+              labels.push(item.title||'Item');
+              const v = scorePct[item.title||'Item'] ?? 0;
+              if (catName==='Performance Task') { ptSeries.push(v); wwSeries.push(null); }
+              else { wwSeries.push(v); ptSeries.push(null); }
             }
           });
           const ctx = canvas.getContext('2d');
-          const data = { labels, datasets: [{ label:'Student Score %', data: series, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', tension:0.25, fill:true }] };
+          const data = { labels, datasets: [
+            { label:'Performance Tasks', data: ptSeries, borderColor:'rgba(54,162,235,1)', backgroundColor:'rgba(54,162,235,0.2)', tension:0.25, spanGaps:true },
+            { label:'Written Works', data: wwSeries, borderColor:'rgba(255,99,132,1)', backgroundColor:'rgba(255,99,132,0.2)', tension:0.25, spanGaps:true }
+          ] };
           const options = { scales: { y: { min:0, max:100, title:{ display:true, text:'%' } } } };
           if (chart){ chart.data=data; chart.options=options; chart.update(); }
           else { chart = new Chart(ctx, { type:'line', data, options }); }
-          const avgLegend = document.querySelector('.chart-legend .legend-item:nth-child(2)');
-          if (avgLegend) avgLegend.style.display='none';
         }catch{}
       }
 
