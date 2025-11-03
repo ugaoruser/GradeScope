@@ -106,8 +106,10 @@
     });
 
     function setupHeader() {
-      document.getElementById('subjectTitle').textContent = subjectName;
-      document.getElementById('classTitle').textContent = subjectName;
+      const subjectTitleEl = document.getElementById('subjectTitle');
+      if (subjectTitleEl) subjectTitleEl.textContent = subjectName;
+      const classTitleEl = document.getElementById('classTitle');
+      if (classTitleEl) classTitleEl.textContent = subjectName;
       
       // Load cached user info
       const fullName = localStorage.getItem('fullName') || 'Teacher';
@@ -138,9 +140,12 @@
           subjectId = subject.id;
           accessCode = subject.code || '';
           
-          document.getElementById('classSection').textContent = subject.section || subject.grade_level || 'No section';
-          document.getElementById('accessCode').textContent = accessCode || '------';
-          document.getElementById('emptyClassCode').textContent = accessCode || '------';
+          const classSectionEl = document.getElementById('classSection');
+          if (classSectionEl) classSectionEl.textContent = subject.section || subject.grade_level || 'No section';
+          const accessCodeEl = document.getElementById('accessCode');
+          if (accessCodeEl) accessCodeEl.textContent = accessCode || '------';
+          const emptyCodeEl = document.getElementById('emptyClassCode');
+          if (emptyCodeEl) emptyCodeEl.textContent = accessCode || '------';
           
           // Setup copy buttons
           setupCopyButtons();
@@ -289,7 +294,7 @@
       grid.style.display = 'none';
       emptyState.style.display = 'block';
     }
-    }
+    
 
     function renderStudents(students) {
       const grid = document.getElementById('studentsGrid');
@@ -299,18 +304,21 @@
         const card = document.createElement('div');
         card.className = 'student-card';
         
-        const initial = student.full_name.charAt(0).toUpperCase();
-        const joinDate = student.enrolled_at ? new Date(student.enrolled_at).toLocaleDateString() : 'Recently';
+        const firstName = student.first_name || (student.full_name ? student.full_name.split(' ')[0] : (student.name ? student.name.split(' ')[0] : ''));
+        const lastName = student.last_name || (student.full_name ? student.full_name.split(' ').slice(1).join(' ') : (student.name ? student.name.split(' ').slice(1).join(' ') : ''));
+        const email = student.email || '';
+        const studentId = student.student_id || student.id || '';
+        const initial = (firstName || (student.full_name || student.name || 'S')).charAt(0).toUpperCase();
         
         card.innerHTML = `
           <div class="student-avatar">${initial}</div>
           <div class="student-info">
-            <div class="student-name">${student.full_name}</div>
-            <div class="student-meta">Joined ${joinDate}</div>
+            <div class="student-name">${firstName || ''}${firstName||lastName ? ' ' : ''}${lastName || ''}</div>
+            <div class="student-meta">Student ID: ${studentId || '-'}</div>
+            <div class="student-meta">Email: ${email || '-'}</div>
           </div>
           <div class="student-actions">
-            <button class="action-btn" onclick="viewStudentGrades(${student.id}, '${student.full_name}')" title="View grades">📊</button>
-            <button class="action-btn" onclick="contactStudent('${student.full_name}')" title="Contact">💬</button>
+            <button class="action-btn" onclick="viewStudentGrades(${JSON.stringify(studentId)}, '${(firstName + ' ' + lastName).replace(/'/g, "\'")}')" title="Edit">✏️</button>
           </div>
         `;
         

@@ -51,10 +51,10 @@
     <div class="control-card">
       <h3 class="control-card-title">Academic Quarter</h3>
       <div class="quarter-tabs" id="quarterTabs">
-        <div class="quarter-tab active" data-quarter="1">Quarter 1</div>
-        <div class="quarter-tab" data-quarter="2">Quarter 2</div>
-        <div class="quarter-tab" data-quarter="3">Quarter 3</div>
-        <div class="quarter-tab" data-quarter="4">Quarter 4</div>
+        <button class="tab-button active" data-quarter="1" onclick="switchQuarter(1)">Quarter 1</button>
+        <button class="tab-button" data-quarter="2" onclick="switchQuarter(2)">Quarter 2</button>
+        <button class="tab-button" data-quarter="3" onclick="switchQuarter(3)">Quarter 3</button>
+        <button class="tab-button" data-quarter="4" onclick="switchQuarter(4)">Quarter 4</button>
       </div>
     </div>
     
@@ -74,18 +74,19 @@
           <h4 class="category-title">Performance Tasks (<span id="ptWeight">0</span>%)</h4>
         </div>
         <div class="table-container">
-          <table class="grades-table">
+          <table class="grades-table" id="ptTable">
             <thead>
               <tr>
-                <th>Index No.</th>
-                <th>Name of Performance Task</th>
-                <th>Topic(s) Involved</th>
-                <th>Score</th>
-                <th>Highest Possible Score</th>
+                <th>Title</th>
+                <th>Topic(s)</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="ptTable">
-              <tr><td colspan="5">No data available</td></tr>
+            <tbody>
+              <tr><td colspan="6">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -97,18 +98,19 @@
           <h4 class="category-title">Written Works (<span id="wwWeight">0</span>%)</h4>
         </div>
         <div class="table-container">
-          <table class="grades-table">
+          <table class="grades-table" id="wwTable">
             <thead>
               <tr>
-                <th>Index No.</th>
-                <th>Status</th>
+                <th>Title</th>
                 <th>Topic(s)</th>
-                <th>Score</th>
-                <th>Highest Possible Score</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="wwTable">
-              <tr><td colspan="5">No data available</td></tr>
+            <tbody>
+              <tr><td colspan="6">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -120,16 +122,19 @@
           <h4 class="category-title">Periodical Exam (<span id="peWeight">0</span>%)</h4>
         </div>
         <div class="table-container">
-          <table class="grades-table">
+          <table class="grades-table" id="peTable">
             <thead>
               <tr>
-                <th>Topics</th>
-                <th>Score</th>
-                <th>Highest Possible Score</th>
+                <th>Title</th>
+                <th>Topic(s)</th>
+                <th>Max Score</th>
+                <th>Date Assigned</th>
+                <th>Category</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="peTable">
-              <tr><td colspan="3">No data available</td></tr>
+            <tbody>
+              <tr><td colspan="6">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -175,13 +180,6 @@
         <button id="sendChat" style="padding:10px 14px; background:#1976d2; color:#fff; border:none; border-radius:6px; cursor:pointer;">Send</button>
       </div>
     </div>
-          </div>
-          
-          <div class="quarter-tabs">
-            <button class="tab-button active" data-quarter="1" onclick="switchQuarter(1)">Quarter 1</button>
-            <button class="tab-button" data-quarter="2" onclick="switchQuarter(2)">Quarter 2</button>
-            <button class="tab-button" data-quarter="3" onclick="switchQuarter(3)">Quarter 3</button>
-            <button class="tab-button" data-quarter="4" onclick="switchQuarter(4)">Quarter 4</button>
           </div>
         </div>
       </div>
@@ -392,8 +390,10 @@
     const urlParamsAll = new URLSearchParams(window.location.search);
     const readOnlyMode = urlParamsAll.get('readonly') === '1';
     
-    if (!role || role !== 'teacher') {
+    if (!role) {
       window.location.href = 'login.html';
+    } else if (role !== 'teacher') {
+      window.location.href = 'homepage1.html';
     }
     
     // Populate account dropdown with latest cached values
