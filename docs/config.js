@@ -137,7 +137,10 @@ window.API_BASE = (function(){
       const r = await fetch(`${window.API_BASE}/api/children`, { headers: authHeaders() });
       if (!r.ok) throw new Error('Failed to load children');
       const children = await r.json();
-      if (!children.length){ showError('No children found. Contact your school.'); return; }
+      if (!children.length){
+        showParentSelection([]);
+        return;
+      }
       // Always ask parent to choose explicitly, even if only one child
       showParentSelection(children);
     }catch(e){ showError('Failed to load children: ' + e.message); }
@@ -160,6 +163,13 @@ window.API_BASE = (function(){
     if (!selector || !btn) return;
     selector.innerHTML = '';
     let selectedId = null; btn.disabled = true;
+    if (!children || children.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;color:#666;padding:8px 0;';
+      empty.textContent = 'No child linked yet. Use "Link Child" to add a child to your account.';
+      selector.appendChild(empty);
+      return;
+    }
     children.forEach(child=>{
       const div = document.createElement('div');
       div.className = 'parent-child-option';
