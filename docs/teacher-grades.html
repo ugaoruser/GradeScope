@@ -544,6 +544,12 @@ document.getElementById('subjectTitle').textContent = subjectName;
       let row = id ? tbody.querySelector(`tr[data-item-id="${id}"]`) : null;
       if (!row){ row = document.createElement('tr'); if (id!=null) row.dataset.itemId = String(id); tbody.appendChild(row); }
       const dateText = dateAssigned ? new Date(dateAssigned).toLocaleDateString() : 'N/A';
+      row.dataset.title = title || '';
+      row.dataset.topic = topic || '';
+      row.dataset.maxScore = String(maxScore || 0);
+      row.dataset.dateAssigned = dateAssigned || '';
+      row.dataset.categoryName = categoryName || itemType || '';
+      row.dataset.comment = (comment || '').toString();
       row.innerHTML = `
         <td>${title || 'Untitled'}</td>
         <td>${topic || 'N/A'}</td>
@@ -553,7 +559,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
         <td>${categoryName || itemType || 'N/A'}</td>
         <td>${(comment || '').toString().slice(0,140)}</td>
         <td class="action-buttons">
-          <button class="btn-edit" onclick="editGradeItem(${Number(id)||0})">Edit</button>
           <button class="btn-delete" onclick="deleteGradeItem(${Number(id)||0})">Delete</button>
         </td>`;
     }
@@ -732,6 +737,12 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   
                   const uiScore = getUIScore(item.id);
                   row.dataset.itemId = String(item.id || '');
+                  row.dataset.title = item.title || '';
+                  row.dataset.topic = item.topic || '';
+                  row.dataset.maxScore = String(item.max_score || 0);
+                  row.dataset.dateAssigned = item.date_assigned || '';
+                  row.dataset.categoryName = categoryName || '';
+                  row.dataset.comment = (item.comment || '').toString();
                   row.innerHTML = `
                     <td>${item.title || 'Untitled'}</td>
                     <td>${item.topic || 'N/A'}</td>
@@ -741,7 +752,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
                     <td>${categoryName || 'N/A'}</td>
                     <td>${(item.comment || '').toString().slice(0,140)}</td>
                     <td class="action-buttons">
-                      <button class="btn-edit" onclick="editGradeItem(${item.id})">Edit</button>
                       <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
                     </td>
                   `;
@@ -1004,6 +1014,13 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const optimisticId = editingItemId || 0; // temporary until API confirms
       const uiScoreVal = isNaN(scoreValue) ? null : Number(scoreValue);
       renderOrUpdateItemRow({ id: optimisticId, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScoreVal);
+      // Keep an optimistic copy in memory so Edit works before reload
+      try{
+        if (!Array.isArray(gradeItems)) gradeItems = [];
+        const idx = gradeItems.findIndex(i=> i.id === optimisticId);
+        const temp = { id: optimisticId, title, topic, item_type: itemType, max_score: maxScore, date_assigned: dateAssigned, included_in_final: includedInFinal, category_id: (function(){ const c=gradeCategories.find(cat=>cat.name===itemType); return c?c.id:null; })(), comment };
+        if (idx>=0) gradeItems[idx]=temp; else gradeItems.push(temp);
+      }catch{}
       if (!isNaN(scoreValue)){
         if (editingItemId) setUIScore(editingItemId, Number(scoreValue));
       }
@@ -1104,8 +1121,25 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     // --- Edit/delete functions ---
-    function editGradeItem(id) {
-      const item = gradeItems.find(item => item.id === id);
+    function editGradeItem(id, el) {
+      let item = gradeItems.find(item => item.id === id);
+      // DOM fallback if not found (optimistic rows before reload)
+      if (!item && el){
+        const tr = el.closest('tr');
+        if (tr){
+          item = {
+            id: Number(tr.dataset.itemId) || id,
+            title: tr.dataset.title || '',
+            topic: tr.dataset.topic || '',
+            item_type: tr.dataset.categoryName || 'Performance Task',
+            max_score: Number(tr.dataset.maxScore) || 0,
+            date_assigned: tr.dataset.dateAssigned || '',
+            included_in_final: true,
+            category_id: (function(){ const c=gradeCategories.find(cat=>cat.name===(tr.dataset.categoryName||'Performance Task')); return c?c.id:null; })(),
+            comment: tr.dataset.comment || ''
+          };
+        }
+      }
       if (!item) return;
       
       editingItemId = id;
@@ -1115,13 +1149,14 @@ document.getElementById('subjectTitle').textContent = subjectName;
       // Map category_id to select value (Performance Task, Written Works, Periodical Exam)
       (function(){
         try{
-          const cat = gradeCategories.find(c=> c.id === item.category_id);
-          const name = cat ? cat.name : 'Performance Task';
+          const cat = item.category_id ? gradeCategories.find(c=> c.id === item.category_id) : gradeCategories.find(c=> c.name === (item.item_type || item.itemType));
+          const name = cat ? cat.name : (item.item_type || 'Performance Task');
           document.getElementById('itemType').value = name;
         }catch{ document.getElementById('itemType').value = 'Performance Task'; }
       })();
       document.getElementById('maxScore').value = item.max_score;
-      document.getElementById('includedInFinal').value = item.included_in_final ? 'true' : 'false';
+      // includedInFinal field may not exist in the form; guard it
+      try{ const inc=document.getElementById('includedInFinal'); if (inc) inc.value = item.included_in_final ? 'true' : 'false'; }catch{}
       
       if (item.date_assigned) {
         document.getElementById('dateAssigned').value = item.date_assigned.split('T')[0];
