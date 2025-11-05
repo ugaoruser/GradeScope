@@ -552,7 +552,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
     function loadStudents() {
       const select = document.getElementById('studentSelect');
       if (!select) { return; }
-      // Clear all options first
       select.innerHTML = '<option value="">Loading students...</option>';
       
       // Use fallback URLs if primary fails
