@@ -1095,16 +1095,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       };
       if (editingItemId) { item.id = editingItemId; }
       
-      // Optimistic row
-      const optimisticId = editingItemId || 0;
-      const uiScoreVal = isNaN(scoreValue) ? null : Number(scoreValue);
-      renderOrUpdateItemRow({ id: optimisticId, title, topic, itemType, maxScore, dateAssigned, categoryName: itemType, comment }, uiScoreVal);
-      try{
-        if (!Array.isArray(gradeItems)) gradeItems = [];
-        const idx = gradeItems.findIndex(i=> i.id === optimisticId);
-        const temp = { id: optimisticId, title, topic, item_type: itemType, max_score: maxScore, date_assigned: dateAssigned, included_in_final: includedInFinal, category_id: categoryId, comment };
-        if (idx>=0) gradeItems[idx]=temp; else gradeItems.push(temp);
-      }catch{}
+      // No optimistic item row creation to avoid duplicates; rely on reload after save
       if (!isNaN(scoreValue) && editingItemId){ setUIScore(editingItemId, Number(scoreValue)); }
       if (editingItemId){ setUIComment(editingItemId, comment); }
       
@@ -1117,13 +1108,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
       .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json().catch(()=>({})); })
       .then(async (_saved) => {
         alert('Grade item saved successfully');
-        try{
-          // Optimistic UI update without relying on returned IDs
-          const tableIdNow = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
-          const tbodyNow = document.querySelector(`#${tableIdNow} tbody`);
-          const uiScore = !isNaN(scoreValue) ? scoreValue : null;
-          renderOrUpdateItemRow({ id: null, title, topic, itemType, maxScore, dateAssigned, categoryName: itemType, comment }, uiScore);
-        }catch{}
         // Reload items to get authoritative list with IDs
         await loadGradeItems();
         toggleAddForm(false);
