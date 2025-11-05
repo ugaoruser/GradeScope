@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
-  <script src="chart.js" defer></script>
   <script src="chatbot.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -343,27 +342,7 @@
       <button class="action-btn" onclick="toggleScoreForm(true)" id="addScoreBtn">Add New Score</button>
     </div>
     
-    <!-- Performance Trends (keep only chart) -->
-    <div class="student-dashboard-card">
-      <div class="dashboard-content">
-        <div class="performance-trends">
-          <h3>Performance Trend per Quarter</h3>
-          <div class="chart-container">
-            <canvas id="performanceChart"></canvas>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(255, 99, 132, 0.8);"></div>
-              <div class="legend-label">Written Works</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: rgba(54, 162, 235, 0.8);"></div>
-              <div class="legend-label">Performance Tasks</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  
   </div>
   
   <script>
@@ -378,6 +357,15 @@
       window.location.href = 'login.html';
     } else if (role !== 'teacher') {
       window.location.href = 'homepage1.html';
+    }
+
+    // Ensure Add Grade Item popup can be toggled even if a previous definition is missing
+    if (typeof toggleAddForm !== 'function'){
+      function toggleAddForm(show){
+        const form = document.getElementById('addGradeForm');
+        if (!form) return;
+        form.style.display = show ? 'block' : 'none';
+      }
     }
     // Assessment form handlers (front-end only for now)
     function clearAssessmentForm(){
