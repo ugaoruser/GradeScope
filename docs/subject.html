@@ -63,9 +63,7 @@
       </div>
     </div>
     
-    <div class="class-actions" style="margin-top: 20px;">
-      <button class="btn btn-primary" id="manageGradesBtn">Manage Grades</button>
-    </div>
+    
     
     <!-- Chatbot Toggle Button -->
     <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px; display: flex; align-items: center; justify-content: center;">💬</button>
@@ -153,10 +151,7 @@
           // Setup copy buttons
           setupCopyButtons();
           
-          // Setup grade management button
-          document.getElementById('manageGradesBtn').addEventListener('click', () => {
-            window.location.href = `teacher-grades.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}`;
-          });
+          // Removed Manage Grades button
         }
       } catch (error) {
         console.error('Error loading subject details:', error);

@@ -790,8 +790,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
                         const scores = Array.isArray(data) ? data : (data.scores || []);
                         const byItem = {};
                         (scores||[]).forEach(sc=>{
-                          if (sc && sc.grade_item_id!=null) {
-                            byItem[sc.grade_item_id] = { score: sc.score, comments: sc.comments || '' };
+                          if (!sc) return;
+                          const gid = (sc.grade_item_id!=null) ? sc.grade_item_id : (sc.item_id!=null ? sc.item_id : null);
+                          if (gid!=null) {
+                            byItem[gid] = { score: sc.score, comments: sc.comments || '' };
                           }
                         });
                         ['ptTable','wwTable','peTable'].forEach(tid=>{
@@ -1192,6 +1194,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         alert('Score saved successfully');
         toggleScoreForm(false);
         loadStudentGrades();
+        loadGradeItems();
       })
       .catch(err => {
         console.error('Error saving score:', err);
@@ -1314,6 +1317,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       if (studentSelect) {
         studentSelect.addEventListener('change', function() {
           loadStudentGrades();
+          loadGradeItems();
           updateSelectedStudentDisplay();
         });
       }
