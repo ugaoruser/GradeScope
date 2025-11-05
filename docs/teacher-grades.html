@@ -789,16 +789,22 @@ document.getElementById('subjectTitle').textContent = subjectName;
                         const data = await res.json();
                         const scores = Array.isArray(data) ? data : (data.scores || []);
                         const byItem = {};
-                        (scores||[]).forEach(sc=>{ if (sc && sc.grade_item_id!=null) byItem[sc.grade_item_id] = sc.score; });
+                        (scores||[]).forEach(sc=>{
+                          if (sc && sc.grade_item_id!=null) {
+                            byItem[sc.grade_item_id] = { score: sc.score, comments: sc.comments || '' };
+                          }
+                        });
                         ['ptTable','wwTable','peTable'].forEach(tid=>{
                           const tb = document.querySelector(`#${tid} tbody`);
                           if (!tb) return;
                           tb.querySelectorAll('tr[data-item-id]').forEach(tr=>{
                             const iid = Number(tr.dataset.itemId);
                             if (!isNaN(iid) && byItem[iid]!=null){
-                              tr.dataset.score = String(byItem[iid]);
+                              tr.dataset.score = String(byItem[iid].score);
+                              tr.dataset.comment = String(byItem[iid].comments || '');
                               const tds = tr.querySelectorAll('td');
-                              if (tds && tds[2]){ tds[2].textContent = String(byItem[iid]); }
+                              if (tds && tds[2]) tds[2].textContent = String(byItem[iid].score);
+                              if (tds && tds[6]) tds[6].textContent = String(byItem[iid].comments || '').slice(0,140);
                             }
                           });
                         });
@@ -1104,28 +1110,45 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const payload = isEditing ? item : { items: [item] };
       
       fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json(); })
-      .then(async (saved) => {
+      .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json().catch(()=>({})); })
+      .then(async (_saved) => {
         alert('Grade item saved successfully');
         try{
-          const newId = isEditing ? editingItemId : (saved && saved.items && saved.items[0] && saved.items[0].id ? saved.items[0].id : null);
-          if (!isEditing && newId){
-            const tableIdNow = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
-            const tbodyNow = document.querySelector(`#${tableIdNow} tbody`);
-            const rowNow = tbodyNow ? tbodyNow.querySelector('tr[data-item-id=""], tr[data-item-id="0"]') : null;
-            if (rowNow){ rowNow.dataset.itemId = String(newId); }
-          }
-          if (!isNaN(scoreValue) && newId){ setUIScore(newId, Number(scoreValue)); }
-          if (newId){ setUIComment(newId, comment); }
+          // Optimistic UI update without relying on returned IDs
+          const tableIdNow = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
+          const tbodyNow = document.querySelector(`#${tableIdNow} tbody`);
+          const uiScore = !isNaN(scoreValue) ? scoreValue : null;
+          renderOrUpdateItemRow({ id: null, title, topic, itemType, maxScore, dateAssigned, categoryName: itemType, comment }, uiScore);
         }catch{}
+        // Reload items to get authoritative list with IDs
+        await loadGradeItems();
         toggleAddForm(false);
         editingItemId = null;
-        loadGradeItems();
+
+        // If a student is selected and an initial score/comment was provided, resolve the new item's id and post the score
         if (selectedStudentId && !isNaN(scoreValue)){
           try{
-            await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade_item_id: (isEditing ? (item.id) : (saved?.items?.[0]?.id)) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment }) });
-            loadStudentGrades();
-          }catch{}
+            const listRes = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`);
+            if (listRes.ok){
+              const data = await listRes.json();
+              const itemsList = Array.isArray(data) ? data : (data.items || []);
+              // Find the most recent item matching the submitted fields
+              const match = itemsList
+                .filter(i => (i.title||'')===title && (i.topic||'')===topic && Number(i.max_score)===Number(maxScore))
+                .sort((a,b)=> new Date(b.date_assigned||0) - new Date(a.date_assigned||0))[0];
+              const resolvedId = match?.id;
+              if (resolvedId){
+                await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ grade_item_id: resolvedId, student_id: selectedStudentId, score: scoreValue, comments: comment })
+                });
+                // Update UI caches for immediate reflect
+                setUIScore(resolvedId, scoreValue);
+                setUIComment(resolvedId, comment);
+                await loadStudentGrades();
+              }
+            }
+          }catch(err){ console.warn('Failed to resolve new item id or save initial score:', err); }
         }
       })
       .catch(err => { console.error('Error saving grade item:', err); alert('Failed to save grade item. Please try again.'); });

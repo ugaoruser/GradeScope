@@ -37,6 +37,15 @@ app.use(cors({
   credentials: true,
 }));
 
+// Ensure caches respect per-origin CORS and explicitly handle preflight on all routes
+app.use((req, res, next) => { try{ res.setHeader('Vary', 'Origin'); }catch{} next(); });
+app.options('*', cors({
+  origin: (origin, cb) => cb(null, true),
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 // Security and compression
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
