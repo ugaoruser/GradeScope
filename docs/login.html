@@ -72,7 +72,52 @@
   </div>
 
   <script>
-    // Rely on config.js initLogin() for handling login and showing a consistent inline spinner
+    // Rely on config.js initLogin(); provide a minimal fallback if it didn't bind.
+    (function(){
+      function ensureApiBase(){
+        try{
+          if (location.protocol === 'file:' && !window.ENV_API_BASE) {
+            window.ENV_API_BASE = 'http://localhost:3000';
+          }
+        }catch{}
+      }
+      async function fallbackLogin(e){
+        e && e.preventDefault();
+        try{
+          const email = document.getElementById('email')?.value?.trim();
+          const password = document.getElementById('password')?.value;
+          if (!email || !password){ alert('Please fill in all fields'); return; }
+          const base = (window.API_BASE || window.ENV_API_BASE || `${location.protocol}//${location.host}`);
+          const res = await fetch(`${base}/api/login`, {
+            method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json().catch(()=>({}));
+          if (!res.ok) throw new Error(data.message || `Login failed (${res.status})`);
+          // Persist minimal session
+          localStorage.setItem('token', data.token||'');
+          localStorage.setItem('role', data.role||'');
+          localStorage.setItem('userId', data.userId||'');
+          localStorage.setItem('user', JSON.stringify({ name: data.name, userId: data.userId, role: data.role }));
+          location.replace(data.role==='teacher' ? 'homepage2.html' : 'homepage1.html');
+        }catch(err){ alert(err.message || 'Login error'); }
+      }
+      document.addEventListener('DOMContentLoaded', function(){
+        ensureApiBase();
+        const form = document.getElementById('login-form');
+        const btn = document.getElementById('login-btn');
+        // If config.js didn't attach, ensure we have working handlers
+        if (form) {
+          let bound = false;
+          try { bound = !!form._loginBound; } catch {}
+          if (!bound) {
+            form.addEventListener('submit', fallbackLogin);
+            btn && btn.addEventListener('click', fallbackLogin);
+            try{ form._loginBound = true; }catch{}
+          }
+        }
+      });
+    })();
   </script>
 </body>
 </html>
