@@ -534,6 +534,16 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     function getUIScore(itemId){ const m=getUIScoreMap(); return m && m[itemId]!=null ? m[itemId] : null; }
     function setUIScore(itemId, val){ const m=getUIScoreMap(); m[itemId]=val; setUIScoreMap(m); }
+    // UI-only comment persistence (per grade item)
+    function getUICommentMap(){
+      try{ return JSON.parse(localStorage.getItem('itemUIComments')||'{}'); }catch{ return {}; }
+    }
+    function setUICommentMap(m){
+      try{ localStorage.setItem('itemUIComments', JSON.stringify(m||{})); }catch{}
+    }
+    function getUIComment(itemId){ const m=getUICommentMap(); return m && m[itemId]!=null ? m[itemId] : '';
+    }
+    function setUIComment(itemId, val){ const m=getUICommentMap(); m[itemId]=val||''; setUICommentMap(m); }
     
     // Optimistically render or update a graded item row (shows Score immediately)
     function renderOrUpdateItemRow({ id, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScore){
@@ -550,6 +560,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       row.dataset.dateAssigned = dateAssigned || '';
       row.dataset.categoryName = categoryName || itemType || '';
       row.dataset.comment = (comment || '').toString();
+      if (uiScore!=null && uiScore!=='') { row.dataset.score = String(uiScore); } else { delete row.dataset.score; }
       row.innerHTML = `
         <td>${title || 'Untitled'}</td>
         <td>${topic || 'N/A'}</td>
@@ -736,13 +747,15 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   const dateAssigned = item.date_assigned ? new Date(item.date_assigned).toLocaleDateString() : 'N/A';
                   
                   const uiScore = getUIScore(item.id);
+                  const uiComment = getUIComment(item.id);
                   row.dataset.itemId = String(item.id || '');
                   row.dataset.title = item.title || '';
                   row.dataset.topic = item.topic || '';
                   row.dataset.maxScore = String(item.max_score || 0);
                   row.dataset.dateAssigned = item.date_assigned || '';
                   row.dataset.categoryName = categoryName || '';
-                  row.dataset.comment = (item.comment || '').toString();
+                  row.dataset.comment = (item.comment || item.comments || uiComment || '').toString();
+                  if (uiScore!=null && uiScore!=='') { row.dataset.score = String(uiScore); }
                   row.innerHTML = `
                     <td>${item.title || 'Untitled'}</td>
                     <td>${item.topic || 'N/A'}</td>
@@ -750,7 +763,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                     <td>${item.max_score || 0}</td>
                     <td>${dateAssigned}</td>
                     <td>${categoryName || 'N/A'}</td>
-                    <td>${(item.comment || '').toString().slice(0,140)}</td>
+                    <td>${(item.comment || item.comments || uiComment || '').toString().slice(0,140)}</td>
                     <td class="action-buttons">
                       <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
                     </td>
@@ -766,6 +779,33 @@ document.getElementById('subjectTitle').textContent = subjectName;
                     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No items in this category</td></tr>';
                   }
                 });
+
+                // If a student is selected, load their scores and populate the Score column
+                if (selectedStudentId) {
+                  (async function(){
+                    try{
+                      const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${selectedStudentId}&quarter=${currentQuarter}`);
+                      if (res.ok){
+                        const data = await res.json();
+                        const scores = Array.isArray(data) ? data : (data.scores || []);
+                        const byItem = {};
+                        (scores||[]).forEach(sc=>{ if (sc && sc.grade_item_id!=null) byItem[sc.grade_item_id] = sc.score; });
+                        ['ptTable','wwTable','peTable'].forEach(tid=>{
+                          const tb = document.querySelector(`#${tid} tbody`);
+                          if (!tb) return;
+                          tb.querySelectorAll('tr[data-item-id]').forEach(tr=>{
+                            const iid = Number(tr.dataset.itemId);
+                            if (!isNaN(iid) && byItem[iid]!=null){
+                              tr.dataset.score = String(byItem[iid]);
+                              const tds = tr.querySelectorAll('td');
+                              if (tds && tds[2]){ tds[2].textContent = String(byItem[iid]); }
+                            }
+                          });
+                        });
+                      }
+                    }catch(e){ console.warn('Failed to load student scores for item list:', e); }
+                  })();
+                }
               }
               
               // Update grade item select for student scoring
@@ -961,28 +1001,65 @@ document.getElementById('subjectTitle').textContent = subjectName;
       });
     }
     
-    function saveGradeItem() {
+    async function ensureCategoriesForItemType(itemType){
+      try{
+        const required = ['Performance Task','Written Works','Periodical Exam'];
+        const haveAll = Array.isArray(gradeCategories) && required.every(n => gradeCategories.some(c => c && c.name === n));
+        if (!haveAll){
+          const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
+          const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
+          const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
+          const total = ptWeight + wwWeight + peWeight;
+          if (Math.abs(total - 100) > 0.01){
+            alert('Weights must add up to 100%');
+            return null;
+          }
+          const categories = [
+            { name:'Performance Task', weight: ptWeight, quarter: currentQuarter },
+            { name:'Written Works', weight: wwWeight, quarter: currentQuarter },
+            { name:'Periodical Exam', weight: peWeight, quarter: currentQuarter }
+          ];
+          const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
+            method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ categories })
+          });
+          if (!res.ok) throw new Error('Failed to save weights');
+          // Refresh local categories
+          const getRes = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`);
+          if (getRes.ok){ gradeCategories = await getRes.json(); }
+          // Update headers with latest weights
+          (function(){
+            try{
+              const ptCategory = gradeCategories.find(cat => cat.name === 'Performance Task');
+              const wwCategory = gradeCategories.find(cat => cat.name === 'Written Works');
+              const peCategory = gradeCategories.find(cat => cat.name === 'Periodical Exam');
+              const ptW = document.getElementById('ptWeight');
+              const wwW = document.getElementById('wwWeight');
+              const peW = document.getElementById('peWeight');
+              if (ptW && ptCategory) ptW.textContent = ptCategory.weight;
+              if (wwW && wwCategory) wwW.textContent = wwCategory.weight;
+              if (peW && peCategory) peW.textContent = peCategory.weight;
+            }catch{}
+          })();
+        }
+        const c = gradeCategories.find(cat => cat && cat.name === itemType);
+        return c ? c.id : null;
+      }catch(err){ console.error('ensureCategoriesForItemType error:', err); return null; }
+    }
+    
+    async function saveGradeItem() {
       const title = document.getElementById('itemTitle').value.trim();
       const topic = document.getElementById('itemTopic').value.trim();
-      const itemType = document.getElementById('itemType').value; // 'Performance Task' | 'Written Works' | 'Periodical Exam'
+      const itemType = document.getElementById('itemType').value;
       const maxScore = parseFloat(document.getElementById('maxScore').value);
       const dateAssigned = document.getElementById('dateAssigned').value;
       const scoreValue = parseFloat(document.getElementById('itemScore').value);
       const comment = document.getElementById('itemComment').value.trim();
-      // Assessments are handled in a separate form; here all are included_in_final
       const includedInFinal = true;
       
-      if (!title) {
-        alert('Title is required');
-        return;
-      }
+      if (!title) { alert('Title is required'); return; }
+      if (isNaN(maxScore) || maxScore <= 0) { alert('Max score must be a positive number'); return; }
       
-      if (isNaN(maxScore) || maxScore <= 0) {
-        alert('Max score must be a positive number');
-        return;
-      }
-      
-      // Determine category ID based on Type selection
+      // Determine or create category id
       let categoryId;
       if (itemType === 'Performance Task') {
         categoryId = gradeCategories.find(cat => cat.name === 'Performance Task')?.id;
@@ -991,11 +1068,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
       } else if (itemType === 'Periodical Exam') {
         categoryId = gradeCategories.find(cat => cat.name === 'Periodical Exam')?.id;
       }
-      
       if (!categoryId) {
-        alert('Please set up grade categories first');
-        return;
+        categoryId = await ensureCategoriesForItemType(itemType);
       }
+      if (!categoryId) { return; }
       
       const item = {
         title,
@@ -1009,70 +1085,50 @@ document.getElementById('subjectTitle').textContent = subjectName;
       };
       if (editingItemId) { item.id = editingItemId; }
       
-      // Optimistic UI: render now so Score is never '-'
-      const categoryName = itemType;
-      const optimisticId = editingItemId || 0; // temporary until API confirms
+      // Optimistic row
+      const optimisticId = editingItemId || 0;
       const uiScoreVal = isNaN(scoreValue) ? null : Number(scoreValue);
-      renderOrUpdateItemRow({ id: optimisticId, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScoreVal);
-      // Keep an optimistic copy in memory so Edit works before reload
+      renderOrUpdateItemRow({ id: optimisticId, title, topic, itemType, maxScore, dateAssigned, categoryName: itemType, comment }, uiScoreVal);
       try{
         if (!Array.isArray(gradeItems)) gradeItems = [];
         const idx = gradeItems.findIndex(i=> i.id === optimisticId);
-        const temp = { id: optimisticId, title, topic, item_type: itemType, max_score: maxScore, date_assigned: dateAssigned, included_in_final: includedInFinal, category_id: (function(){ const c=gradeCategories.find(cat=>cat.name===itemType); return c?c.id:null; })(), comment };
+        const temp = { id: optimisticId, title, topic, item_type: itemType, max_score: maxScore, date_assigned: dateAssigned, included_in_final: includedInFinal, category_id: categoryId, comment };
         if (idx>=0) gradeItems[idx]=temp; else gradeItems.push(temp);
       }catch{}
-      if (!isNaN(scoreValue)){
-        if (editingItemId) setUIScore(editingItemId, Number(scoreValue));
-      }
-
+      if (!isNaN(scoreValue) && editingItemId){ setUIScore(editingItemId, Number(scoreValue)); }
+      if (editingItemId){ setUIComment(editingItemId, comment); }
+      
       const isEditing = !!editingItemId;
-      const url = isEditing
-        ? `${window.API_BASE}/api/subjects/${subjectId}/items/${editingItemId}`
-        : `${window.API_BASE}/api/subjects/${subjectId}/items`;
+      const url = isEditing ? `${window.API_BASE}/api/subjects/${subjectId}/items/${editingItemId}` : `${window.API_BASE}/api/subjects/${subjectId}/items`;
       const method = isEditing ? 'PUT' : 'POST';
       const payload = isEditing ? item : { items: [item] };
-
-      fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to save grade item');
-        return res.json();
-      })
+      
+      fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json(); })
       .then(async (saved) => {
         alert('Grade item saved successfully');
-        // Persist UI-only score for display; update optimistic row id on create
         try{
           const newId = isEditing ? editingItemId : (saved && saved.items && saved.items[0] && saved.items[0].id ? saved.items[0].id : null);
           if (!isEditing && newId){
-            // Update the just-rendered row's data-item-id and actions
             const tableIdNow = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
             const tbodyNow = document.querySelector(`#${tableIdNow} tbody`);
             const rowNow = tbodyNow ? tbodyNow.querySelector('tr[data-item-id=""], tr[data-item-id="0"]') : null;
             if (rowNow){ rowNow.dataset.itemId = String(newId); }
           }
           if (!isNaN(scoreValue) && newId){ setUIScore(newId, Number(scoreValue)); }
+          if (newId){ setUIComment(newId, comment); }
         }catch{}
         toggleAddForm(false);
         editingItemId = null;
         loadGradeItems();
-        // Optionally create a score for the selected student if provided
         if (selectedStudentId && !isNaN(scoreValue)){
           try{
-            await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ grade_item_id: (isEditing ? (item.id) : (saved?.items?.[0]?.id)) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment })
-            });
+            await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade_item_id: (isEditing ? (item.id) : (saved?.items?.[0]?.id)) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment }) });
             loadStudentGrades();
           }catch{}
         }
       })
-      .catch(err => {
-        console.error('Error saving grade item:', err);
-        alert('Failed to save grade item. Please try again.');
-      });
+      .catch(err => { console.error('Error saving grade item:', err); alert('Failed to save grade item. Please try again.'); });
     }
     
     function saveStudentScore() {
