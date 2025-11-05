@@ -228,7 +228,7 @@
           </div>
           <div class="form-group">
             <label for="maxScore">Highest Possible Score</label>
-            <input type="number" id="maxScore" value="100">
+            <input type="number" id="maxScore" placeholder="e.g. 100">
           </div>
           <div class="form-group">
             <label for="dateAssigned">Date Assigned</label>
@@ -534,6 +534,29 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     function getUIScore(itemId){ const m=getUIScoreMap(); return m && m[itemId]!=null ? m[itemId] : null; }
     function setUIScore(itemId, val){ const m=getUIScoreMap(); m[itemId]=val; setUIScoreMap(m); }
+    
+    // Optimistically render or update a graded item row (shows Score immediately)
+    function renderOrUpdateItemRow({ id, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScore){
+      const tableId = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      if (!tbody) return;
+      if (tbody.querySelector('.empty-state') || tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+      let row = id ? tbody.querySelector(`tr[data-item-id="${id}"]`) : null;
+      if (!row){ row = document.createElement('tr'); if (id!=null) row.dataset.itemId = String(id); tbody.appendChild(row); }
+      const dateText = dateAssigned ? new Date(dateAssigned).toLocaleDateString() : 'N/A';
+      row.innerHTML = `
+        <td>${title || 'Untitled'}</td>
+        <td>${topic || 'N/A'}</td>
+        <td>${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
+        <td>${maxScore || 0}</td>
+        <td>${dateText}</td>
+        <td>${categoryName || itemType || 'N/A'}</td>
+        <td>${(comment || '').toString().slice(0,140)}</td>
+        <td class="action-buttons">
+          <button class="btn-edit" onclick="editGradeItem(${Number(id)||0})">Edit</button>
+          <button class="btn-delete" onclick="deleteGradeItem(${Number(id)||0})">Delete</button>
+        </td>`;
+    }
     
     function updateTotalWeight() {
       const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
@@ -974,19 +997,28 @@ document.getElementById('subjectTitle').textContent = subjectName;
         category_id: categoryId,
         comment
       };
+      if (editingItemId) { item.id = editingItemId; }
       
-      const items = [item];
-
-      // Optimistic UI: show row immediately like formative assessments
+      // Optimistic UI: render now so Score is never '-'
       const categoryName = itemType;
-      const tempId = editingItemId || 0; // will be replaced when API returns
+      const optimisticId = editingItemId || 0; // temporary until API confirms
       const uiScoreVal = isNaN(scoreValue) ? null : Number(scoreValue);
-      renderOrUpdateItemRow({ id: tempId, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScoreVal);
+      renderOrUpdateItemRow({ id: optimisticId, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScoreVal);
+      if (!isNaN(scoreValue)){
+        if (editingItemId) setUIScore(editingItemId, Number(scoreValue));
+      }
 
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items`, {
-        method: 'POST',
+      const isEditing = !!editingItemId;
+      const url = isEditing
+        ? `${window.API_BASE}/api/subjects/${subjectId}/items/${editingItemId}`
+        : `${window.API_BASE}/api/subjects/${subjectId}/items`;
+      const method = isEditing ? 'PUT' : 'POST';
+      const payload = isEditing ? item : { items: [item] };
+
+      fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items })
+        body: JSON.stringify(payload)
       })
       .then(res => {
         if (!res.ok) throw new Error('Failed to save grade item');
@@ -994,39 +1026,27 @@ document.getElementById('subjectTitle').textContent = subjectName;
       })
       .then(async (saved) => {
         alert('Grade item saved successfully');
-        // Persist UI-only score for display if provided and update temp row id
+        // Persist UI-only score for display; update optimistic row id on create
         try{
-          const newId = (saved && saved.items && saved.items[0] && saved.items[0].id) ? saved.items[0].id : null;
-          if (newId){
+          const newId = isEditing ? editingItemId : (saved && saved.items && saved.items[0] && saved.items[0].id ? saved.items[0].id : null);
+          if (!isEditing && newId){
             // Update the just-rendered row's data-item-id and actions
             const tableIdNow = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
             const tbodyNow = document.querySelector(`#${tableIdNow} tbody`);
             const rowNow = tbodyNow ? tbodyNow.querySelector('tr[data-item-id=""], tr[data-item-id="0"]') : null;
             if (rowNow){ rowNow.dataset.itemId = String(newId); }
           }
-          if (!isNaN(scoreValue)){
-            if (newId){
-              setUIScore(newId, Number(scoreValue));
-            } else if (editingItemId) {
-              setUIScore(editingItemId, Number(scoreValue));
-            } else {
-              // Fallback: best-effort match by title+max on latest items after reload
-              try{
-                await loadGradeItems();
-                const match = gradeItems.slice().reverse().find(i=> (i.title||'')===title && Number(i.max_score||0)===maxScore);
-                if (match) setUIScore(match.id, Number(scoreValue));
-              }catch{}
-            }
-          }
+          if (!isNaN(scoreValue) && newId){ setUIScore(newId, Number(scoreValue)); }
         }catch{}
         toggleAddForm(false);
+        editingItemId = null;
         loadGradeItems();
         // Optionally create a score for the selected student if provided
         if (selectedStudentId && !isNaN(scoreValue)){
           try{
             await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ grade_item_id: (saved?.items?.[0]?.id) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment })
+              body: JSON.stringify({ grade_item_id: (isEditing ? (item.id) : (saved?.items?.[0]?.id)) || undefined, student_id: selectedStudentId, score: scoreValue, comments: comment })
             });
             loadStudentGrades();
           }catch{}
