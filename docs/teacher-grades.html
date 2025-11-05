@@ -68,6 +68,7 @@
               <tr>
                 <th>Title</th>
                 <th>Topic(s)</th>
+                <th>Score</th>
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
@@ -76,7 +77,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="7">No data available</td></tr>
+              <tr><td colspan="8">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -93,6 +94,7 @@
               <tr>
                 <th>Title</th>
                 <th>Topic(s)</th>
+                <th>Score</th>
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
@@ -101,7 +103,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="7">No data available</td></tr>
+              <tr><td colspan="8">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -118,6 +120,7 @@
               <tr>
                 <th>Title</th>
                 <th>Topic(s)</th>
+                <th>Score</th>
                 <th>Max Score</th>
                 <th>Date Assigned</th>
                 <th>Category</th>
@@ -126,7 +129,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="7">No data available</td></tr>
+              <tr><td colspan="8">No data available</td></tr>
             </tbody>
           </table>
         </div>
@@ -377,8 +380,16 @@
       window.location.href = 'homepage1.html';
     }
     // Assessment form handlers (front-end only for now)
+    function clearAssessmentForm(){
+      const ids = ['assessTitle','assessTopic','assessDate','assessScore','assessMax','assessComment'];
+      ids.forEach(id=>{ const el=document.getElementById(id); if (!el) return; el.value = ''; });
+      const max = document.getElementById('assessMax'); if (max) max.value = 100;
+      const dt = document.getElementById('assessDate'); if (dt) dt.value = new Date().toISOString().split('T')[0];
+    }
     function toggleAssessmentForm(show){
       const form = document.getElementById('addAssessmentForm');
+      if (!form) return;
+      if (show){ clearAssessmentForm(); }
       form.style.display = show ? 'block' : 'none';
     }
     function saveAssessmentItem(){
@@ -400,6 +411,7 @@
         if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
         tbody.appendChild(tr);
       }
+      clearAssessmentForm();
       toggleAssessmentForm(false);
     }
     
@@ -623,6 +635,14 @@ document.getElementById('subjectTitle').textContent = subjectName;
         if (ptCategory) document.getElementById('weightPT').value = ptCategory.weight;
         if (wwCategory) document.getElementById('weightWW').value = wwCategory.weight;
         if (peCategory) document.getElementById('weightPE').value = peCategory.weight;
+
+        // Update displayed category weight labels in headers
+        const ptW = document.getElementById('ptWeight');
+        const wwW = document.getElementById('wwWeight');
+        const peW = document.getElementById('peWeight');
+        if (ptW && ptCategory) ptW.textContent = ptCategory.weight;
+        if (wwW && wwCategory) wwW.textContent = wwCategory.weight;
+        if (peW && peCategory) peW.textContent = peCategory.weight;
       })
       .catch(err => {
         console.error('Error loading grade categories:', err);
@@ -635,7 +655,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       tables.forEach(tableId => {
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="6" class="loading-text">Loading grade items...</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="loading-text">Loading grade items...</td></tr>';
         }
       });
       
@@ -666,7 +686,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                 tables.forEach(tableId => {
                   const tbody = document.querySelector(`#${tableId} tbody`);
                   if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No grade items found for this quarter</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No grade items found for this quarter</td></tr>';
                   }
                 });
               } else {
@@ -694,6 +714,8 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   row.innerHTML = `
                     <td>${item.title || 'Untitled'}</td>
                     <td>${item.topic || 'N/A'}</td>
+                    <td>${(item.ui_score != null ? item.ui_score : '-')}
+                    </td>
                     <td>${item.max_score || 0}</td>
                     <td>${dateAssigned}</td>
                     <td>${categoryName || 'N/A'}</td>
@@ -711,7 +733,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                 tables.forEach(tableId => {
                   const tbody = document.querySelector(`#${tableId} tbody`);
                   if (tbody && tbody.children.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No items in this category</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No items in this category</td></tr>';
                   }
                 });
               }
@@ -734,7 +756,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         tables.forEach(tableId => {
           const tbody = document.querySelector(`#${tableId} tbody`);
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
           }
         });
         showErrorMessage('Unable to load grade items. Please refresh the page or contact support.');
@@ -826,30 +848,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         if (tbody) {
           tbody.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load student grades. Please try again.</td></tr>';
         }
-        showErrorMessage('Unable to load student grades. Please refresh the page or contact support.');
       });
-    }
-    
-    // --- Form handling functions ---
-    function toggleAddForm(show) {
-      const form = document.getElementById('addGradeForm');
-      if (show) {
-        form.style.display = 'block';
-        editingItemId = null;
-        
-        // Reset form
-        document.getElementById('itemTitle').value = '';
-        document.getElementById('itemTopic').value = '';
-        document.getElementById('itemType').value = 'Quiz';
-        document.getElementById('maxScore').value = '100';
-        document.getElementById('includedInFinal').value = 'true';
-        
-        // Set today's date
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateAssigned').value = today;
-      } else {
-        form.style.display = 'none';
-      }
     }
     
     function toggleScoreForm(show) {

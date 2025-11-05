@@ -1,9 +1,19 @@
 class WitAIChatbot {
   constructor() {
     // Wit.ai API configuration
-    this.witApiToken = 'C4OIIUXCQHUO5ZPOGBZRE7EEMK2OMXDD';
+    // Prefer runtime-provided token; never hardcode secrets in source
+    this.witApiToken = (function(){
+      try {
+        if (window.ENV_WIT_TOKEN) {
+          localStorage.setItem('WIT_API_TOKEN', String(window.ENV_WIT_TOKEN));
+          return String(window.ENV_WIT_TOKEN);
+        }
+        const saved = localStorage.getItem('WIT_API_TOKEN');
+        return saved || '';
+      } catch { return ''; }
+    })();
     this.witApiUrl = 'https://api.wit.ai/message';
-    this.apiVersion = '20251031';
+    this.apiVersion = '20241001';
     
     // Fallback responses for when API fails
     this.fallbackResponses = {
@@ -39,25 +49,54 @@ class WitAIChatbot {
     };
   }
 
+  // Internal fetch with timeout and basic retry/backoff
+  async _fetchWithRetry(input, init={}, { retries=1, timeoutMs=6000 }={}){
+    let attempt = 0; let lastErr;
+    while (attempt <= retries){
+      const ctrl = new AbortController();
+      const t = setTimeout(()=> ctrl.abort(), timeoutMs);
+      try{
+        const res = await fetch(input, { ...init, signal: ctrl.signal });
+        clearTimeout(t);
+        return res;
+      }catch(e){
+        clearTimeout(t);
+        lastErr = e;
+        // AbortError or network error -> backoff and retry
+        if (attempt === retries) break;
+        await new Promise(r=> setTimeout(r, 300 * Math.pow(2, attempt)));
+      }
+      attempt++;
+    }
+    throw lastErr || new Error('Network error');
+  }
+
   /**
    * Send message to Wit.ai API
    * @param {string} message - User message to process
    * @returns {Promise<Object>} Wit.ai response
    */
   async sendToWitAI(message) {
+    // Guard: if no token configured, skip remote call
+    if (!this.witApiToken) {
+      try { console.warn('Wit.ai token missing; falling back to local processing'); } catch {}
+      return null;
+    }
     try {
-      const response = await fetch(`${this.witApiUrl}?v=${this.apiVersion}&q=${encodeURIComponent(message)}`, {
+      const url = `${this.witApiUrl}?v=${encodeURIComponent(this.apiVersion)}&q=${encodeURIComponent(message)}`;
+      const response = await this._fetchWithRetry(url, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.witApiToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
+        // Only set Authorization; no Content-Type needed for GET
+        headers: { 'Authorization': `Bearer ${this.witApiToken}` }
+      }, { retries: 1, timeoutMs: 6000 });
 
       if (!response.ok) {
-        throw new Error(`Wit.ai API error: ${response.status}`);
+        // Common: 401/403 when token invalid; 429 rate limit
+        const brief = `${response.status}`;
+        throw new Error(`Wit.ai API error: ${brief}`);
       }
 
+      // Wit.ai returns JSON
       const data = await response.json();
       return data;
     } catch (error) {
