@@ -346,6 +346,17 @@
   </div>
   
   <script>
+    // Ensure API_BASE is available even if this inline script runs before deferred config.js
+    try{
+      if (!window.API_BASE || String(window.API_BASE) === 'undefined'){
+        const host = location.hostname || '';
+        if (host.endsWith('github.io')){
+          window.API_BASE = 'https://gradescope-a4hw.onrender.com';
+        } else {
+          window.API_BASE = `${location.protocol}//${location.host}`;
+        }
+      }
+    }catch{}
     // --- Routing: Only allow logged-in teachers ---
     const role = localStorage.getItem('role');
     const token = localStorage.getItem('token');
