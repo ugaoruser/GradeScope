@@ -1439,14 +1439,9 @@ document.getElementById('subjectTitle').textContent = subjectName;
               tds[commentIdx].textContent = commentDisplay;
             }
           }
-<<<<<<< HEAD
         }catch(e){
-          console.warn('Failed to update UI row:', e);
+          console.warn('UI update failed:', e);
         }
-        
-=======
-        }catch(e){ console.warn('UI update failed:', e); }
->>>>>>> cc5f786b529a8fe46af802ea580a64947de52188
         loadStudentGrades();
         loadGradeItems();
       })
