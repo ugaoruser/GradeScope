@@ -420,6 +420,11 @@
 document.getElementById('subjectTitle').textContent = subjectName;
     // Fetch subject details to show section/grade level
     (function fetchSubjectMeta(){
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
+
       fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
         .then(r=>r.json())
         .then(list=>{
@@ -612,6 +617,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
             const res = await fetch(url);
             if (res.ok) {
               const data = await res.json();
+              if (!data || (Array.isArray(data) && data.length === 0)) {
+                console.warn(`Empty data returned from ${url}`);
+                continue; // try next fallback URL
+              }
               students = Array.isArray(data) ? data : data.students || [];
               
               // Clear and populate select
@@ -660,6 +669,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
     }
     
     function loadGradeCategories() {
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
+
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`, { headers: (typeof authHeaders==='function'? authHeaders() : {}) })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load grade categories');
@@ -715,6 +729,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
             const res = await fetch(url, { headers: (typeof authHeaders==='function'? authHeaders() : {}) });
             if (res.ok) {
               const data = await res.json();
+              if (!data || (Array.isArray(data) && data.length === 0)) {
+                console.warn(`Empty data returned from ${url}`);
+                continue; // try next fallback URL
+              }
               gradeItems = Array.isArray(data) ? data : data.items || [];
               
               // Clear all tables first
@@ -789,38 +807,45 @@ document.getElementById('subjectTitle').textContent = subjectName;
 
                 // If a student is present in URL, load their scores and populate the Score/Comment columns
                 if (getCurrentStudentId()) {
-                  (async function(){
-                    try{
-                      const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`, { headers: (typeof authHeaders==='function'? authHeaders() : {}) });
-                      if (res.ok){
-                        const data = await res.json();
-                        const scores = Array.isArray(data) ? data : (data.scores || []);
-                        const byItem = {};
-                        (scores||[]).forEach(sc=>{
-                          if (!sc) return;
-                          const gid = (sc.grade_item_id!=null) ? sc.grade_item_id : (sc.item_id!=null ? sc.item_id : null);
-                          if (gid!=null) {
-                            byItem[gid] = { score: sc.score, comments: sc.comments || '' };
-                          }
-                        });
-                        ['ptTable','wwTable','peTable'].forEach(tid=>{
-                          const tb = document.querySelector(`#${tid} tbody`);
-                          if (!tb) return;
-                          tb.querySelectorAll('tr[data-item-id]').forEach(tr=>{
-                            const iid = Number(tr.dataset.itemId);
-                            if (!isNaN(iid) && byItem[iid]!=null){
-                              tr.dataset.score = String(byItem[iid].score);
-                              tr.dataset.comment = String(byItem[iid].comments || '');
-                              const tds = tr.querySelectorAll('td');
-                              if (tds && tds[2]) tds[2].textContent = String(byItem[iid].score);
-                              if (tds && tds[6]) tds[6].textContent = String(byItem[iid].comments || '').slice(0,140);
-                            }
-                          });
-                        });
-                      }
-                    }catch(e){ console.warn('Failed to load student scores for item list:', e); }
-                  })();
+                  loadStudentScoresForItems().catch(e => console.warn('Non-fatal: failed to load student scores', e));
                 }
+
+                async function loadStudentScoresForItems() {
+                  if (!window.API_BASE || !subjectId || !getCurrentStudentId()) return;
+                          
+                  const res = await fetch(
+                    `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`,
+                    { headers: (typeof authHeaders==='function'? authHeaders() : {}) }
+                  );
+                          
+                  if (!res.ok) throw new Error('Failed to load student scores');
+                          
+                  const data = await res.json();
+                  if (!data || (!Array.isArray(data) && !data.scores)) throw new Error('Invalid or empty scores data');
+                          
+                  const scores = Array.isArray(data) ? data : (data.scores || []);
+                  const byItem = {};
+                          
+                  scores.forEach(sc => {
+                    const gid = sc.grade_item_id ?? sc.item_id;
+                    if (gid != null) byItem[gid] = { score: sc.score, comments: sc.comments || '' };
+                  });
+                
+                  ['ptTable', 'wwTable', 'peTable'].forEach(tid => {
+                    const tb = document.querySelector(`#${tid} tbody`);
+                    if (!tb) return;
+                    tb.querySelectorAll('tr[data-item-id]').forEach(tr => {
+                      const iid = Number(tr.dataset.itemId);
+                      if (!isNaN(iid) && byItem[iid]) {
+                        const { score, comments } = byItem[iid];
+                        const tds = tr.querySelectorAll('td');
+                        if (tds[2]) tds[2].textContent = score ?? '-';
+                        if (tds[6]) tds[6].textContent = (comments || '').slice(0, 140);
+                      }
+                    });
+                  });
+              }
+
               }
               
               // Update grade item select for student scoring
@@ -838,13 +863,24 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       tryLoadGradeItems().catch(err => {
         console.error('Error loading grade items:', err);
-        tables.forEach(tableId => {
-          const tbody = document.querySelector(`#${tableId} tbody`);
-          if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
-          }
+
+        // Only show error if nothing was rendered
+        const hasAnyRow = ['ptTable','wwTable','peTable'].some(id => {
+          const tb = document.querySelector(`#${id} tbody`);
+          return tb && tb.querySelector('tr[data-item-id]');
         });
-        showErrorMessage('Unable to load grade items. Please refresh the page or contact support.');
+
+        if (!hasAnyRow) {
+          ['ptTable','wwTable','peTable'].forEach(tableId => {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            if (tbody) {
+              tbody.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
+            }
+          });
+          showErrorMessage('Unable to load grade items. Please refresh the page or contact support.');
+        } else {
+          console.warn('Suppressed error UI because data was already loaded.');
+        }
       });
     }
     
@@ -877,6 +913,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
             const res = await fetch(url);
             if (res.ok) {
               const data = await res.json();
+              if (!data || (Array.isArray(data) && data.length === 0)) {
+                console.warn(`Empty data returned from ${url}`);
+                continue; // try next fallback URL
+              }
               const scores = Array.isArray(data) ? data : data.scores || [];
               
               const tbody = document.querySelector('#studentGradesTable tbody');
@@ -997,7 +1037,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
         { name: 'Written Works', weight: wwWeight, quarter: currentQuarter },
         { name: 'Periodical Exam', weight: peWeight, quarter: currentQuarter }
       ];
-      
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
+
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1112,6 +1156,12 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const method = isEditing ? 'PUT' : 'POST';
       const payload = isEditing ? item : { items: [item] };
       
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
+
+
       fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json().catch(()=>({})); })
       .then(async (_saved) => {
@@ -1174,7 +1224,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
       };
       
       if (!confirm('Save this score?')) return;
-      
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1260,7 +1313,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
       if (!confirm('Are you sure you want to delete this grade item? This will also delete all associated scores.')) {
         return;
       }
-      
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/items/${id}`, { method: 'DELETE' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to delete grade item');
@@ -1291,7 +1347,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
       if (!confirm('Are you sure you want to delete this score?')) {
         return;
       }
-      
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
+        return;
+      }
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores/${id}`, { method: 'DELETE' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to delete score');
