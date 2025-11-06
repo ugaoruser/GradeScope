@@ -806,7 +806,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                 });
 
                 // If a student is present in URL, load their scores and populate the Score/Comment columns
-                if (getCurrentStudentId()) {
+                if (getCurrentStudentId() || role === 'teacher') {
                   loadStudentScoresForItems().catch(e => console.warn('Non-fatal: failed to load student scores', e));
                 }
 
@@ -827,20 +827,30 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   const byItem = {};
                           
                   scores.forEach(sc => {
-                    const gid = sc.grade_item_id ?? sc.item_id;
-                    if (gid != null) byItem[gid] = { score: sc.score, comments: sc.comments || '' };
+                    const gid = Number(sc.grade_item_id ?? sc.item_id);
+                    const score =
+                      sc.score ?? sc.value ?? sc.points ?? sc.grade ?? null; // fallback for API variations
+                    const comment =
+                      sc.comments ?? sc.comment ?? sc.remark ?? ''; // common fallback keys
+                    if (!isNaN(gid)) byItem[gid] = { score, comment };
                   });
                 
                   ['ptTable', 'wwTable', 'peTable'].forEach(tid => {
                     const tb = document.querySelector(`#${tid} tbody`);
                     if (!tb) return;
+
                     tb.querySelectorAll('tr[data-item-id]').forEach(tr => {
                       const iid = Number(tr.dataset.itemId);
                       if (!isNaN(iid) && byItem[iid]) {
                         const { score, comments } = byItem[iid];
                         const tds = tr.querySelectorAll('td');
                         if (tds[2]) tds[2].textContent = score ?? '-';
-                        if (tds[6]) tds[6].textContent = (comments || '').slice(0, 140);
+                        if (tds[6]) {
+                          const cleanComment = (comments || '')
+                            .toString()
+                            .replace(/^"|"$/g, ''); // remove surrounding quotes
+                          tds[6].textContent = cleanComment || '-';
+                        }
                       }
                     });
                   });
@@ -1427,66 +1437,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         });
       });
     });
-  </script>
-  <script>
-    // Lazy-load Chart.js and render based on table data
-    (function(){
-      const canvas = document.getElementById('performanceChart');
-      if (!canvas) return;
-      let loaded = false;
-      async function loadLib(){
-        if (loaded) return; loaded = true;
-        await new Promise(res=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'; s.onload=res; s.onerror=res; document.head.appendChild(s); });
-        try { renderChartFromState(); } catch {}
-      }
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{ if (e.isIntersecting) { loadLib(); io.disconnect(); } });
-      }, { root: null, threshold: 0.1 });
-      io.observe(canvas);
-
-      let chart;
-      window.renderChartFromState = function(){
-        try{
-          if (!window.Chart) return;
-          // Build datasets from in-memory gradeItems + latest loaded scores
-          const labels = [];
-          const ptSeries = [];
-          const wwSeries = [];
-          // Map item id -> score percentage for selected student
-          const scorePct = {};
-          document.querySelectorAll('#studentGradesTable tbody tr').forEach((tr)=>{
-            const tds = tr.querySelectorAll('td');
-            if (tds.length >= 4){
-              const title = tds[0].textContent.trim();
-              const pct = (tds[3].textContent||'0').replace('%','').trim();
-              scorePct[title] = Number(pct) || 0;
-            }
-          });
-          // Use gradeItems list to separate PT vs WW
-          (gradeItems||[]).forEach(item=>{
-            const catName = (gradeCategories.find(c=> c.id===item.category_id)||{}).name;
-            if (catName==='Performance Task' || catName==='Written Works'){
-              labels.push(item.title||'Item');
-              const v = scorePct[item.title||'Item'] ?? 0;
-              if (catName==='Performance Task') { ptSeries.push(v); wwSeries.push(null); }
-              else { wwSeries.push(v); ptSeries.push(null); }
-            }
-          });
-          const ctx = canvas.getContext('2d');
-          const data = { labels, datasets: [
-            { label:'Performance Tasks', data: ptSeries, borderColor:'rgba(54,162,235,1)', backgroundColor:'rgba(54,162,235,0.2)', tension:0.25, spanGaps:true },
-            { label:'Written Works', data: wwSeries, borderColor:'rgba(255,99,132,1)', backgroundColor:'rgba(255,99,132,0.2)', tension:0.25, spanGaps:true }
-          ] };
-          const options = { scales: { y: { min:0, max:100, title:{ display:true, text:'%' } } } };
-          if (chart){ chart.data=data; chart.options=options; chart.update(); }
-          else { chart = new Chart(ctx, { type:'line', data, options }); }
-        }catch{}
-      }
-
-      document.addEventListener('grades:loaded', ()=>{ try{ renderChartFromState(); }catch{} });
-    })();
-  </script>
-  
+  </script>  
   <style>
     /* Enhanced styling for teacher grades page */
     .control-card {
