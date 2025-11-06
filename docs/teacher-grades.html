@@ -1190,13 +1190,30 @@ document.getElementById('subjectTitle').textContent = subjectName;
           const gid = String(document.getElementById('gradeItemSelect').value);
           const tr = gid ? document.querySelector(`tr[data-item-id="${gid}"]`) : null;
           if (tr){
+            const table = tr.closest('table');
+            const headers = table ? Array.from(table.querySelectorAll('thead th')) : [];
+            const findColIndex = (names) => {
+              const targets = names.map(n => n.toLowerCase());
+              for (let i = 0; i < headers.length; i++) {
+                const txt = (headers[i].textContent || '').trim().toLowerCase();
+                if (targets.includes(txt)) return i;
+              }
+              return -1;
+            };
+            const scoreIdx = findColIndex(['score']);
+            const commentIdx = findColIndex(['comment','comments']);
             const tds = tr.querySelectorAll('td');
             tr.dataset.score = String(score);
             tr.dataset.comment = String(comments || '');
-            if (tds && tds[2]) tds[2].textContent = String(score);
-            if (tds && tds[6]) tds[6].textContent = String(comments || '').slice(0,140);
+            if (scoreIdx >= 0 && tds[scoreIdx]) {
+              tds[scoreIdx].textContent = String(score);
+            }
+            const commentDisplay = (comments && comments.trim() !== '') ? String(comments).slice(0, 140) : '—';
+            if (commentIdx >= 0 && tds[commentIdx]) {
+              tds[commentIdx].textContent = commentDisplay;
+            }
           }
-        }catch{}
+        }catch(e){ console.warn('UI update failed:', e); }
         loadStudentGrades();
         loadGradeItems();
       })
