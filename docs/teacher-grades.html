@@ -176,7 +176,6 @@
       </div>
     </div>
     
-    
     <!-- Grade Category Weights Section -->
     <div class="grade-weights-card">
       <h2>Grade Category Weights</h2>
@@ -310,7 +309,7 @@
       </table>
       
       <div class="add-grade-form" id="addScoreForm" style="display: none;">
-        <h3>Add/Edit Student Score</h3>
+        <h3>Add Student Score</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="gradeItemSelect">Grade Item</label>
@@ -346,17 +345,6 @@
   </div>
   
   <script>
-    // Ensure API_BASE is available even if this inline script runs before deferred config.js
-    try{
-      if (!window.API_BASE || String(window.API_BASE) === 'undefined'){
-        const host = location.hostname || '';
-        if (host.endsWith('github.io')){
-          window.API_BASE = 'https://gradescope-a4hw.onrender.com';
-        } else {
-          window.API_BASE = `${location.protocol}//${location.host}`;
-        }
-      }
-    }catch{}
     // --- Routing: Only allow logged-in teachers ---
     const role = localStorage.getItem('role');
     const token = localStorage.getItem('token');
@@ -430,49 +418,17 @@
     const subjectId = urlParams.get('id');
     const subjectName = urlParams.get('name') || "Subject";
 document.getElementById('subjectTitle').textContent = subjectName;
-    // Fetch subject details to show section/grade level (robust to API shapes)
+    // Fetch subject details to show section/grade level
     (function fetchSubjectMeta(){
-      (async()=>{
-        try{
-          // Prefer exact by ID if available
-          if (subjectId){
-            const r = await fetch(`${window.API_BASE}/api/subjects/${encodeURIComponent(subjectId)}`);
-            if (r.ok){
-              const subj = await r.json();
-              const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
-              if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
-              return;
-            }
+      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
+        .then(r=>r.json())
+        .then(list=>{
+          const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
+          if (subj){
+            const sec = subj.section || subj.grade_level || '';
+            if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
           }
-          // Fallback: query by title if backend supports it
-          try{
-            const byTitle = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`);
-            if (byTitle.ok){
-              const list = await byTitle.json();
-              const arr = Array.isArray(list) ? list : (list.subjects || []);
-              const subj = arr.find(s=> (s.title||'')===subjectName || String(s.id)===String(subjectId));
-              if (subj){
-                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
-                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
-                return;
-              }
-            }
-          }catch{}
-          // Fallback: get all and search client-side
-          try{
-            const all = await fetch(`${window.API_BASE}/api/subjects`);
-            if (all.ok){
-              const list = await all.json();
-              const arr = Array.isArray(list) ? list : (list.subjects || []);
-              const subj = arr.find(s=> String(s.id)===String(subjectId) || (s.title||'')===subjectName);
-              if (subj){
-                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
-                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
-              }
-            }
-          }catch{}
-        }catch{}
-      })();
+        }).catch(()=>{});
     })();
     
     // Global variables
@@ -506,143 +462,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
         window.location.href = `subject.html?id=${encodeURIComponent(String(id))}&name=${encodeURIComponent(String(name))}`;
       }catch{
         window.location.href = 'subject.html';
-      }
-    }
-    
-    // Helper function to get current student ID
-    function getCurrentStudentId() {
-      const selEl = document.getElementById('studentSelect');
-      return (selEl ? selEl.value : '') || selectedStudentId || initialStudentId || '';
-    }
-    
-    // Inline editing functions for score and comment
-    function editScoreInline(itemId, cell) {
-      const currentStudentId = getCurrentStudentId();
-      if (!currentStudentId) {
-        alert('Please select a student first');
-        return;
-      }
-      
-      const currentValue = cell.textContent === '-' ? '' : cell.textContent;
-      const maxScore = cell.closest('tr').dataset.maxScore || 100;
-      
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.value = currentValue;
-      input.min = '0';
-      input.max = maxScore;
-      input.step = '0.1';
-      input.style.width = '80px';
-      input.style.padding = '4px';
-      input.style.border = '1px solid #ccc';
-      input.style.borderRadius = '4px';
-      
-      const save = () => {
-        const newValue = parseFloat(input.value);
-        if (isNaN(newValue) || newValue < 0 || newValue > maxScore) {
-          alert(`Please enter a valid score between 0 and ${maxScore}`);
-          input.focus();
-          return;
-        }
-        
-        // Save to UI cache immediately
-        setUIScore(itemId, newValue);
-        cell.textContent = newValue;
-        cell.classList.remove('editing');
-        
-        // Save to server if student is selected
-        saveScoreToServer(itemId, currentStudentId, newValue, getUIComment(itemId) || '');
-      };
-      
-      const cancel = () => {
-        cell.textContent = currentValue || '-';
-        cell.classList.remove('editing');
-      };
-      
-      input.addEventListener('blur', save);
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') save();
-        if (e.key === 'Escape') cancel();
-      });
-      
-      cell.textContent = '';
-      cell.appendChild(input);
-      cell.classList.add('editing');
-      input.focus();
-      input.select();
-    }
-    
-    function editCommentInline(itemId, cell) {
-      const currentStudentId = getCurrentStudentId();
-      if (!currentStudentId) {
-        alert('Please select a student first');
-        return;
-      }
-      
-      const currentValue = cell.textContent === 'Click to add comment' ? '' : cell.textContent;
-      
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = currentValue;
-      input.style.width = '200px';
-      input.style.padding = '4px';
-      input.style.border = '1px solid #ccc';
-      input.style.borderRadius = '4px';
-      
-      const save = () => {
-        const newValue = input.value.trim();
-        
-        // Save to UI cache immediately
-        setUIComment(itemId, newValue);
-        cell.textContent = newValue || 'Click to add comment';
-        cell.classList.remove('editing');
-        
-        // Save to server if student is selected
-        saveScoreToServer(itemId, currentStudentId, getUIScore(itemId) || 0, newValue);
-      };
-      
-      const cancel = () => {
-        cell.textContent = currentValue || 'Click to add comment';
-        cell.classList.remove('editing');
-      };
-      
-      input.addEventListener('blur', save);
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') save();
-        if (e.key === 'Escape') cancel();
-      });
-      
-      cell.textContent = '';
-      cell.appendChild(input);
-      cell.classList.add('editing');
-      input.focus();
-      input.select();
-    }
-    
-    // Helper function to save score/comment to server
-    async function saveScoreToServer(itemId, studentId, score, comments) {
-      try {
-        const scoreData = {
-          grade_item_id: parseInt(itemId),
-          student_id: parseInt(studentId),
-          score: parseFloat(score) || 0,
-          comments: comments || ''
-        };
-        
-        const response = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(scoreData)
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to save to server');
-        }
-        
-        console.log('Score/comment saved successfully');
-      } catch (error) {
-        console.warn('Failed to save to server, keeping local changes:', error);
-        // Don't show alert to user since the UI change is already visible
       }
     }
     
@@ -749,11 +568,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
       row.innerHTML = `
         <td>${title || 'Untitled'}</td>
         <td>${topic || 'N/A'}</td>
-        <td class="score-cell editable" onclick="editScoreInline(${Number(id)||0}, this)" title="Click to edit score">${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
+        <td>${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
         <td>${maxScore || 0}</td>
         <td>${dateText}</td>
         <td>${categoryName || itemType || 'N/A'}</td>
-        <td class="comment-cell editable" onclick="editCommentInline(${Number(id)||0}, this)" title="Click to edit comment">${(comment || '').toString().slice(0,140) || 'Click to add comment'}</td>
+        <td>${(comment || '').toString().slice(0,140)}</td>
         <td class="action-buttons">
           <button class="btn-delete" onclick="deleteGradeItem(${Number(id)||0})">Delete</button>
         </td>`;
@@ -946,11 +765,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   row.innerHTML = `
                     <td>${item.title || 'Untitled'}</td>
                     <td>${item.topic || 'N/A'}</td>
-                    <td class="score-cell editable" onclick="editScoreInline(${item.id}, this)" title="Click to edit score">${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
+                    <td>${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
                     <td>${item.max_score || 0}</td>
                     <td>${dateAssigned}</td>
                     <td>${categoryName || 'N/A'}</td>
-                    <td class="comment-cell editable" onclick="editCommentInline(${item.id}, this)" title="Click to edit comment">${(item.comment || item.comments || uiComment || '').toString().slice(0,140) || 'Click to add comment'}</td>
+                    <td>${(item.comment || item.comments || uiComment || '').toString().slice(0,140)}</td>
                     <td class="action-buttons">
                       <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
                     </td>
@@ -968,11 +787,10 @@ document.getElementById('subjectTitle').textContent = subjectName;
                 });
 
                 // If a student is present in URL, load their scores and populate the Score/Comment columns
-                const currentStudentId = getCurrentStudentId();
-                if (currentStudentId) {
+                if (getCurrentStudentId()) {
                   (async function(){
                     try{
-                      const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${currentStudentId}&quarter=${currentQuarter}`, { headers: (typeof authHeaders==='function'? authHeaders() : {}) });
+                      const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`, { headers: (typeof authHeaders==='function'? authHeaders() : {}) });
                       if (res.ok){
                         const data = await res.json();
                         const scores = Array.isArray(data) ? data : (data.scores || []);
@@ -1001,29 +819,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
                       }
                     }catch(e){ console.warn('Failed to load student scores for item list:', e); }
                   })();
-                } else {
-                  // If no student selected, show UI-only scores from localStorage
-                  ['ptTable','wwTable','peTable'].forEach(tid=>{
-                    const tb = document.querySelector(`#${tid} tbody`);
-                    if (!tb) return;
-                    tb.querySelectorAll('tr[data-item-id]').forEach(tr=>{
-                      const iid = Number(tr.dataset.itemId);
-                      if (!isNaN(iid)){
-                        const uiScore = getUIScore(iid);
-                        const uiComment = getUIComment(iid);
-                        if (uiScore != null && uiScore !== '') {
-                          tr.dataset.score = String(uiScore);
-                          const tds = tr.querySelectorAll('td');
-                          if (tds && tds[2]) tds[2].textContent = String(uiScore);
-                        }
-                        if (uiComment) {
-                          tr.dataset.comment = String(uiComment);
-                          const tds = tr.querySelectorAll('td');
-                          if (tds && tds[6]) tds[6].textContent = String(uiComment).slice(0,140);
-                        }
-                      }
-                    });
-                  });
                 }
               }
               
@@ -1060,19 +855,17 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const tbody = document.querySelector('#studentGradesTable tbody');
       if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="loading-text">Loading student grades...</td></tr>';
 
-      const currentStudentId = getCurrentStudentId();
-      if (!currentStudentId) {
+      if (!selectedStudentId) {
         document.getElementById('studentGradesSection').classList.add('hidden');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Please select a student to view grades</td></tr>';
         updateSelectedStudentDisplay();
         return;
       }
       
       // Try multiple endpoints
       const urls = [
-        `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${currentStudentId}&quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/student-grades?subject_id=${subjectId}&student_id=${currentStudentId}&quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/grades?subject=${subjectId}&student=${currentStudentId}&quarter=${currentQuarter}`
+        `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/student-grades?subject_id=${subjectId}&student_id=${selectedStudentId}&quarter=${currentQuarter}`,
+        `${window.API_BASE}/api/grades?subject=${subjectId}&student=${selectedStudentId}&quarter=${currentQuarter}`
       ];
       
       async function tryLoadStudentGrades() {
@@ -1272,6 +1065,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const title = document.getElementById('itemTitle').value.trim();
       const topic = document.getElementById('itemTopic').value.trim();
       const itemType = document.getElementById('itemType').value;
+      const score = parseFloat(document.getElementById('score'.value));
       const maxScore = parseFloat(document.getElementById('maxScore').value);
       const dateAssigned = document.getElementById('dateAssigned').value;
       const scoreValue = parseFloat(document.getElementById('itemScore').value);
@@ -1299,6 +1093,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         title,
         topic,
         item_type: itemType,
+        score,
         max_score: maxScore,
         date_assigned: dateAssigned,
         included_in_final: includedInFinal,
@@ -1359,17 +1154,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const score = parseFloat(document.getElementById('scoreValue').value);
       const maxScore = parseFloat(document.getElementById('scoreMaxValue').value);
       const comments = document.getElementById('scoreComments').value.trim();
-      const currentStudentId = getCurrentStudentId();
-      
-      if (!currentStudentId) {
-        alert('Please select a student first');
-        return;
-      }
-      
-      if (!gradeItemId) {
-        alert('Please select a grade item');
-        return;
-      }
       
       if (isNaN(score)) {
         alert('Score is required and must be a number');
@@ -1382,19 +1166,16 @@ document.getElementById('subjectTitle').textContent = subjectName;
       }
       
       const scoreData = {
-        grade_item_id: parseInt(gradeItemId),
-        student_id: parseInt(currentStudentId),
+        grade_item_id: gradeItemId,
+        student_id: selectedStudentId,
         score,
         comments
       };
       
-      const method = editingScoreId ? 'PUT' : 'POST';
-      const url = editingScoreId 
-        ? `${window.API_BASE}/api/subjects/${subjectId}/scores/${editingScoreId}`
-        : `${window.API_BASE}/api/subjects/${subjectId}/scores`;
+      if (!confirm('Save this score?')) return;
       
-      fetch(url, {
-        method,
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scoreData)
       })
@@ -1405,43 +1186,18 @@ document.getElementById('subjectTitle').textContent = subjectName;
       .then(() => {
         alert('Score saved successfully');
         toggleScoreForm(false);
-        editingScoreId = null;
-        
-        // Update UI caches for immediate reflect
-        setUIScore(gradeItemId, score);
-        setUIComment(gradeItemId, comments);
-        
         // Immediate UI update for the corresponding graded item row
         try{
-          const gid = String(gradeItemId);
+          const gid = String(document.getElementById('gradeItemSelect').value);
           const tr = gid ? document.querySelector(`tr[data-item-id="${gid}"]`) : null;
           if (tr){
-            const table = tr.closest('table');
-            const headers = table ? Array.from(table.querySelectorAll('thead th')) : [];
-            const findColIndex = (names) => {
-              const targets = names.map(n => n.toLowerCase());
-              for (let i = 0; i < headers.length; i++) {
-                const txt = (headers[i].textContent || '').trim().toLowerCase();
-                if (targets.includes(txt)) return i;
-              }
-              return -1;
-            };
-            const scoreIdx = findColIndex(['score']);
-            const commentIdx = findColIndex(['comment','comments']);
             const tds = tr.querySelectorAll('td');
             tr.dataset.score = String(score);
             tr.dataset.comment = String(comments || '');
-            if (scoreIdx >= 0 && tds[scoreIdx]) {
-              tds[scoreIdx].textContent = String(score);
-            }
-            const commentDisplay = (comments && comments.trim() !== '') ? String(comments).slice(0, 140) : '—';
-            if (commentIdx >= 0 && tds[commentIdx]) {
-              tds[commentIdx].textContent = commentDisplay;
-            }
+            if (tds && tds[2]) tds[2].textContent = String(score);
+            if (tds && tds[6]) tds[6].textContent = String(comments || '').slice(0,140);
           }
-        }catch(e){
-          console.warn('UI update failed:', e);
-        }
+        }catch{}
         loadStudentGrades();
         loadGradeItems();
       })
@@ -1849,63 +1605,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
     
     .grades-table tbody tr:last-child td {
       border-bottom: none;
-    }
-    
-    /* Editable cell styles */
-    .editable {
-      cursor: pointer;
-      position: relative;
-      transition: background-color 0.2s ease;
-    }
-    
-    .editable:hover {
-      background-color: #f0f9ff !important;
-      border: 1px solid #3b82f6;
-    }
-    
-    .editable.editing {
-      background-color: #fff !important;
-      padding: 0 !important;
-    }
-    
-    .score-cell.editable::after {
-      content: '✏️';
-      position: absolute;
-      right: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 12px;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-    
-    .score-cell.editable:hover::after {
-      opacity: 1;
-    }
-    
-    .comment-cell.editable::after {
-      content: '✏️';
-      position: absolute;
-      right: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 12px;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-    
-    .comment-cell.editable:hover::after {
-      opacity: 1;
-    }
-    
-    .comment-cell.editable {
-      color: #6b7280;
-      font-style: italic;
-    }
-    
-    .comment-cell.editable:not(:empty) {
-      color: var(--text);
-      font-style: normal;
     }
     
     /* Responsive adjustments */
