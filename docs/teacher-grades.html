@@ -346,6 +346,17 @@
   </div>
   
   <script>
+    // Ensure API_BASE is available even if this inline script runs before deferred config.js
+    try{
+      if (!window.API_BASE || String(window.API_BASE) === 'undefined'){
+        const host = location.hostname || '';
+        if (host.endsWith('github.io')){
+          window.API_BASE = 'https://gradescope-a4hw.onrender.com';
+        } else {
+          window.API_BASE = `${location.protocol}//${location.host}`;
+        }
+      }
+    }catch{}
     // --- Routing: Only allow logged-in teachers ---
     const role = localStorage.getItem('role');
     const token = localStorage.getItem('token');
@@ -419,17 +430,49 @@
     const subjectId = urlParams.get('id');
     const subjectName = urlParams.get('name') || "Subject";
 document.getElementById('subjectTitle').textContent = subjectName;
-    // Fetch subject details to show section/grade level
+    // Fetch subject details to show section/grade level (robust to API shapes)
     (function fetchSubjectMeta(){
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
-        .then(r=>r.json())
-        .then(list=>{
-          const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
-          if (subj){
-            const sec = subj.section || subj.grade_level || '';
-            if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+      (async()=>{
+        try{
+          // Prefer exact by ID if available
+          if (subjectId){
+            const r = await fetch(`${window.API_BASE}/api/subjects/${encodeURIComponent(subjectId)}`);
+            if (r.ok){
+              const subj = await r.json();
+              const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+              if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+              return;
+            }
           }
-        }).catch(()=>{});
+          // Fallback: query by title if backend supports it
+          try{
+            const byTitle = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`);
+            if (byTitle.ok){
+              const list = await byTitle.json();
+              const arr = Array.isArray(list) ? list : (list.subjects || []);
+              const subj = arr.find(s=> (s.title||'')===subjectName || String(s.id)===String(subjectId));
+              if (subj){
+                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+                return;
+              }
+            }
+          }catch{}
+          // Fallback: get all and search client-side
+          try{
+            const all = await fetch(`${window.API_BASE}/api/subjects`);
+            if (all.ok){
+              const list = await all.json();
+              const arr = Array.isArray(list) ? list : (list.subjects || []);
+              const subj = arr.find(s=> String(s.id)===String(subjectId) || (s.title||'')===subjectName);
+              if (subj){
+                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+              }
+            }
+          }catch{}
+        }catch{}
+      })();
     })();
     
     // Global variables
@@ -1373,16 +1416,37 @@ document.getElementById('subjectTitle').textContent = subjectName;
           const gid = String(gradeItemId);
           const tr = gid ? document.querySelector(`tr[data-item-id="${gid}"]`) : null;
           if (tr){
+            const table = tr.closest('table');
+            const headers = table ? Array.from(table.querySelectorAll('thead th')) : [];
+            const findColIndex = (names) => {
+              const targets = names.map(n => n.toLowerCase());
+              for (let i = 0; i < headers.length; i++) {
+                const txt = (headers[i].textContent || '').trim().toLowerCase();
+                if (targets.includes(txt)) return i;
+              }
+              return -1;
+            };
+            const scoreIdx = findColIndex(['score']);
+            const commentIdx = findColIndex(['comment','comments']);
             const tds = tr.querySelectorAll('td');
             tr.dataset.score = String(score);
             tr.dataset.comment = String(comments || '');
-            if (tds && tds[2]) tds[2].textContent = String(score);
-            if (tds && tds[6]) tds[6].textContent = String(comments || '').slice(0,140);
+            if (scoreIdx >= 0 && tds[scoreIdx]) {
+              tds[scoreIdx].textContent = String(score);
+            }
+            const commentDisplay = (comments && comments.trim() !== '') ? String(comments).slice(0, 140) : '—';
+            if (commentIdx >= 0 && tds[commentIdx]) {
+              tds[commentIdx].textContent = commentDisplay;
+            }
           }
+<<<<<<< HEAD
         }catch(e){
           console.warn('Failed to update UI row:', e);
         }
         
+=======
+        }catch(e){ console.warn('UI update failed:', e); }
+>>>>>>> cc5f786b529a8fe46af802ea580a64947de52188
         loadStudentGrades();
         loadGradeItems();
       })
