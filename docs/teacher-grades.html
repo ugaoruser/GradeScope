@@ -419,17 +419,49 @@
     const subjectId = urlParams.get('id');
     const subjectName = urlParams.get('name') || "Subject";
 document.getElementById('subjectTitle').textContent = subjectName;
-    // Fetch subject details to show section/grade level
+    // Fetch subject details to show section/grade level (robust to API shapes)
     (function fetchSubjectMeta(){
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
-        .then(r=>r.json())
-        .then(list=>{
-          const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
-          if (subj){
-            const sec = subj.section || subj.grade_level || '';
-            if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+      (async()=>{
+        try{
+          // Prefer exact by ID if available
+          if (subjectId){
+            const r = await fetch(`${window.API_BASE}/api/subjects/${encodeURIComponent(subjectId)}`);
+            if (r.ok){
+              const subj = await r.json();
+              const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+              if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+              return;
+            }
           }
-        }).catch(()=>{});
+          // Fallback: query by title if backend supports it
+          try{
+            const byTitle = await fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`);
+            if (byTitle.ok){
+              const list = await byTitle.json();
+              const arr = Array.isArray(list) ? list : (list.subjects || []);
+              const subj = arr.find(s=> (s.title||'')===subjectName || String(s.id)===String(subjectId));
+              if (subj){
+                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+                return;
+              }
+            }
+          }catch{}
+          // Fallback: get all and search client-side
+          try{
+            const all = await fetch(`${window.API_BASE}/api/subjects`);
+            if (all.ok){
+              const list = await all.json();
+              const arr = Array.isArray(list) ? list : (list.subjects || []);
+              const subj = arr.find(s=> String(s.id)===String(subjectId) || (s.title||'')===subjectName);
+              if (subj){
+                const sec = subj.section || subj.grade_level || subj.gradeLevel || '';
+                if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
+              }
+            }
+          }catch{}
+        }catch{}
+      })();
     })();
     
     // Global variables
