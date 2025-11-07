@@ -25,7 +25,6 @@ app.use(cors({
   origin: function(origin, cb){
     const allowed = [
       undefined, // same-origin
-      'https://gradescope-a4hw.onrender.com'
       'https://ugaoruser.github.io',
       'http://localhost:5500',
       'http://localhost:3000'

@@ -77,7 +77,7 @@
       function ensureApiBase(){
         try{
           if (location.protocol === 'file:' && !window.ENV_API_BASE) {
-            window.ENV_API_BASE = 'http://localhost:3000';
+            window.ENV_API_BASE = 'https://gradescope-a4hw.onrender.com'
           }
         }catch{}
       }
