@@ -23,10 +23,6 @@ window.API_BASE = (function(){
   const host = location.hostname || '';
   const port = String(location.port || '');
   const isLoopback = ['localhost','127.0.0.1','0.0.0.0','::1'].includes(host);
-  if (!window.API_BASE) {
-    window.API_BASE = 'http://localhost:5000'; // or your deployed backend URL
-    try { localStorage.setItem('API_BASE_OVERRIDE', window.API_BASE); } catch {}
-  }
 
   const isLan = host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
   const isLiveServer = ['5500','5501','3001'].includes(port);
