@@ -768,6 +768,42 @@ document.getElementById('subjectTitle').textContent = subjectName;
       });
     }
     
+    // --- LOCAL STORAGE FALLBACK for Grade Items ---
+    function loadGradeItems() {
+    const localItems = JSON.parse(localStorage.getItem('gradeItems') || '[]');
+    const tables = ['ptTable', 'wwTable', 'peTable'];
+        
+    if (localItems.length > 0) {
+      tables.forEach(id => {
+        const tbody = document.querySelector(`#${id} tbody`);
+        if (tbody) tbody.innerHTML = '';
+      });
+      
+      localItems
+        .filter(item => item.quarter === currentQuarter)
+        .forEach(item => {
+          renderOrUpdateItemRow(
+            {
+              id: item.id,
+              title: item.title,
+              topic: item.topic,
+              itemType: item.item_type,
+              maxScore: item.max_score,
+              dateAssigned: item.date_assigned,
+              categoryName: item.item_type,
+              comment: item.comment
+            },
+            item.score
+          );
+        });
+        
+      console.log('Loaded grade items from localStorage fallback.');
+      return;
+    }
+
+  // --- If local empty, continue to original API load ---
+
+
     function loadGradeItems() {
       // Show loading state in all tables
       const tables = ['ptTable', 'wwTable', 'peTable'];
