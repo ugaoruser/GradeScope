@@ -76,7 +76,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="8">No data available</td></tr>
+              <tr><td colspan="8">No items in this category</td></tr>
             </tbody>
           </table>
         </div>
@@ -102,7 +102,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="8">No data available</td></tr>
+              <tr><td colspan="8">No items in this category</td></tr>
             </tbody>
           </table>
         </div>
@@ -128,7 +128,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="8">No data available</td></tr>
+              <tr><td colspan="8">No items in this category</td></tr>
             </tbody>
           </table>
         </div>
@@ -591,7 +591,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       );
       
       if (filteredAssessments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">No data available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">No items in this category</td></tr>';
         return;
       }
       
@@ -1170,7 +1170,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const title = document.getElementById('itemTitle').value.trim();
       const topic = document.getElementById('itemTopic').value.trim();
       const itemType = document.getElementById('itemType').value;
-      const score = parseFloat(document.getElementById('score'.value));
       const maxScore = parseFloat(document.getElementById('maxScore').value);
       const dateAssigned = document.getElementById('dateAssigned').value;
       const scoreValue = parseFloat(document.getElementById('itemScore').value);
@@ -1198,7 +1197,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
         title,
         topic,
         item_type: itemType,
-        score,
         max_score: maxScore,
         date_assigned: dateAssigned,
         included_in_final: includedInFinal,
