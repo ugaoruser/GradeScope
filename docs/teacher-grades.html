@@ -380,6 +380,7 @@
       form.style.display = show ? 'block' : 'none';
     }
     function saveAssessmentItem(){
+      const subjectId = urlParams.get('id') || localStorage.getItem('currentSubjectId');
       const title = document.getElementById('assessTitle').value.trim();
       const topic = document.getElementById('assessTopic').value.trim();
       const dateAssigned = document.getElementById('assessDate').value;
