@@ -26,9 +26,6 @@ window.API_BASE = (function(){
   const isLan = host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
   const isLiveServer = ['5500','5501','3001'].includes(port);
 
-  // In most local dev cases (loopback, LAN, or Live Server), target the API on 3000
-  if (isLoopback || isLan || isLiveServer) return 'http://localhost:3000';
-
   // When hosted on GitHub Pages, call the Render API
   if (host.endsWith('github.io')) return 'https://gradescope-a4hw.onrender.com';
 
