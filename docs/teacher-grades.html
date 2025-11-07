@@ -466,6 +466,11 @@ document.getElementById('subjectTitle').textContent = subjectName;
     const initialStudentId = urlParams.get('student_id') || '';
     const viewMode = urlParams.get('view') === 'assessment' ? 'assessment' : 'final';
     
+    // Helper function to get current student ID
+    function getCurrentStudentId() {
+      return selectedStudentId || initialStudentId || '';
+    }
+    
     // --- Initialize page ---
     function init() {
       loadStudents();
@@ -526,7 +531,15 @@ document.getElementById('subjectTitle').textContent = subjectName;
         errorBanner.id = 'errorBanner';
         errorBanner.className = 'error-banner';
         errorBanner.style.cssText = 'background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin: 16px 0; display: flex; align-items: center; justify-content: space-between;';
-        document.querySelector('.container').insertBefore(errorBanner, document.querySelector('.student-dashboard-card'));
+        
+        // Use main content area as container
+        const mainContent = document.querySelector('.main') || document.body;
+        const firstElement = mainContent.querySelector('hr, .control-card, .back-btn');
+        if (firstElement) {
+          mainContent.insertBefore(errorBanner, firstElement);
+        } else {
+          mainContent.appendChild(errorBanner);
+        }
       }
       
       errorBanner.innerHTML = `
@@ -773,6 +786,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       
       async function tryLoadGradeItems() {
         let lastError;
+        let hasData = false;
         
         for (const url of urls) {
           try {
@@ -781,9 +795,13 @@ document.getElementById('subjectTitle').textContent = subjectName;
               const data = await res.json();
               if (!data || (Array.isArray(data) && data.length === 0)) {
                 console.warn(`Empty data returned from ${url}`);
-                continue; // try next fallback URL
+                // Treat empty response as valid (no items) rather than trying fallback URLs
+                gradeItems = [];
+                hasData = true;
+                break; // Exit the loop, we have valid data (even if empty)
               }
               gradeItems = Array.isArray(data) ? data : data.items || [];
+              hasData = true;
               
               // Clear all tables first
               tables.forEach(tableId => {
@@ -918,7 +936,20 @@ document.getElementById('subjectTitle').textContent = subjectName;
           }
         }
         
-        throw lastError || new Error('All grade items endpoints failed');
+        // Only throw error if we didn't get any valid response
+        if (!hasData) {
+          throw lastError || new Error('All grade items endpoints failed');
+        } else {
+          // Render empty state if we have valid data but no items
+          if (gradeItems.length === 0) {
+            tables.forEach(tableId => {
+              const tbody = document.querySelector(`#${tableId} tbody`);
+              if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No items in this category</td></tr>';
+              }
+            });
+          }
+        }
       }
       
       tryLoadGradeItems().catch(err => {
