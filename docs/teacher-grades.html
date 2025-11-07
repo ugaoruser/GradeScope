@@ -390,9 +390,27 @@
         alert('Please fill out all assessment fields');
         return;
       }
+      
+      // Get existing assessments and add new one
+      const assessments = getAssessmentMap();
+      const newAssessment = {
+        id: Date.now(), // Simple unique ID
+        title,
+        topic,
+        dateAssigned,
+        score,
+        max,
+        comment,
+        subjectId,
+        quarter: currentQuarter
+      };
+      assessments.push(newAssessment);
+      setAssessmentMap(assessments);
+      
       const tbody = document.getElementById('assessmentTable');
       if (tbody){
         const tr = document.createElement('tr');
+        tr.dataset.assessmentId = String(newAssessment.id);
         tr.innerHTML = `<td>${title}</td><td>${topic}</td><td>${score}</td><td>${max}</td><td>${comment}</td>`;
         if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
         tbody.appendChild(tr);
@@ -453,6 +471,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       loadStudents();
       loadGradeCategories();
       loadGradeItems();
+      loadFormativeAssessments();
       
       // Set today's date as default for new items
       const today = new Date().toISOString().split('T')[0];
@@ -491,6 +510,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       // Reload data for the new quarter
       loadGradeCategories();
       loadGradeItems();
+      loadFormativeAssessments();
       
       if (selectedStudentId) {
         loadStudentGrades();
@@ -550,9 +570,39 @@ document.getElementById('subjectTitle').textContent = subjectName;
     function setUICommentMap(m){
       try{ localStorage.setItem('itemUIComments', JSON.stringify(m||{})); }catch{}
     }
-    function getUIComment(itemId){ const m=getUICommentMap(); return m && m[itemId]!=null ? m[itemId] : '';
-    }
+    function getUIComment(itemId){ const m=getUICommentMap(); return m && m[itemId]!=null ? m[itemId] : ''; }
     function setUIComment(itemId, val){ const m=getUICommentMap(); m[itemId]=val||''; setUICommentMap(m); }
+    
+    // Formative assessment persistence
+    function getAssessmentMap(){
+      try{ return JSON.parse(localStorage.getItem('formativeAssessments')||'[]'); }catch{ return []; }
+    }
+    function setAssessmentMap(arr){
+      try{ localStorage.setItem('formativeAssessments', JSON.stringify(arr||[])); }catch{}
+    }
+    
+    function loadFormativeAssessments(){
+      const tbody = document.getElementById('assessmentTable');
+      if (!tbody) return;
+      
+      const assessments = getAssessmentMap();
+      const filteredAssessments = assessments.filter(a => 
+        a.subjectId === subjectId && a.quarter === currentQuarter
+      );
+      
+      if (filteredAssessments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">No data available</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      filteredAssessments.forEach(assessment => {
+        const tr = document.createElement('tr');
+        tr.dataset.assessmentId = String(assessment.id);
+        tr.innerHTML = `<td>${assessment.title}</td><td>${assessment.topic}</td><td>${assessment.score}</td><td>${assessment.max}</td><td>${assessment.comment}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
     
     // Optimistically render or update a graded item row (shows Score immediately)
     function renderOrUpdateItemRow({ id, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScore){
@@ -573,7 +623,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
       row.innerHTML = `
         <td>${title || 'Untitled'}</td>
         <td>${topic || 'N/A'}</td>
-        <td>${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
+        <td>${(uiScore!=null && uiScore!=='') ? uiScore : (row.dataset.score && row.dataset.score !== 'undefined' ? row.dataset.score : '-')}</td>
         <td>${maxScore || 0}</td>
         <td>${dateText}</td>
         <td>${categoryName || itemType || 'N/A'}</td>
@@ -784,7 +834,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                   row.innerHTML = `
                     <td>${item.title || 'Untitled'}</td>
                     <td>${item.topic || 'N/A'}</td>
-                    <td>${(uiScore!=null && uiScore!=='') ? uiScore : '-'}</td>
+                    <td>${(uiScore!=null && uiScore!=='') ? uiScore : (item.score != null && item.score !== '' ? item.score : '-')}</td>
                     <td>${item.max_score || 0}</td>
                     <td>${dateAssigned}</td>
                     <td>${categoryName || 'N/A'}</td>
@@ -849,7 +899,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
                           const cleanComment = (comments || '')
                             .toString()
                             .replace(/^"|"$/g, ''); // remove surrounding quotes
-                          tds[6].textContent = cleanComment || '-';
+                          tds[6].textContent = cleanComment && cleanComment.trim() !== '' ? cleanComment : '-';
                         }
                       }
                     });
