@@ -23,6 +23,8 @@ window.API_BASE = (function(){
   const host = location.hostname || '';
   const port = String(location.port || '');
   const isLoopback = ['localhost','127.0.0.1','0.0.0.0','::1'].includes(host);
+
+
   const isLan = host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.');
   const isLiveServer = ['5500','5501','3001'].includes(port);
 

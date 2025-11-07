@@ -380,7 +380,6 @@
       form.style.display = show ? 'block' : 'none';
     }
     function saveAssessmentItem(){
-      const subjectId = urlParams.get('id') || localStorage.getItem('currentSubjectId');
       const title = document.getElementById('assessTitle').value.trim();
       const topic = document.getElementById('assessTopic').value.trim();
       const dateAssigned = document.getElementById('assessDate').value;
@@ -767,7 +766,7 @@ document.getElementById('subjectTitle').textContent = subjectName;
         console.error('Error loading grade categories:', err);
       });
     }
-    
+
     function loadGradeItems() {
       // Show loading state in all tables
       const tables = ['ptTable', 'wwTable', 'peTable'];
