@@ -1250,18 +1250,6 @@ document.getElementById('subjectTitle').textContent = subjectName;
       .then(() => {
         alert('Score saved successfully');
         toggleScoreForm(false);
-        // Immediate UI update for the corresponding graded item row
-        try{
-          const gid = String(document.getElementById('gradeItemSelect').value);
-          const tr = gid ? document.querySelector(`tr[data-item-id="${gid}"]`) : null;
-          if (tr){
-            const tds = tr.querySelectorAll('td');
-            tr.dataset.score = String(score);
-            tr.dataset.comment = String(comments || '');
-            if (tds && tds[2]) tds[2].textContent = String(score);
-            if (tds && tds[6]) tds[6].textContent = String(comments || '').slice(0,140);
-          }
-        }catch{}
         loadStudentGrades();
         loadGradeItems();
       })
@@ -1391,8 +1379,9 @@ document.getElementById('subjectTitle').textContent = subjectName;
       const studentSelect = document.getElementById('studentSelect');
       if (studentSelect) {
         studentSelect.addEventListener('change', function() {
+          selectedStudentId = this.value;
+          loadGradeItems();   // reload main table with correct scores
           loadStudentGrades();
-          loadGradeItems();
           updateSelectedStudentDisplay();
         });
       }
