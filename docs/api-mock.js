@@ -1,8 +1,3 @@
-/**
- * API Mock - Provides mock data for GradeTracker application
- * Used for development and testing purposes
- */
-
 class ApiMock {
   constructor() {
     this.students = [
