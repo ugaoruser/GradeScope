@@ -57,14 +57,14 @@ function enforcePageAccess() {
   // Page access rules
   const currentPage = window.location.pathname;
   
-  // Pages accessible to all authenticated users
-  const commonPages = ['index.html', 'subject.html'];
+  // Pages accessible to all authenticated users (subject.html deprecated)
+  const commonPages = ['index.html'];
   if (commonPages.some(page => currentPage.endsWith(page))) {
     return true;
   }
   
   // Role-specific page access
-if (currentPage.endsWith('teacher-grades.html') && role !== 'teacher') {
+  if (currentPage.endsWith('teacher-grades.html') && role !== 'teacher') {
     window.location.href = `index.html`;
     return false;
   }

@@ -31,9 +31,9 @@
     </div>
   </header>
   
-  <div class="main" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+  <div class="main" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 24px 0;">
-    <button class="back-btn" onclick="goBack()">← Back to Subjects</button>
+    <button class="back-btn" onclick="goBack()">← Back to Classes</button>
     
     <!-- Quarter Selection Card -->
     <div class="control-card">
@@ -46,116 +46,44 @@
       </div>
     </div>
     
-    <!-- Content Type Selection -->
-    <div class="control-card">
-      <h3 class="control-card-title">Grade Categories</h3>
-      <div class="tabs">
-        <div class="tab active" data-tab="graded">Graded Components</div>
-        <div class="tab" data-tab="assessment">Formative Assessments</div>
-      </div>
-    </div>
-    
-    <div id="gradedContent" class="tab-content active">
-      <!-- Performance Tasks Section -->
-      <div class="grade-section">
-        <div class="category-header">
-          <h4 class="category-title">Performance Tasks (<span id="ptWeight">0</span>%)</h4>
-        </div>
-        <div class="table-container">
-          <table class="grades-table" id="ptTable">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Topic(s)</th>
-                <th>Score</th>
-                <th>Max Score</th>
-                <th>Date Assigned</th>
-                <th>Category</th>
-                <th>Comment</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="8">No items in this category</td></tr>
-            </tbody>
-          </table>
+    <!-- Student Record Table -->
+    <div class="student-record-container">
+      <div class="record-header">
+        <h2>Student Grade Record - <span id="subjectTitleDisplay">Subject</span></h2>
+        <div class="record-actions">
+          <button class="btn-primary" onclick="addNewStudent()">+ Add Student</button>
+          <button class="btn-secondary" onclick="exportToExcel()">📊 Export to Excel</button>
         </div>
       </div>
       
-      <!-- Written Works Section -->
-      <div class="grade-section">
-        <div class="category-header">
-          <h4 class="category-title">Written Works (<span id="wwWeight">0</span>%)</h4>
-        </div>
-        <div class="table-container">
-          <table class="grades-table" id="wwTable">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Topic(s)</th>
-                <th>Score</th>
-                <th>Max Score</th>
-                <th>Date Assigned</th>
-                <th>Category</th>
-                <th>Comment</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="8">No items in this category</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <!-- Periodical Exam Section -->
-      <div class="grade-section">
-        <div class="category-header">
-          <h4 class="category-title">Periodical Exam (<span id="peWeight">0</span>%)</h4>
-        </div>
-        <div class="table-container">
-          <table class="grades-table" id="peTable">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Topic(s)</th>
-                <th>Score</th>
-                <th>Max Score</th>
-                <th>Date Assigned</th>
-                <th>Category</th>
-                <th>Comment</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="8">No items in this category</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <div id="assessmentContent" class="tab-content">
-      <div class="grade-section">
-        <div class="category-header">
-          <h4 class="category-title">Formative Assessments</h4>
-        </div>
-        <div class="table-container">
-          <table class="grades-table">
-            <thead>
-              <tr>
-                <th>Name of Activity</th>
-                <th>Topic(s) of Task</th>
-                <th>Score</th>
-                <th>Highest Possible Score</th>
-                <th>Comments</th>
-              </tr>
-            </thead>
-            <tbody id="assessmentTable">
-              <tr><td colspan="5">No data available</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="table-wrapper">
+        <table class="student-record-table" id="studentRecordTable">
+          <thead>
+            <tr>
+              <th rowspan="2">Student Name</th>
+              <th colspan="3">Performance Tasks (<span id="ptWeightDisplay">50</span>%)</th>
+              <th colspan="3">Written Works (<span id="wwWeightDisplay">30</span>%)</th>
+              <th colspan="2">Periodical Exam (<span id="peWeightDisplay">20</span>%)</th>
+              <th rowspan="2">Initial Grade</th>
+              <th rowspan="2">Quarterly Grade</th>
+              <th rowspan="2">Comments</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+            <tr>
+              <th>Score</th>
+              <th>Max</th>
+              <th>%</th>
+              <th>Score</th>
+              <th>Max</th>
+              <th>%</th>
+              <th>Score</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody id="studentRecordBody">
+            <tr><td colspan="13" class="loading-text">Loading students...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
     
@@ -201,308 +129,300 @@
       </div>
     </div>
     
-    <!-- Grade Tables Section -->
-    <div class="grade-tables-section">
-      <h2>Grade Items</h2>
-      
-      <!-- Add New Grade Item Form -->
-      <div class="add-grade-form-card" id="addGradeForm" style="display: none;">
-        <h3>Add New Grade Item</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="itemTitle">Title</label>
-            <input type="text" id="itemTitle" placeholder="e.g. Quiz 1">
-          </div>
-          <div class="form-group">
-            <label for="itemTopic">Topic</label>
-            <input type="text" id="itemTopic" placeholder="e.g. Algebra">
-          </div>
-          <div class="form-group">
-            <label for="itemType">Type</label>
-            <select id="itemType">
-              <option value="Performance Task">Performance Task</option>
-              <option value="Written Works">Written Works</option>
-              <option value="Periodical Exam">Periodical Exam</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="maxScore">Highest Possible Score</label>
-            <input type="number" id="maxScore" placeholder="e.g. 100">
-          </div>
-          <div class="form-group">
-            <label for="dateAssigned">Date Assigned</label>
-            <input type="date" id="dateAssigned">
-          </div>
-          <div class="form-group">
-            <label for="itemScore">Score</label>
-            <input type="number" id="itemScore" placeholder="e.g. 85">
-          </div>
-          <div class="form-group">
-            <label for="itemComment">Comment</label>
-            <input type="text" id="itemComment" placeholder="Short comment">
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-cancel" onclick="toggleAddForm(false)">Cancel</button>
-          <button class="btn-primary" onclick="saveGradeItem()">Save Grade Item</button>
-        </div>
-      </div>
-      
-      <div class="add-item-controls">
-        <button class="btn-primary" onclick="toggleAddForm(true)" id="addItemBtn">+ Add New Grade Item</button>
-        <button class="btn-primary" onclick="toggleAssessmentForm(true)" id="addAssessmentBtn" style="margin-left:12px;">+ Add Assessment Item</button>
-      </div>
-      
-      <!-- Add Assessment Item Form -->
-      <div class="add-grade-form-card" id="addAssessmentForm" style="display:none;">
-        <h3>Add Assessment Item</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="assessTitle">Title</label>
-            <input type="text" id="assessTitle" placeholder="e.g. Practice Quiz 1">
-          </div>
-          <div class="form-group">
-            <label for="assessTopic">Topic</label>
-            <input type="text" id="assessTopic" placeholder="e.g. Algebra">
-          </div>
-          <div class="form-group">
-            <label for="assessDate">Date Assigned</label>
-            <input type="date" id="assessDate">
-          </div>
-          <div class="form-group">
-            <label for="assessScore">Score</label>
-            <input type="number" id="assessScore" placeholder="e.g. 18">
-          </div>
-          <div class="form-group">
-            <label for="assessMax">Highest Possible Score</label>
-            <input type="number" id="assessMax" placeholder="e.g. 20" value="100">
-          </div>
-          <div class="form-group">
-            <label for="assessComment">Comment</label>
-            <input type="text" id="assessComment" placeholder="Short comment">
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-cancel" onclick="toggleAssessmentForm(false)">Cancel</button>
-          <button class="btn-primary" onclick="saveAssessmentItem()">Save Assessment Item</button>
-        </div>
-      </div>
-
-    </div>
-    
-    <div id="studentGradesSection" class="hidden">
-      <h3>Student Grades</h3>
-      <table class="grade-table" id="studentGradesTable">
-        <thead>
-          <tr>
-            <th>Grade Item</th>
-            <th>Score</th>
-            <th>Max Score</th>
-            <th>Percentage</th>
-            <th>Comments</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Will be populated by JavaScript -->
-        </tbody>
-      </table>
-      
-      <div class="add-grade-form" id="addScoreForm" style="display: none;">
-        <h3>Add Student Score</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="gradeItemSelect">Grade Item</label>
-            <select id="gradeItemSelect">
-              <!-- Will be populated by JavaScript -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="scoreValue">Score</label>
-            <input type="number" id="scoreValue">
-          </div>
-          <div class="form-group">
-            <label for="scoreMaxValue">Max Score</label>
-            <input type="number" id="scoreMaxValue" disabled>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="scoreComments">Comments</label>
-            <textarea id="scoreComments" rows="3"></textarea>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-cancel" onclick="toggleScoreForm(false)">Cancel</button>
-          <button class="btn-submit" onclick="saveStudentScore()">Save Score</button>
-        </div>
-      </div>
-      
-      <button class="action-btn" onclick="toggleScoreForm(true)" id="addScoreBtn">Add New Score</button>
-    </div>
     
   
   </div>
   
   <script>
-    // --- Routing: Only allow logged-in teachers ---
-    const role = localStorage.getItem('role');
-    const token = localStorage.getItem('token');
-    const userName = localStorage.getItem('userName');
-    const urlParamsAll = new URLSearchParams(window.location.search);
-    const readOnlyMode = urlParamsAll.get('readonly') === '1';
-    
-    if (!role) {
-      window.location.href = 'login.html';
-    } else if (role !== 'teacher') {
-      window.location.href = 'homepage1.html';
-    }
-
-    // Ensure Add Grade Item popup can be toggled even if a previous definition is missing
-    if (typeof toggleAddForm !== 'function'){
-      function toggleAddForm(show){
-        const form = document.getElementById('addGradeForm');
-        if (!form) return;
-        form.style.display = show ? 'block' : 'none';
-      }
-    }
-    // Assessment form handlers (front-end only for now)
-    function clearAssessmentForm(){
-      const ids = ['assessTitle','assessTopic','assessDate','assessScore','assessMax','assessComment'];
-      ids.forEach(id=>{ const el=document.getElementById(id); if (!el) return; el.value = ''; });
-      const max = document.getElementById('assessMax'); if (max) max.value = 100;
-      const dt = document.getElementById('assessDate'); if (dt) dt.value = new Date().toISOString().split('T')[0];
-    }
-    function toggleAssessmentForm(show){
-      const form = document.getElementById('addAssessmentForm');
-      if (!form) return;
-      if (show){ clearAssessmentForm(); }
-      form.style.display = show ? 'block' : 'none';
-    }
-    function saveAssessmentItem(){
-      const title = document.getElementById('assessTitle').value.trim();
-      const topic = document.getElementById('assessTopic').value.trim();
-      const dateAssigned = document.getElementById('assessDate').value;
-      const score = parseFloat(document.getElementById('assessScore').value);
-      const max = parseFloat(document.getElementById('assessMax').value);
-      const comment = (document.getElementById('assessComment')?.value || '').trim();
-      if (!title || !topic || !dateAssigned || isNaN(score) || isNaN(max)){
-        alert('Please fill out all assessment fields');
-        return;
-      }
-      
-      // Get existing assessments and add new one
-      const assessments = getAssessmentMap();
-      const newAssessment = {
-        id: Date.now(), // Simple unique ID
-        title,
-        topic,
-        dateAssigned,
-        score,
-        max,
-        comment,
-        subjectId,
-        quarter: currentQuarter
-      };
-      assessments.push(newAssessment);
-      setAssessmentMap(assessments);
-      
-      const tbody = document.getElementById('assessmentTable');
-      if (tbody){
-        const tr = document.createElement('tr');
-        tr.dataset.assessmentId = String(newAssessment.id);
-        tr.innerHTML = `<td>${title}</td><td>${topic}</td><td>${score}</td><td>${max}</td><td>${comment}</td>`;
-        if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
-        tbody.appendChild(tr);
-      }
-      clearAssessmentForm();
-      toggleAssessmentForm(false);
-    }
-    
-    // Populate account dropdown with latest cached values
-    (function(){
-      try{
-        const full = localStorage.getItem('fullName') || localStorage.getItem('userName') || 'Teacher';
-        const email = localStorage.getItem('email') || '';
-        const init = (full.charAt(0)||'T').toUpperCase();
-        const iEl = document.getElementById('accountInitial'); if (iEl) iEl.textContent = init;
-        const nEl = document.getElementById('userFullName'); if (nEl) nEl.textContent = full;
-        const eEl = document.getElementById('userEmail'); if (eEl) eEl.textContent = email;
-      }catch{}
-    })();
-    
-    // --- Get subject from URL ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('id');
-    const subjectName = urlParams.get('name') || "Subject";
-document.getElementById('subjectTitle').textContent = subjectName;
-    // Fetch subject details to show section/grade level
-    (function fetchSubjectMeta(){
-      if (!window.API_BASE || !subjectId) {
-        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
-        return;
-      }
-
-      fetch(`${window.API_BASE}/api/subjects?title=${encodeURIComponent(subjectName)}`)
-        .then(r=>r.json())
-        .then(list=>{
-          const subj = Array.isArray(list) ? list.find(s=> (s.title||'')===subjectName) : null;
-          if (subj){
-            const sec = subj.section || subj.grade_level || '';
-            if (sec){ const el=document.getElementById('sectionCode'); if (el) el.textContent = `Section: ${sec}`; }
-          }
-        }).catch(()=>{});
-    })();
-    
-    // Global variables
+    // --- Student Record System ---
     let currentQuarter = 1;
-    let currentCategory = 'pt';
-    let gradeCategories = [];
-    let gradeItems = [];
+    let subjectId = '';
+    let subjectName = '';
     let students = [];
-    let selectedStudentId = '';
-    let editingItemId = null;
-    let editingScoreId = null;
-    const initialStudentId = urlParams.get('student_id') || '';
-    const viewMode = urlParams.get('view') === 'assessment' ? 'assessment' : 'final';
+    let gradeWeights = { pt: 50, ww: 30, pe: 20 };
     
-    // Helper function to get current student ID
-    function getCurrentStudentId() {
-      return selectedStudentId || initialStudentId || '';
-    }
+    // Grade transmutation table (DepEd standard)
+    const transmutationTable = {
+      100: 100, 99: 99, 98: 98, 97: 97, 96: 96, 95: 95,
+      94: 94, 93: 93, 92: 92, 91: 91, 90: 90,
+      89: 89, 88: 88, 87: 87, 86: 86, 85: 85,
+      84: 84, 83: 83, 82: 82, 81: 81, 80: 80,
+      79: 79, 78: 78, 77: 77, 76: 76, 75: 75,
+      74: 74, 73: 73, 72: 72, 71: 71, 70: 70,
+      69: 69, 68: 68, 67: 67, 66: 66, 65: 65,
+      64: 64, 63: 63, 62: 62, 61: 61, 60: 60,
+      59: 59, 58: 58, 57: 57, 56: 56, 55: 55,
+      54: 54, 53: 53, 52: 52, 51: 51, 50: 50,
+      49: 49, 48: 48, 47: 47, 46: 46, 45: 45,
+      44: 44, 43: 43, 42: 42, 41: 41, 40: 40,
+      39: 39, 38: 38, 37: 37, 36: 36, 35: 35,
+      34: 34, 33: 33, 32: 32, 31: 31, 30: 30,
+      29: 29, 28: 28, 27: 27, 26: 26, 25: 25,
+      24: 24, 23: 23, 22: 22, 21: 21, 20: 20,
+      19: 75, 18: 74, 17: 73, 16: 72, 15: 71,
+      14: 70, 13: 69, 12: 68, 11: 67, 10: 66,
+      9: 65, 8: 64, 7: 63, 6: 62, 5: 61,
+      4: 60, 3: 60, 2: 60, 1: 60, 0: 60
+    };
     
-    // --- Initialize page ---
-    function init() {
-      loadStudents();
-      loadGradeCategories();
-      loadGradeItems();
-      loadFormativeAssessments();
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      subjectId = urlParams.get('id') || '';
+      subjectName = urlParams.get('name') || 'Subject';
       
-      // Set today's date as default for new items
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('dateAssigned').value = today;
+      document.getElementById('subjectTitle').textContent = subjectName;
+      document.getElementById('subjectTitleDisplay').textContent = subjectName;
+      
+      loadGradeWeights();
+      loadStudents();
+      
+      // Setup weight input listeners
+      ['weightPT', 'weightWW', 'weightPE'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+          input.addEventListener('input', updateWeightDisplay);
+          input.addEventListener('change', saveWeights);
+        }
+      });
+    });
+    
+    // Load grade weights
+    function loadGradeWeights() {
+      if (!window.API_BASE || !subjectId) return;
+      
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`)
+        .then(res => res.json())
+        .then(categories => {
+          categories.forEach(cat => {
+            if (cat.name === 'Performance Task') {
+              gradeWeights.pt = cat.weight;
+              document.getElementById('weightPT').value = cat.weight;
+              document.getElementById('ptWeightDisplay').textContent = cat.weight;
+            } else if (cat.name === 'Written Works') {
+              gradeWeights.ww = cat.weight;
+              document.getElementById('weightWW').value = cat.weight;
+              document.getElementById('wwWeightDisplay').textContent = cat.weight;
+            } else if (cat.name === 'Periodical Exam') {
+              gradeWeights.pe = cat.weight;
+              document.getElementById('weightPE').value = cat.weight;
+              document.getElementById('peWeightDisplay').textContent = cat.weight;
+            }
+          });
+          updateWeightDisplay();
+        })
+        .catch(err => console.error('Error loading weights:', err));
     }
     
-    // --- Navigation functions ---
-    function goBack() {
-      try{
-        const id = urlParams.get('id') || subjectId || '';
-        const name = urlParams.get('name') || subjectName || '';
-        window.location.href = `subject.html?id=${encodeURIComponent(String(id))}&name=${encodeURIComponent(String(name))}`;
-      }catch{
-        window.location.href = 'subject.html';
+    // Load students and render table
+    function loadStudents() {
+      if (!window.API_BASE || !subjectId) {
+        console.error('Missing API_BASE or subjectId');
+        return;
+      }
+      
+      const tbody = document.getElementById('studentRecordBody');
+      tbody.innerHTML = '<tr><td colspan="13" class="loading-text">Loading students...</td></tr>';
+      
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/students`)
+        .then(res => res.json())
+        .then(data => {
+          students = Array.isArray(data) ? data : (data.students || []);
+          renderStudentTable();
+        })
+        .catch(err => {
+          console.error('Error loading students:', err);
+          tbody.innerHTML = '<tr><td colspan="13" class="error-text">Failed to load students</td></tr>';
+        });
+    }
+    
+    // Render student record table
+    function renderStudentTable() {
+      const tbody = document.getElementById('studentRecordBody');
+      
+      if (students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-text">No students enrolled</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      
+      students.forEach((student, index) => {
+        const row = document.createElement('tr');
+        row.dataset.studentId = student.id;
+        
+        // Initialize student grades if not exists
+        if (!student.grades) {
+          student.grades = {
+            pt: { score: 0, max: 100 },
+            ww: { score: 0, max: 100 },
+            pe: { score: 0, max: 100 }
+          };
+        }
+        
+        const initialGrade = calculateInitialGrade(student.grades);
+        const quarterlyGrade = transmuteGrade(initialGrade);
+        
+        row.innerHTML = `
+          <td class="student-name">
+            <div class="student-info">
+              <div class="student-avatar">${(student.full_name || student.name || 'Unknown').charAt(0).toUpperCase()}</div>
+              <div>${student.full_name || student.name || 'Unknown Student'}</div>
+            </div>
+          </td>
+          <td><input type="number" class="score-input pt-score" data-student="${student.id}" data-category="pt" value="${student.grades.pt.score}" min="0" max="${student.grades.pt.max}" onchange="updateStudentGrade(${student.id}, 'pt', this.value)"></td>
+          <td><input type="number" class="max-input pt-max" data-student="${student.id}" data-category="pt" value="${student.grades.pt.max}" min="1" onchange="updateMaxScore(${student.id}, 'pt', this.value)"></td>
+          <td class="percentage">${student.grades.pt.max > 0 ? ((student.grades.pt.score / student.grades.pt.max) * 100).toFixed(1) : '0.0'}%</td>
+          <td><input type="number" class="score-input ww-score" data-student="${student.id}" data-category="ww" value="${student.grades.ww.score}" min="0" max="${student.grades.ww.max}" onchange="updateStudentGrade(${student.id}, 'ww', this.value)"></td>
+          <td><input type="number" class="max-input ww-max" data-student="${student.id}" data-category="ww" value="${student.grades.ww.max}" min="1" onchange="updateMaxScore(${student.id}, 'ww', this.value)"></td>
+          <td class="percentage">${student.grades.ww.max > 0 ? ((student.grades.ww.score / student.grades.ww.max) * 100).toFixed(1) : '0.0'}%</td>
+          <td><input type="number" class="score-input pe-score" data-student="${student.id}" data-category="pe" value="${student.grades.pe.score}" min="0" max="${student.grades.pe.max}" onchange="updateStudentGrade(${student.id}, 'pe', this.value)"></td>
+          <td class="percentage">${student.grades.pe.max > 0 ? ((student.grades.pe.score / student.grades.pe.max) * 100).toFixed(1) : '0.0'}%</td>
+          <td class="initial-grade">${initialGrade.toFixed(2)}</td>
+          <td class="quarterly-grade">${quarterlyGrade.toFixed(2)}</td>
+          <td><input type="text" class="comment-input" data-student="${student.id}" value="${student.comment || ''}" placeholder="Add comment..." onchange="updateComment(${student.id}, this.value)"></td>
+          <td class="actions">
+            <button class="btn-delete" onclick="removeStudent(${student.id})">Remove</button>
+          </td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Calculate initial grade from categories
+    function calculateInitialGrade(grades) {
+      const ptPercent = grades.pt.max > 0 ? (grades.pt.score / grades.pt.max) * 100 : 0;
+      const wwPercent = grades.ww.max > 0 ? (grades.ww.score / grades.ww.max) * 100 : 0;
+      const pePercent = grades.pe.max > 0 ? (grades.pe.score / grades.pe.max) * 100 : 0;
+      
+      const initialGrade = (ptPercent * gradeWeights.pt / 100) + 
+                          (wwPercent * gradeWeights.ww / 100) + 
+                          (pePercent * gradeWeights.pe / 100);
+      
+      return Math.min(100, Math.max(0, initialGrade));
+    }
+    
+    // Transmute grade using DepEd table
+    function transmuteGrade(initialGrade) {
+      const rounded = Math.round(initialGrade);
+      return transmutationTable[rounded] || 60;
+    }
+    
+    // Update student grade
+    function updateStudentGrade(studentId, category, score) {
+      const student = students.find(s => s.id == studentId);
+      if (!student) return;
+      
+      if (!student.grades) {
+        student.grades = { pt: { score: 0, max: 100 }, ww: { score: 0, max: 100 }, pe: { score: 0, max: 100 } };
+      }
+      
+      const numScore = parseFloat(score) || 0;
+      const maxScore = student.grades[category].max;
+      
+      if (numScore > maxScore) {
+        alert(`Score cannot exceed maximum score of ${maxScore}`);
+        // Reset the input
+        const input = document.querySelector(`input[data-student="${studentId}"][data-category="${category}"]`);
+        if (input) input.value = student.grades[category].score;
+        return;
+      }
+      
+      student.grades[category].score = numScore;
+      
+      // Update display
+      updateStudentRow(studentId);
+      
+      // Save to backend
+      saveStudentGrades(studentId);
+    }
+    
+    // Update max score
+    function updateMaxScore(studentId, category, maxScore) {
+      const student = students.find(s => s.id == studentId);
+      if (!student) return;
+      
+      if (!student.grades) {
+        student.grades = { pt: { score: 0, max: 100 }, ww: { score: 0, max: 100 }, pe: { score: 0, max: 100 } };
+      }
+      
+      const numMax = parseFloat(maxScore) || 1;
+      student.grades[category].max = numMax;
+      
+      // Adjust current score if it exceeds new max
+      if (student.grades[category].score > numMax) {
+        student.grades[category].score = numMax;
+      }
+      
+      // Update input max attribute
+      const scoreInput = document.querySelector(`input.score-input[data-student="${studentId}"][data-category="${category}"]`);
+      if (scoreInput) {
+        scoreInput.max = numMax;
+        scoreInput.value = student.grades[category].score;
+      }
+      
+      updateStudentRow(studentId);
+      saveStudentGrades(studentId);
+    }
+    
+    // Update student row display
+    function updateStudentRow(studentId) {
+      const student = students.find(s => s.id == studentId);
+      if (!student) return;
+      
+      const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+      if (!row) return;
+      
+      const initialGrade = calculateInitialGrade(student.grades);
+      const quarterlyGrade = transmuteGrade(initialGrade);
+      
+      // Update percentages
+      const ptPercent = student.grades.pt.max > 0 ? ((student.grades.pt.score / student.grades.pt.max) * 100).toFixed(1) : '0.0';
+      const wwPercent = student.grades.ww.max > 0 ? ((student.grades.ww.score / student.grades.ww.max) * 100).toFixed(1) : '0.0';
+      const pePercent = student.grades.pe.max > 0 ? ((student.grades.pe.score / student.grades.pe.max) * 100).toFixed(1) : '0.0';
+      
+      const cells = row.cells;
+      cells[3].textContent = ptPercent + '%';  // PT %
+      cells[6].textContent = wwPercent + '%';  // WW %
+      cells[8].textContent = pePercent + '%';  // PE %
+      cells[9].textContent = initialGrade.toFixed(2);  // Initial Grade
+      cells[10].textContent = quarterlyGrade.toFixed(2); // Quarterly Grade
+    }
+    
+    // Update comment
+    function updateComment(studentId, comment) {
+      const student = students.find(s => s.id == studentId);
+      if (student) {
+        student.comment = comment;
+        saveStudentGrades(studentId);
       }
     }
     
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userName');
-      window.location.href = 'login.html';
+    // Save student grades to backend
+    function saveStudentGrades(studentId) {
+      const student = students.find(s => s.id == studentId);
+      if (!student || !window.API_BASE || !subjectId) return;
+      
+      const gradesData = {
+        student_id: studentId,
+        subject_id: subjectId,
+        quarter: currentQuarter,
+        grades: student.grades,
+        comment: student.comment || '',
+        initial_grade: calculateInitialGrade(student.grades),
+        quarterly_grade: transmuteGrade(calculateInitialGrade(student.grades))
+      };
+      
+      fetch(`${window.API_BASE}/api/student-grades`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gradesData)
+      })
+      .catch(err => console.error('Error saving grades:', err));
     }
     
-    // --- Tab switching functions ---
+    // Switch quarter
     function switchQuarter(quarter) {
       currentQuarter = quarter;
       
@@ -512,156 +432,23 @@ document.getElementById('subjectTitle').textContent = subjectName;
       });
       document.querySelector(`.quarter-tabs .tab-button[data-quarter="${quarter}"]`).classList.add('active');
       
-      // Reload data for the new quarter
-      loadGradeCategories();
-      loadGradeItems();
-      loadFormativeAssessments();
-      
-      if (selectedStudentId) {
-        loadStudentGrades();
-      }
+      // Reload data
+      loadGradeWeights();
+      loadStudents();
     }
     
-    // Helper functions for the new layout
-    function showErrorMessage(message) {
-      // Create or update error banner
-      let errorBanner = document.getElementById('errorBanner');
-      if (!errorBanner) {
-        errorBanner = document.createElement('div');
-        errorBanner.id = 'errorBanner';
-        errorBanner.className = 'error-banner';
-        errorBanner.style.cssText = 'background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin: 16px 0; display: flex; align-items: center; justify-content: space-between;';
-        
-        // Use main content area as container
-        const mainContent = document.querySelector('.main') || document.body;
-        const firstElement = mainContent.querySelector('hr, .control-card, .back-btn');
-        if (firstElement) {
-          mainContent.insertBefore(errorBanner, firstElement);
-        } else {
-          mainContent.appendChild(errorBanner);
-        }
-      }
-      
-      errorBanner.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px;">&times;</button>
-      `;
-      errorBanner.style.display = 'flex';
-    }
-    
-    function updateSelectedStudentDisplay() {
-      const selectedStudentName = document.getElementById('selectedStudentName');
-      const select = document.getElementById('studentSelect');
-      if (selectedStudentName && select) {
-        const selectedOption = select.options[select.selectedIndex];
-        if (select.value && selectedOption) {
-          selectedStudentName.textContent = selectedOption.textContent;
-        } else {
-          selectedStudentName.textContent = 'Select a student to view details';
-        }
-      }
-    }
-    
-    function showAddFormForCategory(category) {
-      currentCategory = category;
-      toggleAddForm(true);
-    }
-
-    // --- UI-only score persistence (per grade item) ---
-    function getUIScoreMap(){
-      try{ return JSON.parse(localStorage.getItem('itemUIScores')||'{}'); }catch{ return {}; }
-    }
-    function setUIScoreMap(m){
-      try{ localStorage.setItem('itemUIScores', JSON.stringify(m||{})); }catch{}
-    }
-    function getUIScore(itemId){ const m=getUIScoreMap(); return m && m[itemId]!=null ? m[itemId] : null; }
-    function setUIScore(itemId, val){ const m=getUIScoreMap(); m[itemId]=val; setUIScoreMap(m); }
-    // UI-only comment persistence (per grade item)
-    function getUICommentMap(){
-      try{ return JSON.parse(localStorage.getItem('itemUIComments')||'{}'); }catch{ return {}; }
-    }
-    function setUICommentMap(m){
-      try{ localStorage.setItem('itemUIComments', JSON.stringify(m||{})); }catch{}
-    }
-    function getUIComment(itemId){ const m=getUICommentMap(); return m && m[itemId]!=null ? m[itemId] : ''; }
-    function setUIComment(itemId, val){ const m=getUICommentMap(); m[itemId]=val||''; setUICommentMap(m); }
-    
-    // Formative assessment persistence
-    function getAssessmentMap(){
-      try{ return JSON.parse(localStorage.getItem('formativeAssessments')||'[]'); }catch{ return []; }
-    }
-    function setAssessmentMap(arr){
-      try{ localStorage.setItem('formativeAssessments', JSON.stringify(arr||[])); }catch{}
-    }
-    
-    function loadFormativeAssessments(){
-      const tbody = document.getElementById('assessmentTable');
-      if (!tbody) return;
-      
-      const assessments = getAssessmentMap();
-      const filteredAssessments = assessments.filter(a => 
-        a.subjectId === subjectId && a.quarter === currentQuarter
-      );
-      
-      if (filteredAssessments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">No items in this category</td></tr>';
-        return;
-      }
-      
-      tbody.innerHTML = '';
-      filteredAssessments.forEach(assessment => {
-        const tr = document.createElement('tr');
-        tr.dataset.assessmentId = String(assessment.id);
-        tr.innerHTML = `<td>${assessment.title}</td><td>${assessment.topic}</td><td>${assessment.score}</td><td>${assessment.max}</td><td>${assessment.comment}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
-    
-    // Optimistically render or update a graded item row (shows Score immediately)
-    function renderOrUpdateItemRow({ id, title, topic, itemType, maxScore, dateAssigned, categoryName, comment }, uiScore){
-      const tableId = itemType === 'Written Works' ? 'wwTable' : (itemType === 'Periodical Exam' ? 'peTable' : 'ptTable');
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      if (!tbody) return;
-      if (tbody.querySelector('.empty-state') || tbody.querySelector('td[colspan]')) tbody.innerHTML='';
-      let row = id ? tbody.querySelector(`tr[data-item-id="${id}"]`) : null;
-      if (!row){ row = document.createElement('tr'); if (id!=null) row.dataset.itemId = String(id); tbody.appendChild(row); }
-      const dateText = dateAssigned ? new Date(dateAssigned).toLocaleDateString() : 'N/A';
-      row.dataset.title = title || '';
-      row.dataset.topic = topic || '';
-      row.dataset.maxScore = String(maxScore || 0);
-      row.dataset.dateAssigned = dateAssigned || '';
-      row.dataset.categoryName = categoryName || itemType || '';
-      row.dataset.comment = (comment || '').toString();
-      if (uiScore!=null && uiScore!=='') { row.dataset.score = String(uiScore); } else { delete row.dataset.score; }
-      row.innerHTML = `
-        <td>${title || 'Untitled'}</td>
-        <td>${topic || 'N/A'}</td>
-        <td>${(uiScore!=null && uiScore!=='') ? uiScore : (row.dataset.score && row.dataset.score !== 'undefined' ? row.dataset.score : '-')}</td>
-        <td>${maxScore || 0}</td>
-        <td>${dateText}</td>
-        <td>${categoryName || itemType || 'N/A'}</td>
-        <td>${(comment || '').toString().slice(0,140)}</td>
-        <td class="action-buttons">
-          <button class="btn-delete" onclick="deleteGradeItem(${Number(id)||0})">Delete</button>
-        </td>`;
-    }
-    
-    function updateTotalWeight() {
+    // Update weight display
+    function updateWeightDisplay() {
       const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
       const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
       const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
       const total = ptWeight + wwWeight + peWeight;
       
-      const totalElement = document.getElementById('totalWeight');
-      if (totalElement) {
-        totalElement.textContent = `${total}%`;
-        totalElement.style.color = total === 100 ? '#059669' : '#dc2626';
-      }
-    }
-    
-    // --- Data loading functions ---
-    function loadStudents() {
-      const select = document.getElementById('studentSelect');
+      document.getElementById('ptWeightDisplay').textContent = ptWeight;
+      document.getElementById('wwWeightDisplay').textContent = wwWeight;
+      document.getElementById('peWeightDisplay').textContent = peWeight;
+      document.getElementById('totalWeight').textContent = total + '%';
+      document.getElementById('totalWeight').style.color = total === 100 ? '#059669' : '#dc2626';
       if (!select) { return; }
       select.innerHTML = '<option value="">Loading students...</option>';
       
@@ -1506,8 +1293,415 @@ document.getElementById('subjectTitle').textContent = subjectName;
       });
     });
   </script>  
+  <script>
+    // Update weight display
+    function updateWeightDisplay() {
+      const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
+      const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
+      const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
+      const total = ptWeight + wwWeight + peWeight;
+      
+      document.getElementById('ptWeightDisplay').textContent = ptWeight;
+      document.getElementById('wwWeightDisplay').textContent = wwWeight;
+      document.getElementById('peWeightDisplay').textContent = peWeight;
+      document.getElementById('totalWeight').textContent = total + '%';
+      document.getElementById('totalWeight').style.color = total === 100 ? '#059669' : '#dc2626';
+      
+      gradeWeights = { pt: ptWeight, ww: wwWeight, pe: peWeight };
+      
+      // Recalculate all student grades
+      students.forEach(student => {
+        updateStudentRow(student.id);
+      });
+    }
+    
+    // Save weights
+    function saveWeights() {
+      const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
+      const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
+      const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
+      
+      if (Math.abs((ptWeight + wwWeight + peWeight) - 100) > 0.01) {
+        alert('Weights must add up to 100%');
+        return;
+      }
+      
+      const categories = [
+        { name: 'Performance Task', weight: ptWeight, quarter: currentQuarter },
+        { name: 'Written Works', weight: wwWeight, quarter: currentQuarter },
+        { name: 'Periodical Exam', weight: peWeight, quarter: currentQuarter }
+      ];
+      
+      if (!window.API_BASE || !subjectId) return;
+      
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categories })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to save weights');
+        return res.json();
+      })
+      .then(() => {
+        alert('Grade weights saved successfully');
+        updateWeightDisplay();
+      })
+      .catch(err => {
+        console.error('Error saving weights:', err);
+        alert('Failed to save weights. Please try again.');
+      });
+    }
+    
+    // Add new student
+    function addNewStudent() {
+      const name = prompt('Enter student name:');
+      if (!name || !name.trim()) return;
+      
+      const newStudent = {
+        id: Date.now(), // Temporary ID
+        full_name: name.trim(),
+        grades: {
+          pt: { score: 0, max: 100 },
+          ww: { score: 0, max: 100 },
+          pe: { score: 0, max: 100 }
+        },
+        comment: ''
+      };
+      
+      students.push(newStudent);
+      renderStudentTable();
+      
+      // Save to backend
+      if (window.API_BASE && subjectId) {
+        fetch(`${window.API_BASE}/api/subjects/${subjectId}/enroll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_name: name.trim() })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) {
+            newStudent.id = data.id; // Update with real ID
+            saveStudentGrades(data.id);
+          }
+        })
+        .catch(err => console.error('Error enrolling student:', err));
+      }
+    }
+    
+    // Remove student
+    function removeStudent(studentId) {
+      if (!confirm('Are you sure you want to remove this student?')) return;
+      
+      students = students.filter(s => s.id !== studentId);
+      renderStudentTable();
+      
+      // Remove from backend
+      if (window.API_BASE && subjectId) {
+        fetch(`${window.API_BASE}/api/subjects/${subjectId}/students/${studentId}`, {
+          method: 'DELETE'
+        })
+        .catch(err => console.error('Error removing student:', err));
+      }
+    }
+    
+    // Export to Excel (placeholder)
+    function exportToExcel() {
+      alert('Excel export functionality would be implemented here');
+    }
+    
+    // Navigation
+    function goBack() {
+      window.location.href = 'homepage2.html';
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = 'login.html';
+    }
+  </script>  
   <style>
-    /* Enhanced styling for teacher grades page */
+    /* Student Record Table Styles */
+    .student-record-container {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+    
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .record-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    .record-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn-primary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    
+    .student-record-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+    }
+    
+    .student-record-table th {
+      background: #f8fafc;
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+    
+    .student-record-table th:first-child {
+      text-align: left;
+      padding-left: 16px;
+    }
+    
+    .student-record-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text);
+      vertical-align: middle;
+      text-align: center;
+    }
+    
+    .student-record-table td:first-child {
+      text-align: left;
+      padding-left: 16px;
+    }
+    
+    .student-record-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .student-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .student-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .score-input, .max-input {
+      width: 60px;
+      padding: 6px 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    
+    .score-input:focus, .max-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .comment-input {
+      width: 150px;
+      padding: 6px 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    
+    .comment-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .percentage {
+      font-weight: 600;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    
+    .initial-grade {
+      font-weight: 700;
+      color: #059669;
+      font-size: 0.95rem;
+    }
+    
+    .quarterly-grade {
+      font-weight: 700;
+      color: #7c3aed;
+      font-size: 0.95rem;
+    }
+    
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-delete:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+    
+    .loading-text, .error-text, .empty-text {
+      text-align: center;
+      padding: 40px;
+      color: #64748b;
+      font-style: italic;
+    }
+    
+    .error-text {
+      color: #ef4444;
+    }
+    
+    /* Grade Weights Card Styles */
+    .grade-weights-card {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .grade-weights-card h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .weights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .weight-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .weight-input-group label {
+      font-weight: 500;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    
+    .weight-input-group input {
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    
+    .weight-input-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .weights-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .total-weight {
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .save-weights {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .save-weights:hover {
+      background: #4f46e5;
+      transform: translateY(-1px);
+    }
     .control-card {
       background: var(--card);
       border: 1px solid #e2e8f0;

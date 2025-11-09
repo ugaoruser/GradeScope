@@ -652,7 +652,8 @@ window.API_BASE = (function(){
     if (Page.is('signup.html')) return initSignup();
     if (Page.is('homepage1.html')) return initHomepage1();
     if (Page.is('homepage2.html')) return initHomepage2();
-    if (Page.is('subject.html')) return initSubject();
+    // subject.html is deprecated; navigate directly to teacher-grades
+    // if (Page.is('subject.html')) return initSubject();
     if (Page.is('teacher-grades.html')) return initTeacherGrades();
   });
 
@@ -766,7 +767,7 @@ window.API_BASE = (function(){
       const data = await res.json(); if (!res.ok) throw new Error(data.message || 'Failed to create class');
       const accessCode = data.accessCode || data.access_code || data.code || '';
       toggleAddClass(false);
-      const c = qs('#classroomTabs'); if (c){ const div=document.createElement('div'); div.className='class-tab'; div.innerHTML = `<div class="class-title">${data.title || className}</div><div class="class-section">${data.section || section}</div>${accessCode?`<div class="small">Access Code: <strong>${accessCode}</strong></div>`:''}`; div.addEventListener('click', ()=> location.href = `subject.html?subject=${encodeURIComponent(data.title || className)}`); c.appendChild(div);} 
+      const c = qs('#classroomTabs'); if (c){ const div=document.createElement('div'); div.className='class-tab'; div.innerHTML = `<div class="class-title">${data.title || className}</div><div class="class-section">${data.section || section}</div>${accessCode?`<div class="small">Access Code: <strong>${accessCode}</strong></div>`:''}`; div.addEventListener('click', ()=> location.href = `teacher-grades.html?id=${encodeURIComponent(data.id||'')}&name=${encodeURIComponent(data.title || className)}`); c.appendChild(div);} 
       try{ if (accessCode) await navigator.clipboard.writeText(accessCode);}catch{}
       alert('Class created!' + (accessCode? ` Access Code: ${accessCode}`:''));
     }catch(e){ alert('Error creating class: ' + e.message); }
@@ -817,7 +818,7 @@ window.API_BASE = (function(){
       // Navigate to class management page on card click (except copy button)
       div.addEventListener('click', (e) => {
         if (e.target.classList.contains('copy-code-btn')) return;
-        location.href = `subject.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
+        location.href = `teacher-grades.html?id=${encodeURIComponent(subj.id)}&name=${encodeURIComponent(subj.title)}`;
       });
       
       container.appendChild(div);
@@ -1222,12 +1223,7 @@ window.API_BASE = (function(){
     const backBtn = document.querySelector('.back-btn');
     if (backBtn) {
       backBtn.onclick = () => {
-        const subjectId = params.get('subjectId');
-        if (subjectId) {
-          window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}`;
-        } else {
-          window.location.href = 'homepage2.html';
-        }
+        window.location.href = 'homepage2.html';
       };
     }
   }

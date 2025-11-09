@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js" defer></script>
-  <script src="chart.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body class="student-grades-page">
@@ -127,9 +126,7 @@
           </div>
         </div>
       </div>
-      <div class="chart-container">
-        <canvas id="progressChart"></canvas>
-      </div>
+      
     </div>
     
     <div id="assessmentContent" class="tab-content">
@@ -248,7 +245,6 @@
         if (cached.summary){
           updateGradeSummary(cached.summary);
         }
-        updateChart(items.filter(i=> i.included_in_final));
         return true;
       }catch{ return false; }
     }
@@ -291,9 +287,9 @@
         populateTable('peTable', peItems, renderPERow);
         populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
 
-        // Calculate final grade and update chart
+        // Calculate final grade
         calculateFinalGrade(ptItems, wwItems, peItems);
-        updateChart(lastItems.filter(i => i.included_in_final));
+        
 
         if (summary) updateGradeSummary(summary);
         // Cache fresh payload
@@ -401,7 +397,6 @@
       }
     }
 
-    let progressChart;
     function calculateFinalGrade(ptItems, wwItems, peItems) {
       const ptWeight = parseFloat(document.getElementById('ptWeight').textContent) / 100;
       const wwWeight = parseFloat(document.getElementById('wwWeight').textContent) / 100;
@@ -441,51 +436,7 @@
       document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
     }
 
-    async function updateChart(allItems) {
-      try{
-        await ensureChartLib();
-        const ctx = document.getElementById('progressChart').getContext('2d');
-        const points = [];
-        let total = 0, totalMax = 0;
-        const sorted = [...allItems].sort((a,b)=>{
-          const da = a.date_assigned ? new Date(a.date_assigned).getTime() : 0;
-          const db = b.date_assigned ? new Date(b.date_assigned).getTime() : 0;
-          return da - db;
-        });
-        sorted.forEach((it, idx)=>{
-          if (it.score != null && it.max_score) {
-            total += Number(it.score);
-            totalMax += Number(it.max_score);
-            const pct = totalMax > 0 ? (total/totalMax)*100 : 0;
-            points.push({ x: idx+1, y: Number(pct.toFixed(2)) });
-          }
-        });
-        const data = {
-          datasets: [{
-            label: 'Progress %',
-            data: points,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37,99,235,0.2)',
-            tension: 0.25,
-            fill: true,
-          }]
-        };
-        const options = { scales: { x: { title: { display:true, text:'Task #'} }, y: { min:0, max:100, title:{ display:true, text:'%'} } } };
-        if (progressChart) { progressChart.data = data; progressChart.options = options; progressChart.update(); }
-        else { progressChart = new Chart(ctx, { type:'line', data, options }); }
-      }catch(e){ /* no-op */ }
-    }
-
-    function ensureChartLib(){
-      return new Promise((resolve)=>{
-        if (window.Chart) return resolve();
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
-        s.onload = ()=> resolve();
-        s.onerror = ()=> resolve();
-        document.head.appendChild(s);
-      });
-    }
+    
     
     // Navigation functions
     function goBack() {
