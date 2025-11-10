@@ -29,6 +29,7 @@
         <button id="logoutBtnT" class="logout-btn">Log Out</button>
       </div>
     </div>
+    
   </header>
   
   <div class="main" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
@@ -46,14 +47,11 @@
       </div>
     </div>
     
-    <!-- Student Record Table -->
-    <div class="student-record-container">
+    <!-- Student Record Table (legacy hidden) -->
+    <div class="student-record-container" style="display:none;">
       <div class="record-header">
         <h2>Student Grade Record - <span id="subjectTitleDisplay">Subject</span></h2>
-        <div class="record-actions">
-          <button class="btn-primary" onclick="addNewStudent()">+ Add Student</button>
-          <button class="btn-secondary" onclick="exportToExcel()">📊 Export to Excel</button>
-        </div>
+        <div class="record-actions"></div>
       </div>
       
       <div class="table-wrapper">
@@ -88,7 +86,9 @@
     </div>
     
     <!-- Chatbot Toggle Button -->
-    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px; display: flex; align-items: center; justify-content: center;">💬</button>
+    <button id="chatbotToggle" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background:#1976d2; color:#fff; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:24px; display: flex; align-items: center; justify-content: center;" aria-label="Chat">
+      <i class="ri-message-3-line"></i>
+    </button>
     <!-- Chatbot Sidebar -->
     <div id="chatbotSidebar" style="position: fixed; right: -360px; top: 0; width: 360px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; display:flex; flex-direction:column;">
       <div style="padding: 12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -141,6 +141,174 @@
     let students = [];
     let gradeWeights = { pt: 50, ww: 30, pe: 20 };
     
+    // ---------- Category table state ----------
+    let currentCategory = 'Written Works';
+    let itemsByCategory = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
+    let currentPage = 1; // 5 items per page => 10 columns (score/max pairs)
+
+    function switchCategory(name){
+      currentCategory = name;
+      const el = document.getElementById('categoryTitleDisplay'); if (el) el.textContent = name;
+      document.querySelectorAll('#categoryTabs .tab-button').forEach(btn=>{
+        if (btn.dataset.category === name) btn.classList.add('active'); else btn.classList.remove('active');
+      });
+      currentPage = 1;
+      computeItemsByCategory();
+      renderCategoryTable();
+    }
+
+    function computeItemsByCategory(){
+      try{
+        const by = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
+        (Array.isArray(gradeItems)? gradeItems : []).forEach(it=>{
+          const catName = (gradeCategories||[]).find(c=> c.id === it.category_id)?.name;
+          if (by[catName]) by[catName].push(it);
+        });
+        Object.keys(by).forEach(k=>{ by[k].sort((a,b)=> (new Date(a.date_assigned||0)) - (new Date(b.date_assigned||0))); });
+        itemsByCategory = by;
+      }catch(e){ itemsByCategory = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] }; }
+    }
+
+    function pagedItems(){
+      const all = itemsByCategory[currentCategory] || [];
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      const start = (currentPage-1)*pageSize;
+      return all.slice(start, start+pageSize);
+    }
+
+    function totalPages(){
+      const all = itemsByCategory[currentCategory] || [];
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      return Math.max(1, Math.ceil(all.length / pageSize));
+    }
+
+    function gotoPage(p){
+      const tp = totalPages();
+      currentPage = Math.min(tp, Math.max(1, p));
+      renderCategoryTable();
+    }
+
+    function renderPager(){
+      const pager = document.getElementById('categoryPager');
+      if (!pager) return;
+      const tp = totalPages();
+      if (tp <= 1){ pager.innerHTML = ''; return; }
+      let html = `<button class="btn-secondary" ${currentPage===1?'disabled':''} onclick="gotoPage(${currentPage-1})">Prev</button>`;
+      for (let i=1;i<=tp;i++){
+        html += `<button class="btn-secondary ${i===currentPage?'active':''}" onclick="gotoPage(${i})">${i}</button>`;
+      }
+      html += `<button class="btn-secondary" ${currentPage===tp?'disabled':''} onclick="gotoPage(${currentPage+1})">Next</button>`;
+      pager.innerHTML = html;
+    }
+
+    async function renderCategoryTable(){
+      computeItemsByCategory();
+      const head = document.getElementById('categoryTableHead');
+      const body = document.getElementById('categoryTableBody');
+      if (!head || !body) return;
+      const allItems = itemsByCategory[currentCategory] || [];
+      const pageItems = pagedItems();
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      const startIndex = (currentPage-1) * pageSize;
+
+      const catLabel = currentCategory;
+      let headRow1 = `<tr>`;
+      headRow1 += `<th rowspan="2">Student Name</th>`;
+      // items + Total, PS, WS
+      headRow1 += `<th colspan="${pageSize + 3}">${catLabel}</th>`;
+      headRow1 += `<th rowspan="2">Initial Grade</th>`;
+      headRow1 += `<th rowspan="2">Quarterly Grade</th>`;
+      headRow1 += `<th rowspan="2">Comments</th>`;
+      headRow1 += `</tr>`;
+
+      let headRow2 = `<tr>`;
+      for (let i=0;i<pageSize;i++){
+        headRow2 += `<th>${startIndex + i + 1}</th>`;
+      }
+      headRow2 += `<th>Total</th><th>PS</th><th>WS</th>`;
+      headRow2 += `</tr>`;
+      head.innerHTML = headRow1 + headRow2;
+
+      if (!students || students.length === 0){
+        body.innerHTML = '<tr><td class="empty-text">No students enrolled</td></tr>';
+        renderPager();
+        return;
+      }
+      body.innerHTML = '';
+
+      // Build Highest Possible Score row (max scores per item)
+      const maxRow = document.createElement('tr');
+      let maxRowHtml = `<td class="student-name" style="font-weight:600;">Highest Possible Score</td>`;
+      const maxByItem = {};
+      pageItems.forEach(it=>{ if (it) maxByItem[it.id] = Number(it.max_score)||0; });
+      for (let i=0;i<pageSize;i++){
+        const it = pageItems[i];
+        maxRowHtml += `<td>${it ? (Number(it.max_score)||0) : ''}</td>`;
+      }
+      const totalMaxAll = (allItems||[]).reduce((acc,it)=> acc + (Number(it.max_score)||0), 0);
+      const catWeight = (function(){ try{ const c = (gradeCategories||[]).find(x=>x && x.name===currentCategory); return Number(c?.weight)||0; }catch{return 0;} })();
+      maxRowHtml += `<td>${totalMaxAll}</td><td>100%</td><td>${catWeight}%</td>`;
+      maxRow.innerHTML = maxRowHtml;
+      body.appendChild(maxRow);
+
+      students.forEach(stu=>{
+        const tr = document.createElement('tr');
+        tr.dataset.studentId = String(stu.id);
+        const name = stu.full_name || stu.name || 'Unknown Student';
+        let row = `<td class="student-name"><div class="student-info"><div class="student-avatar">${name.charAt(0).toUpperCase()}</div><div>${name}</div></div></td>`;
+        // One input per item cell on the page
+        for (let i=0;i<pageSize;i++){
+          const it = pageItems[i];
+          if (it){
+            const itemId = it.id;
+            const key = `score:${itemId}:${stu.id}`;
+            const cached = sessionStorage.getItem(key);
+            const val = cached!=null ? cached : '';
+            row += `<td><input type="number" class="score-input" min="0" step="0.01" data-item="${itemId}" data-student="${stu.id}" value="${val}" onchange="saveScore(this)" placeholder="0"></td>`;
+          } else {
+            row += `<td></td>`;
+          }
+        }
+        // Totals for the entire category (across all items)
+        const allItemIds = (allItems||[]).map(x=>x.id);
+        let sumScores = 0;
+        allItemIds.forEach(id=>{
+          const k = `score:${id}:${stu.id}`;
+          const v = Number(sessionStorage.getItem(k) || '0');
+          sumScores += isNaN(v) ? 0 : v;
+        });
+        const ps = totalMaxAll>0 ? (sumScores/totalMaxAll)*100 : 0;
+        const ws = (ps * catWeight) / 100;
+        row += `<td>${sumScores} / ${totalMaxAll}</td>`;
+        row += `<td>${ps.toFixed(2)}%</td>`;
+        row += `<td>${ws.toFixed(2)}</td>`;
+
+        const ig =  (function(){ try{ return Number(calculateInitialGrade(stu.grades||{pt:{score:0,max:100},ww:{score:0,max:100},pe:{score:0,max:100}})||0);}catch{return 0;} })();
+        const qg = (function(){ try{ return Number(transmuteGrade ? transmuteGrade(ig) : ig)||0;}catch{return ig;} })();
+        row += `<td class="initial-grade">${ig.toFixed(2)}</td>`;
+        row += `<td class="quarterly-grade">${qg.toFixed(2)}</td>`;
+        const comm = (stu.comment||'').toString().slice(0,25);
+        row += `<td><input type="text" maxlength="25" class="comment-input" data-student="${stu.id}" value="${comm}" placeholder="Add comment..." onchange="updateComment(${stu.id}, this.value)"></td>`;
+        tr.innerHTML = row;
+        body.appendChild(tr);
+      });
+      renderPager();
+    }
+
+    async function saveScore(el){
+      try{
+        const studentId = el.getAttribute('data-student');
+        const itemId = el.getAttribute('data-item');
+        const v = Number(el.value||0);
+        sessionStorage.setItem(`score:${itemId}:${studentId}`, String(v));
+        if (!subjectId || !window.API_BASE) return;
+        const payload = { grade_item_id: Number(itemId), student_id: Number(studentId), score: v };
+        await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+      }catch(e){ console.warn('Failed to save score', e); }
+    }
+    
     // Grade transmutation table (DepEd standard)
     const transmutationTable = {
       100: 100, 99: 99, 98: 98, 97: 97, 96: 96, 95: 95,
@@ -176,6 +344,11 @@
       
       loadGradeWeights();
       loadStudents();
+      loadGradeCategories();
+      loadGradeItems();
+      // Initial category render
+      computeItemsByCategory();
+      renderCategoryTable();
       
       // Setup weight input listeners
       ['weightPT', 'weightWW', 'weightPE'].forEach(id => {
@@ -280,7 +453,7 @@
           <td class="percentage">${student.grades.pe.max > 0 ? ((student.grades.pe.score / student.grades.pe.max) * 100).toFixed(1) : '0.0'}%</td>
           <td class="initial-grade">${initialGrade.toFixed(2)}</td>
           <td class="quarterly-grade">${quarterlyGrade.toFixed(2)}</td>
-          <td><input type="text" class="comment-input" data-student="${student.id}" value="${student.comment || ''}" placeholder="Add comment..." onchange="updateComment(${student.id}, this.value)"></td>
+          <td><input type="text" maxlength="25" class="comment-input" data-student="${student.id}" value="${(student.comment || '').toString().slice(0,25)}" placeholder="Add comment..." onchange="updateComment(${student.id}, this.value)"></td>
           <td class="actions">
             <button class="btn-delete" onclick="removeStudent(${student.id})">Remove</button>
           </td>
@@ -394,7 +567,11 @@
     function updateComment(studentId, comment) {
       const student = students.find(s => s.id == studentId);
       if (student) {
-        student.comment = comment;
+        const trimmed = (comment || '').toString().slice(0,25);
+        // enforce input box reflects limit
+        const input = document.querySelector(`input.comment-input[data-student="${studentId}"]`);
+        if (input && input.value !== trimmed) input.value = trimmed;
+        student.comment = trimmed;
         saveStudentGrades(studentId);
       }
     }
@@ -435,6 +612,7 @@
       // Reload data
       loadGradeWeights();
       loadStudents();
+      loadGradeItems();
     }
     
     // Update weight display
@@ -555,839 +733,28 @@
     }
 
     function loadGradeItems() {
-      // Show loading state in all tables
-      const tables = ['ptTable', 'wwTable', 'peTable'];
-      tables.forEach(tableId => {
-        const tbody = document.querySelector(`#${tableId} tbody`);
-        if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="8" class="loading-text">Loading grade items...</td></tr>';
-        }
-      });
-      
-      // Try multiple endpoints
-      const urls = [
-        `${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/classes/${subjectId}/items?quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/grade-items?subject_id=${subjectId}&quarter=${currentQuarter}`
-      ];
-      
-      async function tryLoadGradeItems() {
-        let lastError;
-        let hasData = false;
-        
-        for (const url of urls) {
-          try {
-            const res = await fetch(url, { headers: (typeof authHeaders==='function'? authHeaders() : {}) });
-            if (res.ok) {
-              const data = await res.json();
-              if (!data || (Array.isArray(data) && data.length === 0)) {
-                console.warn(`Empty data returned from ${url}`);
-                // Treat empty response as valid (no items) rather than trying fallback URLs
-                gradeItems = [];
-                hasData = true;
-                break; // Exit the loop, we have valid data (even if empty)
-              }
-              gradeItems = Array.isArray(data) ? data : data.items || [];
-              hasData = true;
-              
-              // Clear all tables first
-              tables.forEach(tableId => {
-                const tbody = document.querySelector(`#${tableId} tbody`);
-                if (tbody) tbody.innerHTML = '';
-              });
-              
-              if (gradeItems.length === 0) {
-                tables.forEach(tableId => {
-                  const tbody = document.querySelector(`#${tableId} tbody`);
-                  if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No grade items found for this quarter</td></tr>';
-                  }
-                });
-              } else {
-                // Populate tables by category
-                gradeItems.forEach(item => {
-                  const categoryName = gradeCategories.find(cat => cat.id === item.category_id)?.name;
-                  let tableId;
-                  
-                  if (categoryName === 'Performance Task') tableId = 'ptTable';
-                  else if (categoryName === 'Written Works') tableId = 'wwTable';
-                  else if (categoryName === 'Periodical Exam') tableId = 'peTable';
-                  else return;
-                  
-                  const tbody = document.querySelector(`#${tableId} tbody`);
-                  if (!tbody) return;
-                  
-                  // Clear empty state if this is the first item for this table
-                  if (tbody.querySelector('.empty-state')) {
-                    tbody.innerHTML = '';
-                  }
-                  
-                  const row = document.createElement('tr');
-                  const dateAssigned = item.date_assigned ? new Date(item.date_assigned).toLocaleDateString() : 'N/A';
-                  
-                  const uiScore = getUIScore(item.id);
-                  const uiComment = getUIComment(item.id);
-                  row.dataset.itemId = String(item.id || '');
-                  row.dataset.title = item.title || '';
-                  row.dataset.topic = item.topic || '';
-                  row.dataset.score = String(item.score);
-                  row.dataset.maxScore = String(item.max_score || 0);
-                  row.dataset.dateAssigned = item.date_assigned || '';
-                  row.dataset.categoryName = categoryName || '';
-                  row.dataset.comment = (item.comment || item.comments || uiComment || '').toString();
-                  if (uiScore!=null && uiScore!=='') { row.dataset.score = String(uiScore); }
-                  row.innerHTML = `
-                    <td>${item.title || 'Untitled'}</td>
-                    <td>${item.topic || 'N/A'}</td>
-                    <td>${(uiScore!=null && uiScore!=='') ? uiScore : (item.score != null && item.score !== '' ? item.score : '-')}</td>
-                    <td>${item.max_score || 0}</td>
-                    <td>${dateAssigned}</td>
-                    <td>${categoryName || 'N/A'}</td>
-                    <td>${(item.comment || item.comments || uiComment || '').toString().slice(0,140)}</td>
-                    <td class="action-buttons">
-                      <button class="btn-delete" onclick="deleteGradeItem(${item.id})">Delete</button>
-                    </td>
-                  `;
-                  
-                  tbody.appendChild(row);
-                });
-                
-                // Set empty state for tables that have no items
-                tables.forEach(tableId => {
-                  const tbody = document.querySelector(`#${tableId} tbody`);
-                  if (tbody && tbody.children.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No items in this category</td></tr>';
-                  }
-                });
-
-                // If a student is present in URL, load their scores and populate the Score/Comment columns
-                if (getCurrentStudentId() || role === 'teacher') {
-                  loadStudentScoresForItems().catch(e => console.warn('Non-fatal: failed to load student scores', e));
-                }
-
-                async function loadStudentScoresForItems() {
-                  if (!window.API_BASE || !subjectId || !getCurrentStudentId()) return;
-                          
-                  const res = await fetch(
-                    `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`,
-                    { headers: (typeof authHeaders==='function'? authHeaders() : {}) }
-                  );
-                          
-                  if (!res.ok) throw new Error('Failed to load student scores');
-                          
-                  const data = await res.json();
-                  if (!data || (!Array.isArray(data) && !data.scores)) throw new Error('Invalid or empty scores data');
-                          
-                  const scores = Array.isArray(data) ? data : (data.scores || []);
-                  const byItem = {};
-                          
-                  scores.forEach(sc => {
-                    const gid = Number(sc.grade_item_id ?? sc.item_id);
-                    const score =
-                      sc.score ?? sc.value ?? sc.points ?? sc.grade ?? null; // fallback for API variations
-                    const comment =
-                      sc.comments ?? sc.comment ?? sc.remark ?? ''; // common fallback keys
-                    if (!isNaN(gid)) byItem[gid] = { score, comment };
-                  });
-                
-                  ['ptTable', 'wwTable', 'peTable'].forEach(tid => {
-                    const tb = document.querySelector(`#${tid} tbody`);
-                    if (!tb) return;
-
-                    tb.querySelectorAll('tr[data-item-id]').forEach(tr => {
-                      const iid = Number(tr.dataset.itemId);
-                      if (!isNaN(iid) && byItem[iid]) {
-                        const { score, comments } = byItem[iid];
-                        const tds = tr.querySelectorAll('td');
-                        if (tds[2]) tds[2].textContent = score ?? '-';
-                        if (tds[6]) {
-                          const cleanComment = (comments || '')
-                            .toString()
-                            .replace(/^"|"$/g, ''); // remove surrounding quotes
-                          tds[6].textContent = cleanComment && cleanComment.trim() !== '' ? cleanComment : '-';
-                        }
-                      }
-                    });
-                  });
-              }
-
-              }
-              
-              // Update grade item select for student scoring
-              updateGradeItemSelect();
-              return; // Success, exit
-            }
-          } catch (err) {
-            lastError = err;
-            console.warn(`Failed to load from ${url}:`, err);
-          }
-        }
-        
-        // Only throw error if we didn't get any valid response
-        if (!hasData) {
-          throw lastError || new Error('All grade items endpoints failed');
-        } else {
-          // Render empty state if we have valid data but no items
-          if (gradeItems.length === 0) {
-            tables.forEach(tableId => {
-              const tbody = document.querySelector(`#${tableId} tbody`);
-              if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No items in this category</td></tr>';
-              }
-            });
-          }
-        }
-      }
-      
-      tryLoadGradeItems().catch(err => {
-        console.error('Error loading grade items:', err);
-
-        // Only show error if nothing was rendered
-        const hasAnyRow = ['ptTable','wwTable','peTable'].some(id => {
-          const tb = document.querySelector(`#${id} tbody`);
-          return tb && tb.querySelector('tr[data-item-id]');
-        });
-
-        if (!hasAnyRow) {
-          ['ptTable','wwTable','peTable'].forEach(tableId => {
-            const tbody = document.querySelector(`#${tableId} tbody`);
-            if (tbody) {
-              tbody.innerHTML = '<tr><td colspan="8" class="error-state">Failed to load grade items. Please refresh the page.</td></tr>';
-            }
-          });
-          showErrorMessage('Unable to load grade items. Please refresh the page or contact support.');
-        } else {
-          console.warn('Suppressed error UI because data was already loaded.');
-        }
-      });
-    }
-    
-    function loadStudentGrades() {
-      const selEl = document.getElementById('studentSelect');
-      selectedStudentId = (selEl ? selEl.value : '') || getCurrentStudentId();
-      updateSelectedStudentDisplay();
-      
-      const tbody = document.querySelector('#studentGradesTable tbody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="loading-text">Loading student grades...</td></tr>';
-
-      if (!selectedStudentId) {
-        document.getElementById('studentGradesSection').classList.add('hidden');
-        updateSelectedStudentDisplay();
-        return;
-      }
-      
-      // Try multiple endpoints
-      const urls = [
-        `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${getCurrentStudentId()}&quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/student-grades?subject_id=${subjectId}&student_id=${selectedStudentId}&quarter=${currentQuarter}`,
-        `${window.API_BASE}/api/grades?subject=${subjectId}&student=${selectedStudentId}&quarter=${currentQuarter}`
-      ];
-      
-      async function tryLoadStudentGrades() {
-        let lastError;
-        
-        for (const url of urls) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const data = await res.json();
-              if (!data || (Array.isArray(data) && data.length === 0)) {
-                console.warn(`Empty data returned from ${url}`);
-                continue; // try next fallback URL
-              }
-              const scores = Array.isArray(data) ? data : data.scores || [];
-              
-              const tbody = document.querySelector('#studentGradesTable tbody');
-              if (!tbody) return;
-              
-              tbody.innerHTML = '';
-              
-              if (scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No grades recorded for this student</td></tr>';
-              } else {
-                scores.forEach(score => {
-                  const item = gradeItems.find(item => item.id === score.grade_item_id);
-                  if (!item) return;
-                  
-                  // Filter by view mode if specified
-                  const included = !!item.included_in_final;
-                  if (viewMode === 'final' && !included) return;
-                  if (viewMode === 'assessment' && included) return;
-                  
-                  const row = document.createElement('tr');
-                  const percentage = item.max_score > 0 ? ((score.score / item.max_score) * 100).toFixed(1) : '0.0';
-                  
-                  row.innerHTML = `
-                    <td>${item.title || 'Untitled'}</td>
-                    <td>${score.score || 0}</td>
-                    <td>${item.max_score || 0}</td>
-                    <td>${percentage}%</td>
-                    <td>${score.comments || ''}</td>
-                    <td class="action-buttons">
-                      <button class="btn-edit" onclick="editStudentScore(${score.id}, ${score.grade_item_id}, ${score.score}, \`${(score.comments || '').replace(/`/g, '\\`')}\`)">Edit</button>
-                      <button class="btn-delete" onclick="deleteStudentScore(${score.id})">Delete</button>
-                    </td>
-                  `;
-                  
-                  tbody.appendChild(row);
-                });
-              }
-              
-              document.getElementById('studentGradesSection').classList.remove('hidden');
-              document.dispatchEvent(new Event('grades:loaded'));
-              return; // Success
-            }
-          } catch (err) {
-            lastError = err;
-            console.warn(`Failed to load from ${url}:`, err);
-          }
-        }
-        
-        throw lastError || new Error('All student grades endpoints failed');
-      }
-      
-      tryLoadStudentGrades().catch(err => {
-        console.error('Error loading student grades:', err);
-        const tbody = document.querySelector('#studentGradesTable tbody');
-        if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="6" class="error-state">Failed to load student grades. Please try again.</td></tr>';
-        }
-      });
-    }
-    
-    function toggleScoreForm(show) {
-      const form = document.getElementById('addScoreForm');
-      if (show) {
-        form.style.display = 'block';
-        editingScoreId = null;
-        
-        // Reset form
-        document.getElementById('scoreValue').value = '';
-        document.getElementById('scoreComments').value = '';
-        
-        // Update max score based on selected item
-        updateMaxScore();
-      } else {
-        form.style.display = 'none';
-      }
-    }
-    
-    function updateGradeItemSelect() {
-      const select = document.getElementById('gradeItemSelect');
-      select.innerHTML = '';
-      
-      gradeItems.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = item.title;
-        option.dataset.maxScore = item.max_score;
-        select.appendChild(option);
-      });
-      
-      updateMaxScore();
-    }
-    
-    function updateMaxScore() {
-      const select = document.getElementById('gradeItemSelect');
-      const maxScoreInput = document.getElementById('scoreMaxValue');
-      
-      if (select.options.length > 0) {
-        const selectedOption = select.options[select.selectedIndex];
-        maxScoreInput.value = selectedOption.dataset.maxScore;
-      }
-    }
-    
-    // --- Save/update functions ---
-    function saveWeights() {
-      const ptWeight = parseFloat(document.getElementById('weightPT').value);
-      const wwWeight = parseFloat(document.getElementById('weightWW').value);
-      const peWeight = parseFloat(document.getElementById('weightPE').value);
-      
-      // Validate weights add up to 100%
-      const totalWeight = ptWeight + wwWeight + peWeight;
-      if (Math.abs(totalWeight - 100) > 0.01) {
-        alert('Weights must add up to 100%');
-        return;
-      }
-      
-      const categories = [
-        { name: 'Performance Task', weight: ptWeight, quarter: currentQuarter },
-        { name: 'Written Works', weight: wwWeight, quarter: currentQuarter },
-        { name: 'Periodical Exam', weight: peWeight, quarter: currentQuarter }
-      ];
       if (!window.API_BASE || !subjectId) {
         console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
         return;
       }
-
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categories })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to save weights');
-        return res.json();
-      })
-      .then(() => {
-        alert('Grade weights saved successfully');
-        loadGradeCategories();
-      })
-      .catch(err => {
-        console.error('Error saving weights:', err);
-        alert('Failed to save weights. Please try again.');
-      });
-    }
-    
-    async function ensureCategoriesForItemType(itemType){
-      try{
-        const required = ['Performance Task','Written Works','Periodical Exam'];
-        const haveAll = Array.isArray(gradeCategories) && required.every(n => gradeCategories.some(c => c && c.name === n));
-        if (!haveAll){
-          const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
-          const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
-          const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
-          const total = ptWeight + wwWeight + peWeight;
-          if (Math.abs(total - 100) > 0.01){
-            alert('Weights must add up to 100%');
-            return null;
-          }
-          const categories = [
-            { name:'Performance Task', weight: ptWeight, quarter: currentQuarter },
-            { name:'Written Works', weight: wwWeight, quarter: currentQuarter },
-            { name:'Periodical Exam', weight: peWeight, quarter: currentQuarter }
-          ];
-          const res = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
-            method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ categories })
-          });
-          if (!res.ok) throw new Error('Failed to save weights');
-          // Refresh local categories
-          const getRes = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${currentQuarter}`);
-          if (getRes.ok){ gradeCategories = await getRes.json(); }
-          // Update headers with latest weights
-          (function(){
-            try{
-              const ptCategory = gradeCategories.find(cat => cat.name === 'Performance Task');
-              const wwCategory = gradeCategories.find(cat => cat.name === 'Written Works');
-              const peCategory = gradeCategories.find(cat => cat.name === 'Periodical Exam');
-              const ptW = document.getElementById('ptWeight');
-              const wwW = document.getElementById('wwWeight');
-              const peW = document.getElementById('peWeight');
-              if (ptW && ptCategory) ptW.textContent = ptCategory.weight;
-              if (wwW && wwCategory) wwW.textContent = wwCategory.weight;
-              if (peW && peCategory) peW.textContent = peCategory.weight;
-            }catch{}
-          })();
-        }
-        const c = gradeCategories.find(cat => cat && cat.name === itemType);
-        return c ? c.id : null;
-      }catch(err){ console.error('ensureCategoriesForItemType error:', err); return null; }
-    }
-    
-    async function saveGradeItem() {
-      const title = document.getElementById('itemTitle').value.trim();
-      const topic = document.getElementById('itemTopic').value.trim();
-      const itemType = document.getElementById('itemType').value;
-      const maxScore = parseFloat(document.getElementById('maxScore').value);
-      const dateAssigned = document.getElementById('dateAssigned').value;
-      const scoreValue = parseFloat(document.getElementById('itemScore').value);
-      const comment = document.getElementById('itemComment').value.trim();
-      const includedInFinal = true;
-      
-      if (!title) { alert('Title is required'); return; }
-      if (isNaN(maxScore) || maxScore <= 0) { alert('Max score must be a positive number'); return; }
-      
-      // Determine or create category id
-      let categoryId;
-      if (itemType === 'Performance Task') {
-        categoryId = gradeCategories.find(cat => cat.name === 'Performance Task')?.id;
-      } else if (itemType === 'Written Works') {
-        categoryId = gradeCategories.find(cat => cat.name === 'Written Works')?.id;
-      } else if (itemType === 'Periodical Exam') {
-        categoryId = gradeCategories.find(cat => cat.name === 'Periodical Exam')?.id;
-      }
-      if (!categoryId) {
-        categoryId = await ensureCategoriesForItemType(itemType);
-      }
-      if (!categoryId) { return; }
-      
-      const item = {
-        title,
-        topic,
-        item_type: itemType,
-        max_score: maxScore,
-        date_assigned: dateAssigned,
-        included_in_final: includedInFinal,
-        category_id: categoryId,
-        comment
-      };
-      if (editingItemId) { item.id = editingItemId; }
-      
-      // No optimistic item row creation to avoid duplicates; rely on reload after save
-      if (!isNaN(scoreValue) && editingItemId){ setUIScore(editingItemId, Number(scoreValue)); }
-      if (editingItemId){ setUIComment(editingItemId, comment); }
-      
-      const isEditing = !!editingItemId;
-      const url = isEditing ? `${window.API_BASE}/api/subjects/${subjectId}/items/${editingItemId}` : `${window.API_BASE}/api/subjects/${subjectId}/items`;
-      const method = isEditing ? 'PUT' : 'POST';
-      const payload = isEditing ? item : { items: [item] };
-      
-      if (!window.API_BASE || !subjectId) {
-        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
-        return;
-      }
-
-
-      fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      .then(res => { if (!res.ok) throw new Error('Failed to save grade item'); return res.json().catch(()=>({})); })
-      .then(async (_saved) => {
-        alert('Grade item saved successfully');
-        // Reload items to get authoritative list with IDs
-        await loadGradeItems();
-        toggleAddForm(false);
-        editingItemId = null;
-
-        // If a student is selected and an initial score/comment was provided, resolve the new item's id and post the score
-        if (getCurrentStudentId() && !isNaN(scoreValue)){
-          try{
-            const listRes = await fetch(`${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`);
-            if (listRes.ok){
-              const data = await listRes.json();
-              const itemsList = Array.isArray(data) ? data : (data.items || []);
-              // Find the most recent item matching the submitted fields
-              const match = itemsList
-                .filter(i => (i.title||'')===title && (i.topic||'')===topic && Number(i.max_score)===Number(maxScore))
-                .sort((a,b)=> new Date(b.date_assigned||0) - new Date(a.date_assigned||0))[0];
-              const resolvedId = match?.id;
-              if (resolvedId){
-                await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ grade_item_id: resolvedId, student_id: getCurrentStudentId(), score: scoreValue, comments: comment })
-                });
-                // Update UI caches for immediate reflect
-                setUIScore(resolvedId, scoreValue);
-                setUIComment(resolvedId, comment);
-                await loadStudentGrades();
-              }
-            }
-          }catch(err){ console.warn('Failed to resolve new item id or save initial score:', err); }
-        }
-      })
-      .catch(err => { console.error('Error saving grade item:', err); alert('Failed to save grade item. Please try again.'); });
-    }
-    
-    function saveStudentScore() {
-      const gradeItemId = document.getElementById('gradeItemSelect').value;
-      const score = parseFloat(document.getElementById('scoreValue').value);
-      const maxScore = parseFloat(document.getElementById('scoreMaxValue').value);
-      const comments = document.getElementById('scoreComments').value.trim();
-      
-      if (isNaN(score)) {
-        alert('Score is required and must be a number');
-        return;
-      }
-      
-      if (score < 0 || score > maxScore) {
-        alert(`Score must be between 0 and ${maxScore}`);
-        return;
-      }
-      
-      const scoreData = {
-        grade_item_id: gradeItemId,
-        student_id: selectedStudentId,
-        score,
-        comments
-      };
-      
-      if (!confirm('Save this score?')) return;
-      if (!window.API_BASE || !subjectId) {
-        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
-        return;
-      }
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(scoreData)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to save score');
-        return res.json();
-      })
-      .then(() => {
-        alert('Score saved successfully');
-        toggleScoreForm(false);
-        loadStudentGrades();
-        loadGradeItems();
-      })
-      .catch(err => {
-        console.error('Error saving score:', err);
-        alert('Failed to save score. Please try again.');
-      });
-    }
-    
-    // --- Edit/delete functions ---
-    function editGradeItem(id, el) {
-      let item = gradeItems.find(item => item.id === id);
-      // DOM fallback if not found (optimistic rows before reload)
-      if (!item && el){
-        const tr = el.closest('tr');
-        if (tr){
-          item = {
-            id: Number(tr.dataset.itemId) || id,
-            title: tr.dataset.title || '',
-            topic: tr.dataset.topic || '',
-            item_type: tr.dataset.categoryName || 'Performance Task',
-            max_score: Number(tr.dataset.maxScore) || 0,
-            date_assigned: tr.dataset.dateAssigned || '',
-            included_in_final: true,
-            category_id: (function(){ const c=gradeCategories.find(cat=>cat.name===(tr.dataset.categoryName||'Performance Task')); return c?c.id:null; })(),
-            comment: tr.dataset.comment || ''
-          };
-        }
-      }
-      if (!item) return;
-      
-      editingItemId = id;
-      
-      document.getElementById('itemTitle').value = item.title;
-      document.getElementById('itemTopic').value = item.topic || '';
-      // Map category_id to select value (Performance Task, Written Works, Periodical Exam)
-      (function(){
-        try{
-          const cat = item.category_id ? gradeCategories.find(c=> c.id === item.category_id) : gradeCategories.find(c=> c.name === (item.item_type || item.itemType));
-          const name = cat ? cat.name : (item.item_type || 'Performance Task');
-          document.getElementById('itemType').value = name;
-        }catch{ document.getElementById('itemType').value = 'Performance Task'; }
-      })();
-      document.getElementById('maxScore').value = item.max_score;
-      // includedInFinal field may not exist in the form; guard it
-      try{ const inc=document.getElementById('includedInFinal'); if (inc) inc.value = item.included_in_final ? 'true' : 'false'; }catch{}
-      
-      if (item.date_assigned) {
-        document.getElementById('dateAssigned').value = item.date_assigned.split('T')[0];
-      }
-      // Load UI-only score into the form if present
-      const us = getUIScore(id);
-      const sEl = document.getElementById('itemScore'); if (sEl) sEl.value = (us!=null? us : '');
-      
-      toggleAddForm(true);
-    }
-    
-    function deleteGradeItem(id) {
-      if (!confirm('Are you sure you want to delete this grade item? This will also delete all associated scores.')) {
-        return;
-      }
-      if (!window.API_BASE || !subjectId) {
-        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
-        return;
-      }
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/items/${id}`, { method: 'DELETE' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to delete grade item');
-        return res.json();
-      })
-      .then(() => {
-        alert('Grade item deleted successfully');
-        loadGradeItems();
-      })
-      .catch(err => {
-        console.error('Error deleting grade item:', err);
-        alert('Failed to delete grade item. Please try again.');
-      });
-    }
-    
-    function editStudentScore(id, gradeItemId, scoreValue, comments) {
-      editingScoreId = id;
-      
-      document.getElementById('gradeItemSelect').value = gradeItemId;
-      document.getElementById('scoreValue').value = scoreValue;
-      document.getElementById('scoreComments').value = comments;
-      
-      updateMaxScore();
-      toggleScoreForm(true);
-    }
-    
-    function deleteStudentScore(id) {
-      if (!confirm('Are you sure you want to delete this score?')) {
-        return;
-      }
-      if (!window.API_BASE || !subjectId) {
-        console.error('Missing API_BASE or subjectId. Aborting loadGradeItems.');
-        return;
-      }
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores/${id}`, { method: 'DELETE' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to delete score');
-        return res.json();
-      })
-      .then(() => {
-        alert('Score deleted successfully');
-        loadStudentGrades();
-      })
-      .catch(err => {
-        console.error('Error deleting score:', err);
-      });
-    }
-    
-    // Initialize the page
-  document.addEventListener('DOMContentLoaded', function() {
-      // Add event listeners for weight inputs
-      const weightInputs = ['weightPT', 'weightWW', 'weightPE'];
-      weightInputs.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-          input.addEventListener('input', updateTotalWeight);
-          input.addEventListener('change', updateTotalWeight);
-        }
-      });
-      
-      // Add event listener for student selection
-      const studentSelect = document.getElementById('studentSelect');
-      if (studentSelect) {
-        studentSelect.addEventListener('change', function() {
-          selectedStudentId = this.value;
-          loadGradeItems();   // reload main table with correct scores
-          loadStudentGrades();
-          updateSelectedStudentDisplay();
-        });
-      }
-      
-      // Add event listener for grade item select
-      const gradeItemSelect = document.getElementById('gradeItemSelect');
-      if (gradeItemSelect) {
-        gradeItemSelect.addEventListener('change', updateMaxScore);
-      }
-      
-      // Apply read-only mode if requested
-      if (readOnlyMode) {
-        document.querySelectorAll('.action-buttons').forEach(el => el.style.display = 'none');
-        const addItemBtn = document.getElementById('addItemBtn'); if (addItemBtn) addItemBtn.style.display = 'none';
-        const addScoreBtn = document.getElementById('addScoreBtn'); if (addScoreBtn) addScoreBtn.style.display = 'none';
-        const saveWeightsBtn = document.getElementById('saveWeightsBtn'); if (saveWeightsBtn) saveWeightsBtn.style.display = 'none';
-        weightInputs.forEach(id => {
-          const input = document.getElementById(id);
-          if (input) input.readOnly = true;
-        });
-      }
-      
-      // Initialize page data
-      init();
-      
-      // Update total weight on page load
-      updateTotalWeight();
-
-      // Initialize tab switching for graded vs assessment
-      const tabs = document.querySelectorAll('.tabs .tab');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          const which = tab.getAttribute('data-tab');
-          const graded = document.getElementById('gradedContent');
-          const assess = document.getElementById('assessmentContent');
-          if (graded && assess){
-            graded.classList.toggle('active', which === 'graded');
-            assess.classList.toggle('active', which === 'assessment');
-          }
-        });
-      });
-    });
-  </script>  
-  <script>
-    // Update weight display
-    function updateWeightDisplay() {
-      const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
-      const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
-      const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
-      const total = ptWeight + wwWeight + peWeight;
-      
-      document.getElementById('ptWeightDisplay').textContent = ptWeight;
-      document.getElementById('wwWeightDisplay').textContent = wwWeight;
-      document.getElementById('peWeightDisplay').textContent = peWeight;
-      document.getElementById('totalWeight').textContent = total + '%';
-      document.getElementById('totalWeight').style.color = total === 100 ? '#059669' : '#dc2626';
-      
-      gradeWeights = { pt: ptWeight, ww: wwWeight, pe: peWeight };
-      
-      // Recalculate all student grades
-      students.forEach(student => {
-        updateStudentRow(student.id);
-      });
-    }
-    
-    // Save weights
-    function saveWeights() {
-      const ptWeight = parseFloat(document.getElementById('weightPT').value) || 0;
-      const wwWeight = parseFloat(document.getElementById('weightWW').value) || 0;
-      const peWeight = parseFloat(document.getElementById('weightPE').value) || 0;
-      
-      if (Math.abs((ptWeight + wwWeight + peWeight) - 100) > 0.01) {
-        alert('Weights must add up to 100%');
-        return;
-      }
-      
-      const categories = [
-        { name: 'Performance Task', weight: ptWeight, quarter: currentQuarter },
-        { name: 'Written Works', weight: wwWeight, quarter: currentQuarter },
-        { name: 'Periodical Exam', weight: peWeight, quarter: currentQuarter }
-      ];
-      
-      if (!window.API_BASE || !subjectId) return;
-      
-      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categories })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to save weights');
-        return res.json();
-      })
-      .then(() => {
-        alert('Grade weights saved successfully');
-        updateWeightDisplay();
-      })
-      .catch(err => {
-        console.error('Error saving weights:', err);
-        alert('Failed to save weights. Please try again.');
-      });
-    }
-    
-    // Add new student
-    function addNewStudent() {
-      const name = prompt('Enter student name:');
-      if (!name || !name.trim()) return;
-      
-      const newStudent = {
-        id: Date.now(), // Temporary ID
-        full_name: name.trim(),
-        grades: {
-          pt: { score: 0, max: 100 },
-          ww: { score: 0, max: 100 },
-          pe: { score: 0, max: 100 }
-        },
-        comment: ''
-      };
-      
-      students.push(newStudent);
-      renderStudentTable();
-      
-      // Save to backend
-      if (window.API_BASE && subjectId) {
-        fetch(`${window.API_BASE}/api/subjects/${subjectId}/enroll`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ student_name: name.trim() })
-        })
-        .then(res => res.json())
+      const url = `${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`;
+      fetch(url, { headers: (typeof authHeaders==='function' ? authHeaders() : {}) })
+        .then(res => res.ok ? res.json() : [])
         .then(data => {
-          if (data.id) {
-            newStudent.id = data.id; // Update with real ID
-            saveStudentGrades(data.id);
+          gradeItems = Array.isArray(data) ? data : (data.items || []);
+          computeItemsByCategory();
+          const len = (itemsByCategory[currentCategory] || []).length;
+          if (len > 0 && len % 5 === 1 && len > 5) {
+            currentPage = totalPages();
           }
+          renderCategoryTable();
         })
-        .catch(err => console.error('Error enrolling student:', err));
-      }
+        .catch(err => {
+          console.error('Error loading grade items:', err);
+          gradeItems = [];
+          computeItemsByCategory();
+          renderCategoryTable();
+        });
     }
     
     // Remove student

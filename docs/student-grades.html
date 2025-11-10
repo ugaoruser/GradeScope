@@ -108,7 +108,7 @@
       
       <div class="grade-summary">
         <div class="grade-display">
-          <div class="grade-label">Estimated Final Grade:</div>
+          <div class="grade-label">Quarterly Grade:</div>
           <div class="grade-value" id="finalGrade">N/A</div>
         </div>
         <div class="grade-progress">
@@ -148,6 +148,33 @@
   </div>
 
   <script>
+    // DepEd-style transmutation table (for converting initial grade to quarterly grade)
+    const transmutationTable = {
+      100: 100, 99: 99, 98: 98, 97: 97, 96: 96, 95: 95,
+      94: 94, 93: 93, 92: 92, 91: 91, 90: 90,
+      89: 89, 88: 88, 87: 87, 86: 86, 85: 85,
+      84: 84, 83: 83, 82: 82, 81: 81, 80: 80,
+      79: 79, 78: 78, 77: 77, 76: 76, 75: 75,
+      74: 74, 73: 73, 72: 72, 71: 71, 70: 70,
+      69: 69, 68: 68, 67: 67, 66: 66, 65: 65,
+      64: 64, 63: 63, 62: 62, 61: 61, 60: 60,
+      59: 59, 58: 58, 57: 57, 56: 56, 55: 55,
+      54: 54, 53: 53, 52: 52, 51: 51, 50: 50,
+      49: 49, 48: 48, 47: 47, 46: 46, 45: 45,
+      44: 44, 43: 43, 42: 42, 41: 41, 40: 40,
+      39: 39, 38: 38, 37: 37, 36: 36, 35: 35,
+      34: 34, 33: 33, 32: 32, 31: 31, 30: 30,
+      29: 29, 28: 28, 27: 27, 26: 26, 25: 25,
+      24: 24, 23: 23, 22: 22, 21: 21, 20: 20,
+      19: 75, 18: 74, 17: 73, 16: 72, 15: 71,
+      14: 70, 13: 69, 12: 68, 11: 67, 10: 66,
+      9: 65, 8: 64, 7: 63, 6: 62, 5: 61,
+      4: 60, 3: 60, 2: 60, 1: 60, 0: 60
+    };
+    function transmute(initial){
+      const r = Math.round(Math.max(0, Math.min(100, Number(initial)||0)));
+      return transmutationTable[r] || 60;
+    }
     // Populate account dropdown from cache (fast) and backfill from /api/me if missing
     (async function(){
       try{
@@ -427,13 +454,13 @@
         }
       });
       
-      let finalGrade = 0;
-      
-      if (ptMax > 0) finalGrade += (ptTotal / ptMax) * ptWeight * 100;
-      if (wwMax > 0) finalGrade += (wwTotal / wwMax) * wwWeight * 100;
-      if (peMax > 0) finalGrade += (peTotal / peMax) * peWeight * 100;
-      
-      document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
+      let initial = 0;
+      if (ptMax > 0) initial += (ptTotal / ptMax) * ptWeight * 100;
+      if (wwMax > 0) initial += (wwTotal / wwMax) * wwWeight * 100;
+      if (peMax > 0) initial += (peTotal / peMax) * peWeight * 100;
+
+      const quarterly = transmute(initial);
+      document.getElementById('finalGrade').textContent = Number(quarterly).toFixed(2);
     }
 
     

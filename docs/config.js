@@ -303,10 +303,17 @@ window.API_BASE = (function(){
         try{
           if (Page.is('homepage1.html')) loadClasses();
           if (Page.is('homepage2.html')) loadTeacherSubjects();
+          // Refresh teacher-grades student list on enrollment updates
+          if (Page.is('teacher-grades.html') && typeof window.loadStudents === 'function') {
+            window.loadStudents();
+          }
         }catch(e){}
       }, 400);
       sse.addEventListener('classCreated', refresh);
-      sse.addEventListener('enrollmentUpdated', refresh);
+      sse.addEventListener('enrollmentUpdated', (ev)=>{
+        try { document.dispatchEvent(new CustomEvent('enrollment:updated', { detail: ev?.data||null })); } catch {}
+        refresh();
+      });
       sse.addEventListener('scoreUpdated', ()=>{
         // handled per-page where needed
       });
