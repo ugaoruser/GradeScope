@@ -260,7 +260,7 @@
       head.innerHTML = headRow1 + headRow2;
 
       if (!students || students.length === 0){
-        body.innerHTML = '<tr><td class="empty-text">No students enrolled</td></tr>';
+        body.innerHTML = '<tr><td colspan="10" class="empty-text">No students enrolled</td></tr>';
         renderPager();
         return;
       }
@@ -657,73 +657,30 @@
       document.getElementById('peWeightDisplay').textContent = peWeight;
       document.getElementById('totalWeight').textContent = total + '%';
       document.getElementById('totalWeight').style.color = total === 100 ? '#059669' : '#dc2626';
-      if (!select) { return; }
-      select.innerHTML = '<option value="">Loading students...</option>';
+    }
+    
+    // Save weights
+    function saveWeights() {
+      if (!window.API_BASE || !subjectId) return;
       
-      // Use fallback URLs if primary fails
-      const urls = [
-        `${window.API_BASE}/api/subjects/${subjectId}/students`,
-        `${window.API_BASE}/api/classes/${subjectId}/students`,
-        `${window.API_BASE}/api/enrollments?subject_id=${subjectId}`
-      ];
+      const weights = {
+        'Performance Task': parseFloat(document.getElementById('weightPT').value) || 0,
+        'Written Works': parseFloat(document.getElementById('weightWW').value) || 0,
+        'Periodical Exam': parseFloat(document.getElementById('weightPE').value) || 0
+      };
       
-      async function tryLoadStudents() {
-        let lastError;
-        
-        for (const url of urls) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const data = await res.json();
-              if (!data || (Array.isArray(data) && data.length === 0)) {
-                console.warn(`Empty data returned from ${url}`);
-                continue; // try next fallback URL
-              }
-              students = Array.isArray(data) ? data : data.students || [];
-              
-              // Clear and populate select
-              select.innerHTML = '<option value="">All Students</option>';
-              
-              if (students.length === 0) {
-                const option = document.createElement('option');
-                option.disabled = true;
-                option.textContent = 'No students enrolled';
-                select.appendChild(option);
-              } else {
-                students.forEach(student => {
-                  const option = document.createElement('option');
-                  option.value = student.id;
-                  option.textContent = student.full_name || student.name || 'Unknown Student';
-                  select.appendChild(option);
-                });
-                
-                // Preselect from URL if provided
-                if (initialStudentId) {
-                  select.value = initialStudentId;
-                  selectedStudentId = initialStudentId;
-                  loadStudentGrades();
-                  loadGradeItems();
-                }
-              }
-              
-              updateSelectedStudentDisplay();
-              return; // Success, exit
-            }
-          } catch (err) {
-            lastError = err;
-            console.warn(`Failed to load from ${url}:`, err);
-          }
-        }
-        
-        // All URLs failed
-        throw lastError || new Error('All student loading endpoints failed');
-      }
-      
-      tryLoadStudents().catch(err => {
-        console.error('Error loading students:', err);
-        select.innerHTML = '<option value="">Failed to load students</option>';
-        showErrorMessage('Unable to load students. Please refresh the page or contact support.');
-      });
+      fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weights, quarter: currentQuarter })
+      })
+      .then(res => res.json())
+      .then(() => {
+        gradeWeights = { pt: weights['Performance Task'], ww: weights['Written Works'], pe: weights['Periodical Exam'] };
+        updateWeightDisplay();
+        renderCategoryTable();
+      })
+      .catch(err => console.error('Error saving weights:', err));
     }
     
     function loadGradeCategories() {
@@ -1275,6 +1232,148 @@
     
     .grades-table tbody tr:last-child td {
       border-bottom: none;
+    }
+    
+    /* Category Entry Table Styles */
+    .category-entry-container {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .category-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .category-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .category-tabs .tab-button {
+      padding: 8px 16px;
+      border: 2px solid #e2e8f0;
+      background: var(--card);
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .category-tabs .tab-button:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    
+    .category-tabs .tab-button.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .category-record-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+    }
+    
+    .category-record-table th {
+      background: #f8fafc;
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+    
+    .category-record-table th:first-child {
+      text-align: left;
+      padding-left: 16px;
+    }
+    
+    .category-record-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text);
+      vertical-align: middle;
+      text-align: center;
+    }
+    
+    .category-record-table td:first-child {
+      text-align: left;
+      padding-left: 16px;
+    }
+    
+    .category-record-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .category-pager {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .category-pager .btn-secondary {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      background: var(--card);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .category-pager .btn-secondary:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    
+    .category-pager .btn-secondary.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .category-pager .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .category-helper {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .category-helper small {
+      color: #64748b;
+      font-style: italic;
     }
     
     /* Responsive adjustments */
