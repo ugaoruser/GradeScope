@@ -786,12 +786,21 @@ window.API_BASE = (function(){
     container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
     try{
       let res = await fetch(`${window.API_BASE}/api/subjects`, { headers: authHeaders() });
-      let list; if (res.ok){ list = await res.json(); } else {
-        const res2 = await fetch(`${window.API_BASE}/api/classes`);
-        if (!res2.ok) throw new Error('Failed to load classes'); list = await res2.json();
+      let list; 
+      if (res.ok){ 
+        list = await res.json(); 
+      } else {
+        console.warn('Failed to load from /api/subjects, trying /api/classes');
+        const res2 = await fetch(`${window.API_BASE}/api/classes`, { headers: authHeaders() });
+        if (!res2.ok) throw new Error(`Failed to load classes: ${res2.status} ${res2.statusText}`); 
+        list = await res2.json();
       }
+      console.log('Loaded classes/subjects:', list);
       renderTeacherSubjects(list);
-    }catch(e){ console.error('Error loading classes:', e); container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>'; }
+    }catch(e){ 
+      console.error('Error loading classes:', e); 
+      container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>'; 
+    }
   }
 
   async function renderTeacherSubjects(subjects){
