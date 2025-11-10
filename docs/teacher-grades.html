@@ -129,6 +129,36 @@
       </div>
     </div>
     
+    <!-- Category Switch and Table -->
+    <div class="category-entry-container">
+      <div class="category-header">
+        <h2>Grade Entry - <span id="categoryTitleDisplay">Written Works</span></h2>
+        <div class="category-tabs" id="categoryTabs">
+          <button class="tab-button active" data-category="Written Works" onclick="switchCategory('Written Works')">Written Works</button>
+          <button class="tab-button" data-category="Performance Task" onclick="switchCategory('Performance Task')">Performance Task</button>
+          <button class="tab-button" data-category="Periodical Exam" onclick="switchCategory('Periodical Exam')">Periodical Exam</button>
+        </div>
+      </div>
+      
+      <div class="table-wrapper">
+        <table class="category-record-table" id="categoryRecordTable">
+          <thead id="categoryTableHead">
+            <!-- Dynamically rendered -->
+          </thead>
+          <tbody id="categoryTableBody">
+            <tr><td colspan="10" class="loading-text">Loading grade items...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="category-pager" id="categoryPager">
+        <!-- Dynamically rendered -->
+      </div>
+      
+      <div class="category-helper">
+        <small><strong>Note:</strong> Initial Grade and Quarterly Grade are overall grades across all categories, not just the active category.</small>
+      </div>
+    </div>
     
   
   </div>
