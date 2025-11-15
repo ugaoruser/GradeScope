@@ -10,6 +10,7 @@ import fs from "fs";
 import compression from "compression";
 import helmet from "helmet";
 import pool from "./db.js";
+import crypto from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -429,7 +430,7 @@ app.post("/api/login", async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: "Missing fields" });
 
-    // ✅ Fetch user and role name
+    // Fetch user and role name
     const [rows] = await db.query(`
       SELECT u.*, r.name AS role
       FROM users u
@@ -442,11 +443,44 @@ app.post("/api/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const ok = await bcrypt.compare(password, user.password_hash || "");
+    const stored = user.password_hash || "";
+    const isBcrypt = typeof stored === 'string' && /^\$2[aby]?\$/.test(stored);
 
-    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+    let verified = false;
+    let needsUpgrade = false;
 
-    // ✅ Sign JWT with the actual string role
+    if (isBcrypt) {
+      verified = await bcrypt.compare(password, stored);
+    } else {
+      // Legacy formats: plaintext, md5, sha256
+      const md5 = crypto.createHash('md5').update(password, 'utf8').digest('hex');
+      const sha256 = crypto.createHash('sha256').update(password, 'utf8').digest('hex');
+      if (stored === password) { // plaintext
+        verified = true; needsUpgrade = true;
+      } else if (/^[a-f0-9]{32}$/i.test(stored) && stored.toLowerCase() === md5) {
+        verified = true; needsUpgrade = true;
+      } else if (/^[a-f0-9]{64}$/i.test(stored) && stored.toLowerCase() === sha256) {
+        verified = true; needsUpgrade = true;
+      } else {
+        verified = false;
+      }
+    }
+
+    if (!verified) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Upgrade to bcrypt if needed
+    if (!isBcrypt && needsUpgrade) {
+      try {
+        const saltRounds = 12;
+        const newHash = await bcrypt.hash(password, saltRounds);
+        await db.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);
+      } catch (e) {
+        // Do not block login on upgrade failure
+        console.warn('Password upgrade failed for user', user.id, e?.message || e);
+      }
+    }
+
+    // Sign JWT
     const token = jwt.sign(
       { userId: user.id, role: user.role, name: user.full_name },
       process.env.JWT_SECRET || "secret",
@@ -457,7 +491,7 @@ app.post("/api/login", async (req, res) => {
     const isProd = process.env.NODE_ENV === 'production';
     res.setHeader('Set-Cookie', `token=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${60*60*8}; SameSite=Lax${isProd?'; Secure':''}`);
 
-    // ✅ Return correct structure
+    // Response
     res.json({
       message: "Login successful",
       token,
