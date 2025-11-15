@@ -279,13 +279,8 @@
     function loadGradeData(quarter) {
       let lastCategories = [];
       let lastItems = [];
-      // Try cached render first (fast UI), then fetch fresh in parallel
-      if (!renderFromCache(quarter)){
-        document.getElementById('ptTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-        document.getElementById('wwTable').innerHTML = '<tr><td colspan="6"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-        document.getElementById('peTable').innerHTML = '<tr><td colspan="4"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-        document.getElementById('assessmentTable').innerHTML = '<tr><td colspan="5"><div class="loading-placeholder" style="height:16px"></div></td></tr>';
-      }
+      // Try cached render first (fast UI); otherwise keep current content (including initial 'No data available')
+      renderFromCache(quarter);
 
       const childParam = (role === 'parent' && window.selectedChildId) ? `&childId=${encodeURIComponent(window.selectedChildId)}` : '';
       const categoriesReq = fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories?quarter=${quarter}`).then(r=>r.json());
