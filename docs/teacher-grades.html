@@ -175,6 +175,10 @@
     let currentCategory = 'Written Works';
     let itemsByCategory = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
     let currentPage = 1; // 5 items per page => 10 columns (score/max pairs)
+    let gradeCategories = [];
+    let gradeItems = [];
+    let scoresByKey = {}; // key: `${itemId}:${studentId}` -> number
+    let scoresLoaded = false;
 
     function switchCategory(name){
       currentCategory = name;
@@ -241,6 +245,12 @@
       const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
       const startIndex = (currentPage-1) * pageSize;
 
+      // Ensure scores are loaded once students and items are available
+      if (!scoresLoaded && students && students.length && gradeItems && gradeItems.length){
+        body.innerHTML = '<tr><td colspan="10" class="loading-text">Loading scores...</td></tr>';
+        await loadAllScores();
+      }
+
       const catLabel = currentCategory;
       let headRow1 = `<tr>`;
       headRow1 += `<th rowspan="2">Student Name</th>`;
@@ -286,15 +296,14 @@
         tr.dataset.studentId = String(stu.id);
         const name = stu.full_name || stu.name || 'Unknown Student';
         let row = `<td class="student-name"><div class="student-info"><div class="student-avatar">${name.charAt(0).toUpperCase()}</div><div>${name}</div></div></td>`;
-        // One input per item cell on the page
+        // One editable cell per item on the page
         for (let i=0;i<pageSize;i++){
           const it = pageItems[i];
           if (it){
             const itemId = it.id;
-            const key = `score:${itemId}:${stu.id}`;
-            const cached = sessionStorage.getItem(key);
-            const val = cached!=null ? cached : '';
-            row += `<td><input type="number" class="score-input" min="0" step="0.01" data-item="${itemId}" data-student="${stu.id}" value="${val}" onchange="saveScore(this)" placeholder="0"></td>`;
+            const key = `${itemId}:${stu.id}`;
+            const val = scoresByKey[key] != null ? String(scoresByKey[key]) : '';
+            row += `<td class="score-cell" contenteditable="true" data-item="${itemId}" data-student="${stu.id}">${val}</td>`;
           } else {
             row += `<td></td>`;
           }
@@ -303,9 +312,9 @@
         const allItemIds = (allItems||[]).map(x=>x.id);
         let sumScores = 0;
         allItemIds.forEach(id=>{
-          const k = `score:${id}:${stu.id}`;
-          const v = Number(sessionStorage.getItem(k) || '0');
-          sumScores += isNaN(v) ? 0 : v;
+          const k = `${id}:${stu.id}`;
+          const v = Number(scoresByKey[k]);
+          sumScores += Number.isFinite(v) ? v : 0;
         });
         const ps = totalMaxAll>0 ? (sumScores/totalMaxAll)*100 : 0;
         const ws = (ps * catWeight) / 100;
@@ -318,25 +327,62 @@
         row += `<td class="initial-grade">${ig.toFixed(2)}</td>`;
         row += `<td class="quarterly-grade">${qg.toFixed(2)}</td>`;
         const comm = (stu.comment||'').toString().slice(0,25);
-        row += `<td><input type="text" maxlength="25" class="comment-input" data-student="${stu.id}" value="${comm}" placeholder="Add comment..." onchange="updateComment(${stu.id}, this.value)"></td>`;
+        row += `<td class="comment-cell" contenteditable="true" data-student="${stu.id}">${comm}</td>`;
         tr.innerHTML = row;
         body.appendChild(tr);
       });
       renderPager();
+
+      // Delegate editing handlers for score/comment cells
+      body.removeEventListener('blur', onCellBlur, true);
+      body.addEventListener('blur', onCellBlur, true);
+      body.removeEventListener('keydown', onCellKeydown, true);
+      body.addEventListener('keydown', onCellKeydown, true);
     }
 
-    async function saveScore(el){
-      try{
-        const studentId = el.getAttribute('data-student');
-        const itemId = el.getAttribute('data-item');
-        const v = Number(el.value||0);
-        sessionStorage.setItem(`score:${itemId}:${studentId}`, String(v));
-        if (!subjectId || !window.API_BASE) return;
-        const payload = { grade_item_id: Number(itemId), student_id: Number(studentId), score: v };
-        await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-        });
-      }catch(e){ console.warn('Failed to save score', e); }
+    function onCellKeydown(e){
+      const t = e.target;
+      if (!(t && (t.classList.contains('score-cell') || t.classList.contains('comment-cell')))) return;
+      if (e.key === 'Enter') { e.preventDefault(); t.blur(); }
+    }
+
+    async function onCellBlur(e){
+      const t = e.target;
+      if (!t) return;
+      // Score cell
+      if (t.classList.contains('score-cell')){
+        const studentId = Number(t.getAttribute('data-student'));
+        const itemId = Number(t.getAttribute('data-item'));
+        let raw = (t.textContent || '').trim();
+        if (raw === '') raw = '0';
+        let v = Number(raw);
+        if (!Number.isFinite(v) || v < 0) v = 0;
+        // Validate against max
+        const item = (gradeItems || []).find(x=> Number(x.id)===itemId);
+        const maxScore = Number(item?.max_score) || 0;
+        if (maxScore && v > maxScore) v = maxScore;
+        // Reflect normalized value in UI
+        t.textContent = String(v);
+        scoresByKey[`${itemId}:${studentId}`] = v;
+        // Persist
+        if (subjectId && window.API_BASE){
+          try{
+            const payload = { grade_item_id: itemId, student_id: studentId, score: v };
+            await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+          }catch(err){ console.warn('Save failed', err); }
+        }
+        // Recompute totals for this row
+        renderCategoryTable();
+      }
+      // Comment cell
+      else if (t.classList.contains('comment-cell')){
+        const studentId = Number(t.getAttribute('data-student'));
+        const val = (t.textContent||'').slice(0,25);
+        if (t.textContent !== val) t.textContent = val;
+        updateComment(studentId, val);
+      }
     }
     
     // Grade transmutation table (DepEd standard)
@@ -437,6 +483,20 @@
           console.error('Error loading students:', err);
           tbody.innerHTML = '<tr><td colspan="13" class="error-text">Failed to load students</td></tr>';
         });
+    }
+
+    async function loadAllScores(){
+      try{
+        const map = {};
+        for (const s of (students||[])){
+          const url = `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${encodeURIComponent(s.id)}&quarter=${encodeURIComponent(currentQuarter)}`;
+          const resp = await fetch(url, { headers: (typeof authHeaders==='function'? authHeaders():{}) });
+          if (!resp.ok) continue;
+          const rows = await resp.json();
+          (rows||[]).forEach(r=>{ map[`${r.grade_item_id}:${s.id}`] = Number(r.score); });
+        }
+        scoresByKey = map; scoresLoaded = true;
+      }catch(e){ scoresByKey = {}; scoresLoaded = true; }
     }
     
     // Render student record table
@@ -593,16 +653,12 @@
       cells[10].textContent = quarterlyGrade.toFixed(2); // Quarterly Grade
     }
     
-    // Update comment
+    // Update comment (stored locally only)
     function updateComment(studentId, comment) {
       const student = students.find(s => s.id == studentId);
       if (student) {
         const trimmed = (comment || '').toString().slice(0,25);
-        // enforce input box reflects limit
-        const input = document.querySelector(`input.comment-input[data-student="${studentId}"]`);
-        if (input && input.value !== trimmed) input.value = trimmed;
         student.comment = trimmed;
-        saveStudentGrades(studentId);
       }
     }
     
@@ -662,21 +718,22 @@
     // Save weights
     function saveWeights() {
       if (!window.API_BASE || !subjectId) return;
-      
-      const weights = {
-        'Performance Task': parseFloat(document.getElementById('weightPT').value) || 0,
-        'Written Works': parseFloat(document.getElementById('weightWW').value) || 0,
-        'Periodical Exam': parseFloat(document.getElementById('weightPE').value) || 0
-      };
-      
+      const pt = parseFloat(document.getElementById('weightPT').value) || 0;
+      const ww = parseFloat(document.getElementById('weightWW').value) || 0;
+      const pe = parseFloat(document.getElementById('weightPE').value) || 0;
+      const categories = [
+        { name: 'Performance Task', weight: pt, quarter: currentQuarter },
+        { name: 'Written Works', weight: ww, quarter: currentQuarter },
+        { name: 'Periodical Exam', weight: pe, quarter: currentQuarter },
+      ];
       fetch(`${window.API_BASE}/api/subjects/${subjectId}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weights, quarter: currentQuarter })
+        body: JSON.stringify({ categories })
       })
-      .then(res => res.json())
+      .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to save weights')))
       .then(() => {
-        gradeWeights = { pt: weights['Performance Task'], ww: weights['Written Works'], pe: weights['Periodical Exam'] };
+        gradeWeights = { pt, ww, pe };
         updateWeightDisplay();
         renderCategoryTable();
       })
@@ -729,6 +786,7 @@
         .then(res => res.ok ? res.json() : [])
         .then(data => {
           gradeItems = Array.isArray(data) ? data : (data.items || []);
+          scoresLoaded = false; // force reload of scores when items change
           computeItemsByCategory();
           const len = (itemsByCategory[currentCategory] || []).length;
           if (len > 0 && len % 5 === 1 && len > 5) {

@@ -22,6 +22,10 @@ window.API_BASE = (function(){
 
   const host = location.hostname || '';
   const port = String(location.port || '');
+  // When opened from local files, default to the Render API to avoid file:/// fetch errors
+  if (location.protocol === 'file:') {
+    return 'https://gradescope-a4hw.onrender.com';
+  }
   const isLoopback = ['localhost','127.0.0.1','0.0.0.0','::1'].includes(host);
 
 
