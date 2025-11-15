@@ -6,6 +6,20 @@
   }catch{}
 })();
 
+// Ensure a favicon exists even on GitHub Pages (prevents 404 requests)
+(function(){
+  try{
+    const has = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+    if (!has){
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/ayv0XQAAAAASUVORK5CYII=';
+      document.head.appendChild(link);
+    }
+  }catch{}
+})();
+
 // API base resolution without hardcoded deploy URL
 window.API_BASE = (function(){
   // Allow explicit override first

@@ -2,7 +2,6 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import mysql from "mysql2/promise";
 import path from "path";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -10,6 +9,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import compression from "compression";
 import helmet from "helmet";
+import pool from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,20 +108,43 @@ app.get('/api/events', (req, res) => {
   }
 });
 
-// MySQL pool
+// MySQL pool (shared, with SSL if configured)
 const required = ['DB_HOST','DB_USER','DB_PASSWORD','DB_NAME'];
 for (const k of required){ if (!process.env[k]) { console.warn(`[warn] Missing ${k} in environment. Using defaults may be insecure.`); } }
-const db = await mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "grade_tracker",
-  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
-  connectionLimit: 10
-});
+const db = pool;
 
 // Lightweight startup migration to ensure required schema parts exist
 async function ensureStartupMigrations() {
+  try {
+    // Ensure core tables exist first on fresh databases
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(255) NOT NULL,
+        last_name VARCHAR(255) NOT NULL,
+        full_name VARCHAR(255) GENERATED ALWAYS AS (CONCAT(first_name, ' ', last_name)) STORED,
+        role_id INT NOT NULL,
+        email_verified TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS subjects (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(32) UNIQUE,
+        title VARCHAR(255) NOT NULL,
+        grade_level VARCHAR(50),
+        section VARCHAR(50),
+        teacher_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (e) {
+    console.error('Failed to ensure core tables:', e);
+  }
   try {
     // Ensure 'section', 'code', 'teacher_id', 'grade_level' columns exist on subjects
 await db.query(`
