@@ -647,11 +647,13 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
-      subjectId = urlParams.get('id') || '';
-      subjectName = urlParams.get('name') || 'Subject';
+      subjectId = urlParams.get('subjectId') || urlParams.get('id') || '';
+      subjectName = urlParams.get('subjectName') || urlParams.get('name') || 'Subject';
       
-      document.getElementById('subjectTitle').textContent = subjectName;
-      document.getElementById('subjectTitleDisplay').textContent = subjectName;
+      const subjTitle = document.getElementById('subjectTitle');
+      const subjDisplay = document.getElementById('subjectTitleDisplay');
+      if (subjTitle) subjTitle.textContent = subjectName;
+      if (subjDisplay) subjDisplay.textContent = subjectName;
       
       loadGradeWeights();
       loadStudents();
