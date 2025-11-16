@@ -156,7 +156,7 @@
       </div>
       
       <div class="category-helper">
-        <small><strong>Note:</strong> Initial Grade and Quarterly Grade are overall grades across all categories, not just the active category. PS = Percentage Score, WS = Weighted Score for the active category.</small>
+        <small><strong>Note:</strong> Initial Grade and Quarterly Grade are overall grades across all categories, not just the active category.</small>
       </div>
       <div class="category-actions">
         <div class="category-legend">
@@ -290,7 +290,7 @@
       for (let i=0;i<pageSize;i++){
         const it = pageItems[i];
         maxRowHtml += it
-          ? `<td class="max-cell" contenteditable="true" tabindex="0" data-item="${it.id}">${Number(it.max_score)||0}</td>`
+          ? `<td class="max-cell" data-item="${it.id}"><input type="number" class="max-input-cell" data-item="${it.id}" min="0" value="${Number(it.max_score)||0}"></td>`
           : `<td></td>`;
       }
       const totalMaxAll = (allItems||[]).reduce((acc,it)=> acc + (Number(it.max_score)||0), 0);
@@ -311,7 +311,7 @@
             const itemId = it.id;
             const key = `${itemId}:${stu.id}`;
             const val = scoresByKey[key] != null ? String(scoresByKey[key]) : '';
-            row += `<td class="score-cell" contenteditable="true" tabindex="0" data-item="${itemId}" data-student="${stu.id}">${val}</td>`;
+            row += `<td class="score-cell" data-item="${itemId}" data-student="${stu.id}"><input type="number" class="score-input-cell" data-item="${itemId}" data-student="${stu.id}" min="0" value="${val}"></td>`;
           } else {
             row += `<td></td>`;
           }
@@ -338,17 +338,15 @@
           // Try per-item comment if available in scores map later; default to empty
           return (stu.comment||'').toString().slice(0,25);
         })();
-        row += `<td class="comment-cell" contenteditable="true" tabindex="0" data-student="${stu.id}" data-item="${(pageItems[0]&&pageItems[0].id)||''}">${comm}</td>`;
+        row += `<td class="comment-cell" data-student="${stu.id}" data-item="${(pageItems[0]&&pageItems[0].id)||''}"><input type="text" class="comment-input-cell" maxlength="255" data-student="${stu.id}" data-item="${(pageItems[0]&&pageItems[0].id)||''}" value="${comm}"></td>`;
         tr.innerHTML = row;
         body.appendChild(tr);
       });
       renderPager();
 
-      // Delegate editing handlers for score/comment cells
-      body.removeEventListener('blur', onCellBlur, true);
-      body.addEventListener('blur', onCellBlur, true);
-      body.removeEventListener('keydown', onCellKeydown, true);
-      body.addEventListener('keydown', onCellKeydown, true);
+      // Delegate editing handlers for score/comment cells (inputs)
+      body.removeEventListener('change', onCellChange, true);
+      body.addEventListener('change', onCellChange, true);
 
       // Update summary placeholder (optional hook for future computed summary)
       updateTeacherGradeSummary({ final: null, completion: 0 });
@@ -384,20 +382,14 @@
       }catch{}
     }
 
-    function onCellKeydown(e){
-      const t = e.target;
-      if (!(t && (t.classList.contains('score-cell') || t.classList.contains('comment-cell')))) return;
-      if (e.key === 'Enter') { e.preventDefault(); t.blur(); }
-    }
-
-    async function onCellBlur(e){
+    async function onCellChange(e){
       const t = e.target;
       if (!t) return;
-      // Score cell
-      if (t.classList.contains('score-cell')){
+      // Score input
+      if (t.classList.contains('score-input-cell')){
         const studentId = Number(t.getAttribute('data-student'));
         const itemId = Number(t.getAttribute('data-item'));
-        let raw = (t.textContent || '').trim();
+        let raw = (t.value || '').trim();
         if (raw === '') raw = '0';
         let v = Number(raw);
         if (!Number.isFinite(v) || v < 0) v = 0;
@@ -406,7 +398,7 @@
         const maxScore = Number(item?.max_score) || 0;
         if (maxScore && v > maxScore) v = maxScore;
         // Reflect normalized value in UI
-        t.textContent = String(v);
+        t.value = String(v);
         scoresByKey[`${itemId}:${studentId}`] = v;
         // Persist
         if (subjectId && window.API_BASE){
@@ -420,12 +412,12 @@
         // Recompute totals for this row
         renderCategoryTable();
       }
-      // Comment cell
-      else if (t.classList.contains('comment-cell')){
+      // Comment input
+      else if (t.classList.contains('comment-input-cell')){
         const studentId = Number(t.getAttribute('data-student'));
         const itemId = Number(t.getAttribute('data-item'));
-        const val = (t.textContent||'').slice(0,255);
-        if (t.textContent !== val) t.textContent = val;
+        const val = (t.value||'').slice(0,255);
+        if (t.value !== val) t.value = val;
         // Persist per-item comment alongside current score (fallback 0)
         if (subjectId && window.API_BASE && itemId){
           try{
@@ -439,14 +431,14 @@
           }catch(err){ console.warn('Save comment failed', err); }
         }
       }
-      // Max score cell (per item)
-      else if (t.classList.contains('max-cell')){
+      // Max score input (per item)
+      else if (t.classList.contains('max-input-cell')){
         const itemId = Number(t.getAttribute('data-item'));
-        let raw = (t.textContent || '').trim();
+        let raw = (t.value || '').trim();
         if (raw === '') raw = '0';
         let v = Number(raw);
         if (!Number.isFinite(v) || v < 0) v = 0;
-        t.textContent = String(v);
+        t.value = String(v);
         // Persist via items update API, including existing fields to avoid clobbering
         try{
           const it = (gradeItems||[]).find(x=> Number(x.id)===itemId);
@@ -478,12 +470,12 @@
       if (!body || !students || !students.length) return;
 
       // Validate highest possible scores (max scores per visible item)
-      const maxCells = Array.from(body.querySelectorAll('td.max-cell[data-item]'));
+      const maxCells = Array.from(body.querySelectorAll('input.max-input-cell[data-item]'));
       const maxByItem = {};
       for (const cell of maxCells) {
         const itemId = Number(cell.getAttribute('data-item'));
         if (!itemId) continue;
-        let raw = (cell.textContent || '').trim();
+        let raw = (cell.value || '').trim();
         if (raw === '') {
           alert('Please set the highest possible score for all columns before saving.');
           cell.focus();
@@ -495,7 +487,7 @@
           cell.focus();
           return;
         }
-        cell.textContent = String(v);
+        cell.value = String(v);
         maxByItem[itemId] = v;
         const it = (gradeItems || []).find(x => Number(x.id) === itemId);
         if (it) {
@@ -506,12 +498,12 @@
       const savePromises = [];
 
       // Normalize and save all visible scores and comments
-      const scoreCells = Array.from(body.querySelectorAll('td.score-cell[data-item][data-student]'));
+      const scoreCells = Array.from(body.querySelectorAll('input.score-input-cell[data-item][data-student]'));
       for (const cell of scoreCells) {
         const itemId = Number(cell.getAttribute('data-item'));
         const studentId = Number(cell.getAttribute('data-student'));
         if (!itemId || !studentId) continue;
-        let raw = (cell.textContent || '').trim();
+        let raw = (cell.value || '').trim();
         if (raw === '') raw = '0';
         let v = Number(raw);
         if (!Number.isFinite(v) || v < 0) v = 0;
@@ -519,12 +511,12 @@
         const maxScore = maxByItem[itemId] || Number(((gradeItems || []).find(x => Number(x.id) === itemId) || {}).max_score) || 0;
         if (maxScore && v > maxScore) {
           alert(`Score for this column cannot exceed its highest possible score of ${maxScore}.`);
-          cell.textContent = String(maxScore);
+          cell.value = String(maxScore);
           cell.focus();
           return;
         }
 
-        cell.textContent = String(v);
+        cell.value = String(v);
         scoresByKey[`${itemId}:${studentId}`] = v;
 
         if (subjectId && window.API_BASE) {
@@ -539,13 +531,13 @@
         }
       }
 
-      const commentCells = Array.from(body.querySelectorAll('td.comment-cell[data-student]'));
+      const commentCells = Array.from(body.querySelectorAll('input.comment-input-cell[data-student]'));
       for (const cell of commentCells) {
         const studentId = Number(cell.getAttribute('data-student'));
         const itemId = Number(cell.getAttribute('data-item'));
         if (!studentId || !itemId) continue;
-        const val = (cell.textContent || '').slice(0, 255);
-        if (cell.textContent !== val) cell.textContent = val;
+        const val = (cell.value || '').slice(0, 255);
+        if (cell.value !== val) cell.value = val;
 
         if (subjectId && window.API_BASE) {
           const key = `${itemId}:${studentId}`;
