@@ -156,32 +156,16 @@
       </div>
       
       <div class="category-helper">
-        <small><strong>Note:</strong> Initial Grade and Quarterly Grade are overall grades across all categories, not just the active category.</small>
+        <small><strong>Note:</strong> Initial Grade and Quarterly Grade are overall grades across all categories, not just the active category. PS = Percentage Score, WS = Weighted Score for the active category.</small>
+      </div>
+      <div class="category-actions">
+        <div class="category-legend">
+          <small><strong>PS</strong> = Percentage Score, <strong>WS</strong> = Weighted Score.</small>
+        </div>
+        <button class="btn-primary save-category" onclick="saveAllCategoryGrades()">Save Grades</button>
       </div>
     </div>
 
-    <!-- Quarterly Grade Summary (Teacher View) -->
-    <div class="grade-summary" id="teacherGradeSummary" style="margin-top:16px;">
-      <div class="grade-display">
-        <div class="grade-label">Quarterly Grade:</div>
-        <div class="grade-value" id="tFinalGrade">N/A</div>
-      </div>
-      <div class="grade-progress">
-        <div class="progress-bar">
-          <div class="progress-fill" id="tProgressFill"></div>
-        </div>
-        <div class="progress-text" id="tProgressText">0% Complete</div>
-      </div>
-      <div class="grade-disclaimer">
-        <div class="disclaimer-icon">⚠️</div>
-        <div class="disclaimer-text">
-          <strong>Important:</strong> This is an estimated grade based on currently entered scores. 
-          The final grade will be calculated when all assignments for this quarter are completed and graded.
-          <span class="completion-note" id="tCompletionNote"></span>
-        </div>
-      </div>
-    </div>
-    
   
   </div>
   
@@ -487,6 +471,161 @@
           }
         }catch(err){ console.warn('Save max score failed', err); }
       }
+    }
+    
+    async function saveAllCategoryGrades() {
+      const body = document.getElementById('categoryTableBody');
+      if (!body || !students || !students.length) return;
+
+      // Validate highest possible scores (max scores per visible item)
+      const maxCells = Array.from(body.querySelectorAll('td.max-cell[data-item]'));
+      const maxByItem = {};
+      for (const cell of maxCells) {
+        const itemId = Number(cell.getAttribute('data-item'));
+        if (!itemId) continue;
+        let raw = (cell.textContent || '').trim();
+        if (raw === '') {
+          alert('Please set the highest possible score for all columns before saving.');
+          cell.focus();
+          return;
+        }
+        let v = Number(raw);
+        if (!Number.isFinite(v) || v <= 0) {
+          alert('Highest possible score must be a positive number.');
+          cell.focus();
+          return;
+        }
+        cell.textContent = String(v);
+        maxByItem[itemId] = v;
+        const it = (gradeItems || []).find(x => Number(x.id) === itemId);
+        if (it) {
+          it.max_score = v;
+        }
+      }
+
+      const savePromises = [];
+
+      // Normalize and save all visible scores and comments
+      const scoreCells = Array.from(body.querySelectorAll('td.score-cell[data-item][data-student]'));
+      for (const cell of scoreCells) {
+        const itemId = Number(cell.getAttribute('data-item'));
+        const studentId = Number(cell.getAttribute('data-student'));
+        if (!itemId || !studentId) continue;
+        let raw = (cell.textContent || '').trim();
+        if (raw === '') raw = '0';
+        let v = Number(raw);
+        if (!Number.isFinite(v) || v < 0) v = 0;
+
+        const maxScore = maxByItem[itemId] || Number(((gradeItems || []).find(x => Number(x.id) === itemId) || {}).max_score) || 0;
+        if (maxScore && v > maxScore) {
+          alert(`Score for this column cannot exceed its highest possible score of ${maxScore}.`);
+          cell.textContent = String(maxScore);
+          cell.focus();
+          return;
+        }
+
+        cell.textContent = String(v);
+        scoresByKey[`${itemId}:${studentId}`] = v;
+
+        if (subjectId && window.API_BASE) {
+          const payload = { grade_item_id: itemId, student_id: studentId, score: v };
+          savePromises.push(
+            fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).catch(err => console.warn('Save score failed', err))
+          );
+        }
+      }
+
+      const commentCells = Array.from(body.querySelectorAll('td.comment-cell[data-student]'));
+      for (const cell of commentCells) {
+        const studentId = Number(cell.getAttribute('data-student'));
+        const itemId = Number(cell.getAttribute('data-item'));
+        if (!studentId || !itemId) continue;
+        const val = (cell.textContent || '').slice(0, 255);
+        if (cell.textContent !== val) cell.textContent = val;
+
+        if (subjectId && window.API_BASE) {
+          const key = `${itemId}:${studentId}`;
+          const cur = Number(scoresByKey[key]);
+          const score = Number.isFinite(cur) ? cur : 0;
+          const payload = { grade_item_id: itemId, student_id: studentId, score, comments: val };
+          savePromises.push(
+            fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).catch(err => console.warn('Save comment failed', err))
+          );
+        }
+      }
+
+      await Promise.all(savePromises);
+
+      // Aggregate per-student category totals for PT / WW / PE and save initial/quarterly grades
+      const catById = {};
+      (gradeCategories || []).forEach(c => { if (c && c.id != null) catById[c.id] = c; });
+
+      (students || []).forEach(stu => {
+        const totals = {
+          pt: { score: 0, max: 0 },
+          ww: { score: 0, max: 0 },
+          pe: { score: 0, max: 0 }
+        };
+
+        (gradeItems || []).forEach(it => {
+          if (!it || !it.included_in_final) return;
+          const cat = catById[it.category_id];
+          if (!cat) return;
+          const key = `${it.id}:${stu.id}`;
+          const sVal = Number(scoresByKey[key]);
+          const mVal = Number(it.max_score) || 0;
+          if (!Number.isFinite(sVal) || mVal <= 0) return;
+
+          let bucket = null;
+          if (cat.name === 'Performance Task') bucket = 'pt';
+          else if (cat.name === 'Written Works') bucket = 'ww';
+          else if (cat.name === 'Periodical Exam') bucket = 'pe';
+          if (!bucket) return;
+
+          totals[bucket].score += sVal;
+          totals[bucket].max += mVal;
+        });
+
+        if (!stu.grades) {
+          stu.grades = {
+            pt: { score: 0, max: 100 },
+            ww: { score: 0, max: 100 },
+            pe: { score: 0, max: 100 }
+          };
+        }
+
+        stu.grades.pt.score = totals.pt.score;
+        stu.grades.pt.max = totals.pt.max || 1;
+        stu.grades.ww.score = totals.ww.score;
+        stu.grades.ww.max = totals.ww.max || 1;
+        stu.grades.pe.score = totals.pe.score;
+        stu.grades.pe.max = totals.pe.max || 1;
+
+        const initialGrade = calculateInitialGrade(stu.grades);
+        const quarterlyGrade = transmuteGrade(initialGrade);
+
+        // Persist aggregated grades to backend
+        saveStudentGrades(stu.id);
+
+        // Update visible initial/quarterly grade cells for this row
+        const row = body.querySelector(`tr[data-student-id="${stu.id}"]`);
+        if (row) {
+          const igCell = row.querySelector('td.initial-grade');
+          const qgCell = row.querySelector('td.quarterly-grade');
+          if (igCell) igCell.textContent = initialGrade.toFixed(2);
+          if (qgCell) qgCell.textContent = quarterlyGrade.toFixed(2);
+        }
+      });
+
+      alert('Grades saved successfully.');
     }
     
     // Grade transmutation table (DepEd standard)
