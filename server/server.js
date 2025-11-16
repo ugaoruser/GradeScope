@@ -867,6 +867,77 @@ app.get('/api/classes', verifyToken, async (req, res) => {
   }
 });
 
+// Ensure default grade categories and at least one grade item per category
+async function ensureDefaultGradeStructure(subjectId, quarter, user){
+  try{
+    if (!user || user.role !== 'teacher') return;
+    const qNum = Number(quarter || 0);
+    if (!qNum || !Number.isFinite(qNum)) return;
+    // Verify teacher owns this subject
+    const [subjects] = await db.query(
+      `SELECT id FROM subjects WHERE id = ? AND teacher_id = ?`, 
+      [subjectId, user.userId]
+    );
+    if (subjects.length === 0) return;
+    // Ensure categories for this quarter
+    let [cats] = await db.query(
+      `SELECT id, name, weight, quarter FROM grade_categories WHERE subject_id = ? AND quarter = ?`,
+      [subjectId, qNum]
+    );
+    if (!cats.length){
+      const defaults = [
+        { name: 'Performance Task', weight: 50 },
+        { name: 'Written Works', weight: 30 },
+        { name: 'Periodical Exam', weight: 20 },
+      ];
+      await db.query('START TRANSACTION');
+      try{
+        for (const c of defaults){
+          await db.query(
+            `INSERT INTO grade_categories (subject_id, name, weight, quarter) VALUES (?, ?, ?, ?)`,
+            [subjectId, c.name, c.weight, qNum]
+          );
+        }
+        await db.query('COMMIT');
+      }catch(err){
+        await db.query('ROLLBACK');
+        throw err;
+      }
+      [cats] = await db.query(
+        `SELECT id, name, weight, quarter FROM grade_categories WHERE subject_id = ? AND quarter = ?`,
+        [subjectId, qNum]
+      );
+    }
+    if (!cats.length) return;
+    const catIds = cats.map(c=> c.id).filter(Boolean);
+    if (!catIds.length) return;
+    const placeholders = catIds.map(()=> '?').join(',');
+    const params = [subjectId, ...catIds];
+    const [items] = await db.query(
+      `SELECT id FROM grade_items WHERE subject_id = ? AND category_id IN (${placeholders})`,
+      params
+    );
+    if (items.length) return;
+    // No items yet for these categories: create one per category
+    await db.query('START TRANSACTION');
+    try{
+      for (const cat of cats){
+        await db.query(
+          `INSERT INTO grade_items (subject_id, category_id, title, topic, item_type, included_in_final, max_score, date_assigned)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [subjectId, cat.id, 'Item 1', null, null, 1, 100, null]
+        );
+      }
+      await db.query('COMMIT');
+    }catch(err){
+      await db.query('ROLLBACK');
+      throw err;
+    }
+  }catch(err){
+    console.error('ensureDefaultGradeStructure failed', err);
+  }
+}
+
 // Create grade categories for a subject (teachers only)
 app.post("/api/subjects/:subjectId/categories", verifyToken, async (req, res) => {
   try {
@@ -1029,6 +1100,10 @@ app.get("/api/subjects/:subjectId/items", verifyToken, async (req, res) => {
   try {
     const { subjectId } = req.params;
     const { categoryId, quarter, childId } = req.query;
+    
+    if (req.user && req.user.role === 'teacher' && quarter) {
+      try { await ensureDefaultGradeStructure(subjectId, quarter, req.user); } catch {}
+    }
     
     let query = `
       SELECT i.*, c.name as category_name, c.quarter`;
