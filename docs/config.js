@@ -406,7 +406,16 @@ window.API_BASE = (function(){
 
   async function initLogin(){
     const token=getToken(), role=getRole(); if (token && role){ redirectByRole(role); return; }
-    try{ const r = await fetch(`${window.API_BASE}/api/me`); if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; } }catch{}
+    // On same-origin (Render) we can safely probe /api/me to auto-redirect logged-in users.
+    // On GitHub Pages this would be a cross-origin request and can produce noisy CORS errors,
+    // so skip the probe there and rely purely on explicit login.
+    const host = location.hostname || '';
+    if (!host.endsWith('github.io')){
+      try{
+        const r = await fetch(`${window.API_BASE}/api/me`);
+        if (r.ok){ const me=await r.json(); redirectByRole(me.role); return; }
+      }catch{}
+    }
     const form = qs('#login-form');
     if (form){
       // Robust binding and default navigation guard
