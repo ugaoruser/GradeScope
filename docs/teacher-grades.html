@@ -201,7 +201,7 @@
       try{
         const by = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
         (Array.isArray(gradeItems)? gradeItems : []).forEach(it=>{
-          const catName = (gradeCategories||[]).find(c=> c.id === it.category_id)?.name;
+          const catName = it.category_name || (gradeCategories||[]).find(c=> c.id === it.category_id)?.name;
           if (by[catName]) by[catName].push(it);
         });
         Object.keys(by).forEach(k=>{ by[k].sort((a,b)=> (new Date(a.date_assigned||0)) - (new Date(b.date_assigned||0))); });

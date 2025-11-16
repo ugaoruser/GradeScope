@@ -909,24 +909,24 @@ async function ensureDefaultGradeStructure(subjectId, quarter, user){
       );
     }
     if (!cats.length) return;
-    const catIds = cats.map(c=> c.id).filter(Boolean);
-    if (!catIds.length) return;
-    const placeholders = catIds.map(()=> '?').join(',');
-    const params = [subjectId, ...catIds];
-    const [items] = await db.query(
-      `SELECT id FROM grade_items WHERE subject_id = ? AND category_id IN (${placeholders})`,
-      params
-    );
-    if (items.length) return;
-    // No items yet for these categories: create one per category
+    // Ensure a fixed number of items per category so the UI subcolumns map to real grade_items
     await db.query('START TRANSACTION');
     try{
       for (const cat of cats){
-        await db.query(
-          `INSERT INTO grade_items (subject_id, category_id, title, topic, item_type, included_in_final, max_score, date_assigned)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [subjectId, cat.id, 'Item 1', null, null, 1, 100, null]
+        const desiredCount = (cat.name === 'Periodical Exam') ? 1 : 5;
+        const [existingItems] = await db.query(
+          `SELECT id FROM grade_items WHERE subject_id = ? AND category_id = ? ORDER BY id`,
+          [subjectId, cat.id]
         );
+        if (existingItems.length >= desiredCount) continue;
+        let nextIndex = existingItems.length + 1;
+        for (let i = existingItems.length; i < desiredCount; i++, nextIndex++){
+          await db.query(
+            `INSERT INTO grade_items (subject_id, category_id, title, topic, item_type, included_in_final, max_score, date_assigned)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [subjectId, cat.id, `Item ${nextIndex}`, null, null, 1, 100, null]
+          );
+        }
       }
       await db.query('COMMIT');
     }catch(err){
