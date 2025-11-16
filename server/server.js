@@ -22,29 +22,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CORS
-app.use(cors({
+const allowedOrigins = [
+  undefined, // same-origin / server-side tools
+  'https://ugaoruser.github.io',
+  'https://gradescope-a4hw.onrender.com'
+];
+const corsOptions = {
   origin: function(origin, cb){
-    const allowed = [
-      undefined, // same-origin
-      'https://ugaoruser.github.io',
-      'https://gradescope-a4hw.onrender.com'
-    ];
-    if (!origin || allowed.includes(origin)) return cb(null, true);
-    return cb(null, true); // be permissive for now
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(null, true); // keep permissive for now
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-}));
+};
+app.use(cors(corsOptions));
 
 // Ensure caches respect per-origin CORS and explicitly handle preflight on all routes
 app.use((req, res, next) => { try{ res.setHeader('Vary', 'Origin'); }catch{} next(); });
-app.options('*', cors({
-  origin: (origin, cb) => cb(null, true),
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+app.options('*', cors(corsOptions));
 
 // Security and compression
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
