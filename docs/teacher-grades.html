@@ -184,6 +184,7 @@
     let gradeCategories = [];
     let gradeItems = [];
     let scoresByKey = {}; // key: `${itemId}:${studentId}` -> number
+    let commentsByKey = {};
     let scoresLoaded = false;
 
     function switchCategory(name){
@@ -211,14 +212,14 @@
 
     function pagedItems(){
       const all = itemsByCategory[currentCategory] || [];
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
       const start = (currentPage-1)*pageSize;
       return all.slice(start, start+pageSize);
     }
 
     function totalPages(){
       const all = itemsByCategory[currentCategory] || [];
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
       return Math.max(1, Math.ceil(all.length / pageSize));
     }
 
@@ -248,7 +249,7 @@
       if (!head || !body) return;
       const allItems = itemsByCategory[currentCategory] || [];
       const pageItems = pagedItems();
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 5;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
       const startIndex = (currentPage-1) * pageSize;
 
       // Ensure scores are loaded once students and items are available (non-blocking)
@@ -271,8 +272,13 @@
       for (let i=0;i<pageSize;i++){
         const it = pageItems[i];
         if (it){
-          const label = (it.title || '').toString().slice(0, 120);
-          headRow2 += `<th data-item="${it.id}"><div class="header-number">${startIndex + i + 1}</div><input type="text" class="header-comment-input" data-item="${it.id}" maxlength="120" value="${label}" placeholder="Title / Label"></th>`;
+          const colIndex = startIndex + i + 1;
+          if (colIndex <= 5){
+            headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div></th>`;
+          } else {
+            const label = (it.title || '').toString().slice(0, 120);
+            headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div><input type="text" class="header-comment-input" data-item="${it.id}" maxlength="120" value="${label}" placeholder="Title / Label"></th>`;
+          }
         } else {
           headRow2 += `<th>${startIndex + i + 1}</th>`;
         }
@@ -300,7 +306,15 @@
           : `<td></td>`;
       }
       const totalMaxAll = (allItems||[]).reduce((acc,it)=> acc + (Number(it.max_score)||0), 0);
-      const catWeight = (function(){ try{ const c = (gradeCategories||[]).find(x=>x && x.name===currentCategory); return Number(c?.weight)||0; }catch{return 0;} })();
+      const catWeight = (function(){
+        if (currentCategory === 'Performance Task') return Number(gradeWeights?.pt)||0;
+        if (currentCategory === 'Written Works') return Number(gradeWeights?.ww)||0;
+        if (currentCategory === 'Periodical Exam') return Number(gradeWeights?.pe)||0;
+        try{
+          const c = (gradeCategories||[]).find(x=>x && x.name===currentCategory);
+          return Number(c?.weight)||0;
+        }catch{return 0;}
+      })();
       maxRowHtml += `<td>${totalMaxAll}</td><td>100%</td><td>${catWeight}%</td>`;
       maxRow.innerHTML = maxRowHtml;
       body.appendChild(maxRow);
@@ -342,6 +356,11 @@
         row += `<td class="quarterly-grade">${qg.toFixed(2)}</td>`;
         const comm = (function(){
           // Try per-item comment if available in scores map later; default to empty
+          const primaryItemId = (pageItems[0] && pageItems[0].id) || '';
+          const key = primaryItemId ? `${primaryItemId}:${stu.id}` : null;
+          if (key && commentsByKey && Object.prototype.hasOwnProperty.call(commentsByKey, key)){
+            return String(commentsByKey[key] || '').slice(0,25);
+          }
           return (stu.comment||'').toString().slice(0,25);
         })();
         row += `<td class="comment-cell" data-student="${stu.id}" data-item="${(pageItems[0]&&pageItems[0].id)||''}"><input type="text" class="comment-input-cell" maxlength="255" data-student="${stu.id}" data-item="${(pageItems[0]&&pageItems[0].id)||''}" value="${comm}"></td>`;
@@ -432,6 +451,7 @@
             const key = `${itemId}:${studentId}`;
             const cur = Number(scoresByKey[key]);
             const score = Number.isFinite(cur) ? cur : 0;
+            commentsByKey[key] = val;
             const payload = { grade_item_id: itemId, student_id: studentId, score, comments: val };
             await fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
@@ -628,6 +648,7 @@
           const key = `${itemId}:${studentId}`;
           const cur = Number(scoresByKey[key]);
           const score = Number.isFinite(cur) ? cur : 0;
+          commentsByKey[key] = val;
           const payload = { grade_item_id: itemId, student_id: studentId, score, comments: val };
           savePromises.push(
             fetch(`${window.API_BASE}/api/subjects/${subjectId}/scores`, {
@@ -811,16 +832,23 @@
 
     async function loadAllScores(){
       try{
-        const map = {};
+        const scoreMap = {};
+        const commentMap = {};
         for (const s of (students||[])){
           const url = `${window.API_BASE}/api/subjects/${subjectId}/scores?student_id=${encodeURIComponent(s.id)}&quarter=${encodeURIComponent(currentQuarter)}`;
           const resp = await fetch(url, { headers: (typeof authHeaders==='function'? authHeaders():{}) });
           if (!resp.ok) continue;
           const rows = await resp.json();
-          (rows||[]).forEach(r=>{ map[`${r.grade_item_id}:${s.id}`] = Number(r.score); });
+          (rows||[]).forEach(r=>{
+            const key = `${r.grade_item_id}:${s.id}`;
+            scoreMap[key] = Number(r.score);
+            if (r.comments != null) commentMap[key] = String(r.comments);
+          });
         }
-        scoresByKey = map; scoresLoaded = true;
-      }catch(e){ scoresByKey = {}; scoresLoaded = true; }
+        scoresByKey = scoreMap;
+        commentsByKey = commentMap;
+        scoresLoaded = true;
+      }catch(e){ scoresByKey = {}; commentsByKey = {}; scoresLoaded = true; }
     }
     
     // Render student record table
@@ -1115,7 +1143,8 @@
           scoresLoaded = false; // force reload of scores when items change
           computeItemsByCategory();
           const len = (itemsByCategory[currentCategory] || []).length;
-          if (len > 0 && len % 5 === 1 && len > 5) {
+          const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+          if (len > 0 && len % pageSize === 1 && len > pageSize) {
             currentPage = totalPages();
           }
           renderCategoryTable();
