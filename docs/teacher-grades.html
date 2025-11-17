@@ -540,10 +540,9 @@
         const itemId = Number(cell.getAttribute('data-item'));
         if (!itemId) continue;
         let raw = (cell.value || '').trim();
+        // If left blank, treat as "no task yet" and skip this column
         if (raw === '') {
-          alert('Please set the highest possible score for all columns before saving.');
-          cell.focus();
-          return;
+          continue;
         }
         let v = Number(raw);
         if (!Number.isFinite(v) || v <= 0) {
@@ -608,6 +607,12 @@
         if (!Number.isFinite(v) || v < 0) v = 0;
 
         const maxScore = maxByItem[itemId] || Number(((gradeItems || []).find(x => Number(x.id) === itemId) || {}).max_score) || 0;
+        // Do not allow positive scores when no highest possible score is defined yet
+        if (!maxScore && v > 0) {
+          alert('Set the highest possible score for this column before entering student scores.');
+          cell.focus();
+          return;
+        }
         if (maxScore && v > maxScore) {
           alert(`Score for this column cannot exceed its highest possible score of ${maxScore}.`);
           cell.value = String(maxScore);
