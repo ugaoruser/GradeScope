@@ -37,10 +37,25 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-
 // Ensure caches respect per-origin CORS and explicitly handle preflight on all routes
-app.use((req, res, next) => { try{ res.setHeader('Vary', 'Origin'); }catch{} next(); });
-app.options('*', cors(corsOptions));
+app.use((req, res, next) => {
+  try {
+    const origin = req.headers.origin;
+    if (origin) {
+      // Mirror requesting origin for credentialed requests (GitHub Pages, Render, etc.)
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      res.setHeader('Vary', 'Origin');
+    }
+    if (req.method === 'OPTIONS') {
+      // Short-circuit CORS preflight
+      return res.sendStatus(204);
+    }
+  } catch {}
+  next();
+});
 
 // Security and compression
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
