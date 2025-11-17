@@ -1650,6 +1650,10 @@
       margin-bottom: 24px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
+
+    .category-entry-container .table-wrapper {
+      overflow-x: auto;
+    }
     
     .category-header {
       display: flex;
@@ -1696,6 +1700,7 @@
     
     .category-record-table {
       width: 100%;
+      min-width: 1100px;
       border-collapse: collapse;
       background: var(--card);
     }
@@ -1740,6 +1745,24 @@
     
     .category-record-table tbody tr:hover {
       background: #f8fafc;
+    }
+
+    .score-input-cell,
+    .max-input-cell {
+      width: 64px;
+      padding: 6px 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .score-input-cell:focus,
+    .max-input-cell:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
     
     .category-pager {

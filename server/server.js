@@ -939,7 +939,7 @@ async function ensureDefaultGradeStructure(subjectId, quarter, user){
           await db.query(
             `INSERT INTO grade_items (subject_id, category_id, title, topic, item_type, included_in_final, max_score, date_assigned)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [subjectId, cat.id, `Item ${nextIndex}`, null, null, 1, 100, null]
+            [subjectId, cat.id, `Item ${nextIndex}`, null, null, 1, 0, null]
           );
         }
       }
