@@ -32,7 +32,7 @@
     
   </header>
   
-  <div class="main" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+  <div class="main" style="padding: 20px; max-width: 1500px; margin: 0 auto;">
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 24px 0;">
     <button class="back-btn" onclick="goBack()">← Back to Classes</button>
     
@@ -212,14 +212,14 @@
 
     function pagedItems(){
       const all = itemsByCategory[currentCategory] || [];
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 8;
       const start = (currentPage-1)*pageSize;
       return all.slice(start, start+pageSize);
     }
 
     function totalPages(){
       const all = itemsByCategory[currentCategory] || [];
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 8;
       return Math.max(1, Math.ceil(all.length / pageSize));
     }
 
@@ -249,7 +249,7 @@
       if (!head || !body) return;
       const allItems = itemsByCategory[currentCategory] || [];
       const pageItems = pagedItems();
-      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+      const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 8;
       const visibleCols = pageItems.length; // actual item columns on this page
       const startIndex = (currentPage-1) * pageSize;
 
@@ -1137,7 +1137,7 @@
           scoresLoaded = false; // force reload of scores when items change
           computeItemsByCategory();
           const len = (itemsByCategory[currentCategory] || []).length;
-          const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+          const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 8;
           if (len > 0 && len % pageSize === 1 && len > pageSize) {
             currentPage = totalPages();
           }
