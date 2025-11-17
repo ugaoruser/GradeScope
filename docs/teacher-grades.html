@@ -273,12 +273,8 @@
         const it = pageItems[i];
         if (it){
           const colIndex = startIndex + i + 1;
-          if (colIndex <= 5){
-            headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div></th>`;
-          } else {
-            const label = (it.title || '').toString().slice(0, 120);
-            headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div><input type="text" class="header-comment-input" data-item="${it.id}" maxlength="120" value="${label}" placeholder="Title / Label"></th>`;
-          }
+          const label = (it.title || '').toString().slice(0, 120);
+          headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div><input type="text" class="header-comment-input" data-item="${it.id}" maxlength="120" value="${label}" placeholder="Title / Label"></th>`;
         } else {
           headRow2 += `<th>${startIndex + i + 1}</th>`;
         }
@@ -301,9 +297,13 @@
       pageItems.forEach(it=>{ if (it) maxByItem[it.id] = Number(it.max_score)||0; });
       for (let i=0;i<pageSize;i++){
         const it = pageItems[i];
-        maxRowHtml += it
-          ? `<td class="max-cell" data-item="${it.id}"><input type="number" class="max-input-cell" data-item="${it.id}" min="0" value="${Number(it.max_score)||0}"></td>`
-          : `<td></td>`;
+        if (it){
+          const storedMax = Number(it.max_score);
+          const displayVal = (Number.isFinite(storedMax) && storedMax > 0) ? storedMax : '';
+          maxRowHtml += `<td class="max-cell" data-item="${it.id}"><input type="number" class="max-input-cell" data-item="${it.id}" min="0" value="${displayVal}"></td>`;
+        } else {
+          maxRowHtml += `<td></td>`;
+        }
       }
       const totalMaxAll = (allItems||[]).reduce((acc,it)=> acc + (Number(it.max_score)||0), 0);
       const catWeight = (function(){
@@ -1717,6 +1717,13 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       vertical-align: middle;
+    }
+
+    .header-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
     }
     
     .category-record-table th:first-child {
