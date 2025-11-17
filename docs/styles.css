@@ -1513,17 +1513,190 @@ border-color: rgba(47,128,237,0.22);
 .student-grades-page table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 24px;
+  margin: 24px 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
+
 .student-grades-page th,
 .student-grades-page td {
-  padding: 12px;
+  padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
+
 .student-grades-page th {
-  background: #f9fafb;
+  background-color: var(--bg);
   font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.student-grades-page tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.student-grades-page .category-header {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1.125rem;
+}
+
+.student-grades-page .grade-summary {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin: 24px 0;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-grades-page .grade-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.student-grades-page .grade-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.student-grades-page .grade-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.student-grades-page .quarterly-grade-summary {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 8px 0;
+}
+
+.student-grades-page .grade-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--bg);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.student-grades-page .disclaimer-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.student-grades-page .disclaimer-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Ensure consistent column widths */
+.student-grades-page table {
+  table-layout: fixed;
+}
+
+.student-grades-page th:nth-child(1),
+.student-grades-page td:nth-child(1) {
+  width: 15%;
+}
+
+.student-grades-page th:nth-child(2),
+.student-grades-page td:nth-child(2) {
+  width: 20%;
+}
+
+.student-grades-page th:nth-child(3),
+.student-grades-page td:nth-child(3) {
+  width: 25%;
+}
+
+.student-grades-page th:nth-child(4),
+.student-grades-page td:nth-child(4) {
+  width: 40%;
+}
+
+/* For Periodical Exam table which has one less column */
+.student-grades-page #peTable th:nth-child(1),
+.student-grades-page #peTable td:nth-child(1) {
+  width: 35%;
+}
+
+.student-grades-page #peTable th:nth-child(2),
+.student-grades-page #peTable td:nth-child(2) {
+  width: 40%;
+}
+
+/* For Formative Assessment table which has an extra column */
+.student-grades-page #assessmentTable th:nth-child(1),
+.student-grades-page #assessmentTable td:nth-child(1) {
+  width: 10%;
+}
+
+.student-grades-page #assessmentTable th:nth-child(2),
+.student-grades-page #assessmentTable td:nth-child(2) {
+  width: 25%;
+}
+
+.student-grades-page #assessmentTable th:nth-child(3),
+.student-grades-page #assessmentTable td:nth-child(3) {
+  width: 15%;
+}
+
+.student-grades-page #assessmentTable th:nth-child(4),
+.student-grades-page #assessmentTable td:nth-child(4) {
+  width: 20%;
+}
+
+.student-grades-page #assessmentTable th:nth-child(5),
+.student-grades-page #assessmentTable td:nth-child(5) {
+  width: 30%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .student-grades-page .grade-summary {
+    padding: 16px;
+  }
+  
+  .student-grades-page .grade-display {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .student-grades-page .grade-value {
+    font-size: 1.25rem;
+  }
+  
+  .student-grades-page .quarterly-grade-summary {
+    font-size: 1.5rem;
+  }
+  
+  .student-grades-page table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 
 /* Theme overrides - merged from theme.css */

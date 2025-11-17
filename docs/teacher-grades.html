@@ -1092,7 +1092,10 @@
     
     // Switch quarter
     function switchQuarter(quarter) {
+      // Update current quarter
       currentQuarter = quarter;
+      
+      // Update active tab UI
       document.querySelectorAll('.quarter-tabs .tab-button').forEach(btn => {
         if (parseInt(btn.dataset.quarter) === quarter) {
           btn.classList.add('active');
@@ -1101,11 +1104,37 @@
         }
       });
       
-      loadStudents();
-      loadGradeWeights();
-      loadGradeCategories();
-      loadGradeItems();
-      loadFormativeAssessments();
+      // Clear existing data
+      students = [];
+      gradeItems = [];
+      gradeCategories = [];
+      scoresByKey = {};
+      commentsByKey = {};
+      itemsByCategory = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
+      
+      // Update UI to show loading state
+      const tableBody = document.querySelector('#categoryTable tbody');
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="10" class="loading-text">Loading quarter data...</td></tr>';
+      }
+      
+      // Reload all data for the new quarter
+      Promise.all([
+        loadStudents(),
+        loadGradeWeights(),
+        loadGradeCategories(),
+        loadGradeItems(),
+        loadFormativeAssessments()
+      ]).then(() => {
+        // Re-render the table after all data is loaded
+        renderCategoryTable();
+        renderStudentTable();
+      }).catch(error => {
+        console.error('Error loading quarter data:', error);
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="10" class="error-text">Error loading data. Please try again.</td></tr>';
+        }
+      });
     }
     
     // Update weight display
