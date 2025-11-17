@@ -250,6 +250,7 @@
       const allItems = itemsByCategory[currentCategory] || [];
       const pageItems = pagedItems();
       const pageSize = (currentCategory === 'Periodical Exam') ? 1 : 10;
+      const visibleCols = pageItems.length; // actual item columns on this page
       const startIndex = (currentPage-1) * pageSize;
 
       // Ensure scores are loaded once students and items are available (non-blocking)
@@ -262,21 +263,18 @@
       let headRow1 = `<tr>`;
       headRow1 += `<th rowspan="2">Student Name</th>`;
       // items + Total, PS, WS
-      headRow1 += `<th colspan="${pageSize + 3}">${catLabel}</th>`;
+      headRow1 += `<th colspan="${visibleCols + 3}">${catLabel}</th>`;
       headRow1 += `<th rowspan="2">Initial Grade</th>`;
       headRow1 += `<th rowspan="2">Quarterly Grade</th>`;
       headRow1 += `<th rowspan="2">Comments</th>`;
       headRow1 += `</tr>`;
 
       let headRow2 = `<tr>`;
-      for (let i=0;i<pageSize;i++){
+      for (let i=0;i<visibleCols;i++){
         const it = pageItems[i];
         if (it){
           const colIndex = startIndex + i + 1;
-          const label = (it.title || '').toString().slice(0, 120);
-          headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div><input type="text" class="header-comment-input" data-item="${it.id}" maxlength="120" value="${label}" placeholder="Title / Label"></th>`;
-        } else {
-          headRow2 += `<th>${startIndex + i + 1}</th>`;
+          headRow2 += `<th data-item="${it.id}"><div class="header-number">${colIndex}</div></th>`;
         }
       }
       headRow2 += `<th>Total</th><th>PS</th><th>WS</th>`;
@@ -295,14 +293,12 @@
       let maxRowHtml = `<td class="student-name" style="font-weight:600;">Highest Possible Score</td>`;
       const maxByItem = {};
       pageItems.forEach(it=>{ if (it) maxByItem[it.id] = Number(it.max_score)||0; });
-      for (let i=0;i<pageSize;i++){
+      for (let i=0;i<visibleCols;i++){
         const it = pageItems[i];
         if (it){
           const storedMax = Number(it.max_score);
           const displayVal = (Number.isFinite(storedMax) && storedMax > 0) ? storedMax : '';
           maxRowHtml += `<td class="max-cell" data-item="${it.id}"><input type="number" class="max-input-cell" data-item="${it.id}" min="0" value="${displayVal}"></td>`;
-        } else {
-          maxRowHtml += `<td></td>`;
         }
       }
       const totalMaxAll = (allItems||[]).reduce((acc,it)=> acc + (Number(it.max_score)||0), 0);
@@ -325,15 +321,13 @@
         const name = stu.full_name || stu.name || 'Unknown Student';
         let row = `<td class="student-name"><div class="student-info"><div class="student-avatar">${name.charAt(0).toUpperCase()}</div><div>${name}</div></div></td>`;
         // One editable cell per item on the page
-        for (let i=0;i<pageSize;i++){
+        for (let i=0;i<visibleCols;i++){
           const it = pageItems[i];
           if (it){
             const itemId = it.id;
             const key = `${itemId}:${stu.id}`;
             const val = scoresByKey[key] != null ? String(scoresByKey[key]) : '';
             row += `<td class="score-cell" data-item="${itemId}" data-student="${stu.id}"><input type="number" class="score-input-cell" data-item="${itemId}" data-student="${stu.id}" min="0" value="${val}"></td>`;
-          } else {
-            row += `<td></td>`;
           }
         }
         // Totals for the entire category (across all items)

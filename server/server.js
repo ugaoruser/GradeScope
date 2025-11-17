@@ -928,7 +928,7 @@ async function ensureDefaultGradeStructure(subjectId, quarter, user){
     await db.query('START TRANSACTION');
     try{
       for (const cat of cats){
-        const desiredCount = (cat.name === 'Periodical Exam') ? 1 : 5;
+        const desiredCount = (cat.name === 'Periodical Exam') ? 1 : 10;
         const [existingItems] = await db.query(
           `SELECT id FROM grade_items WHERE subject_id = ? AND category_id = ? ORDER BY id`,
           [subjectId, cat.id]
