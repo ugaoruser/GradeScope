@@ -104,7 +104,14 @@
       </div>
     </div>
     
-    <!-- Grade Category Weights Section -->
+    <!-- Tabs for Graded Components and Formative Assessment -->
+    <div class="tabs" style="margin: 20px 0;">
+      <div class="tab active" data-tab="graded">Graded Components</div>
+      <div class="tab" data-tab="assessment">Formative Assessment</div>
+    </div>
+    
+    <div id="gradedContent" class="tab-content active">
+      <!-- Grade Category Weights Section -->
     <div class="grade-weights-card">
       <h2>Grade Category Weights</h2>
       <div class="weights-grid">
@@ -165,11 +172,54 @@
         <button class="btn-primary save-category" onclick="saveAllCategoryGrades()">Save Grades</button>
       </div>
     </div>
-
-  
+    
+    <!-- Formative Assessment Tab Content -->
+    <div id="assessmentContent" class="tab-content">
+      <div class="category-entry-container">
+        <div class="category-header">
+          <h2>Formative Assessment</h2>
+        </div>
+        
+        <div class="table-wrapper">
+          <table class="category-record-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Student Name</th>
+                <th>Index No.</th>
+                <th>Topic(s) of Task</th>
+                <th>Score</th>
+                <th>Highest Possible Score</th>
+                <th>Comments</th>
+              </tr>
+            </thead>
+            <tbody id="formativeAssessmentTable">
+              <tr><td colspan="6" class="loading-text">Loading formative assessments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="category-pager" id="formativePager">
+          <!-- Will be populated dynamically -->
+        </div>
+      </div>
+    </div>
   </div>
   
   <script>
+    // Tab switching functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show corresponding content
+        const tabName = tab.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tabName + 'Content').classList.add('active');
+      });
+    });
+    
     // --- Student Record System ---
     let currentQuarter = 1;
     let subjectId = '';
@@ -1043,17 +1093,19 @@
     // Switch quarter
     function switchQuarter(quarter) {
       currentQuarter = quarter;
-      
-      // Update active tab
       document.querySelectorAll('.quarter-tabs .tab-button').forEach(btn => {
-        btn.classList.remove('active');
+        if (parseInt(btn.dataset.quarter) === quarter) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
       });
-      document.querySelector(`.quarter-tabs .tab-button[data-quarter="${quarter}"]`).classList.add('active');
       
-      // Reload data
-      loadGradeWeights();
       loadStudents();
+      loadGradeWeights();
+      loadGradeCategories();
       loadGradeItems();
+      loadFormativeAssessments();
     }
     
     // Update weight display
@@ -1131,6 +1183,18 @@
       .catch(err => {
         console.error('Error loading grade categories:', err);
       });
+    }
+
+    function loadFormativeAssessments() {
+      // This would be implemented to load formative assessment data
+      // Similar to loadGradeItems but for non-graded assessments
+      console.log('Loading formative assessments...');
+      // TODO: Implement actual API call to fetch formative assessments
+      // For now, we'll just show a message
+      const tableBody = document.getElementById('formativeAssessmentTable');
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="6">No formative assessments found for this quarter.</td></tr>';
+      }
     }
 
     function loadGradeItems() {
