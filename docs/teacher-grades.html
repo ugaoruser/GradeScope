@@ -262,10 +262,10 @@
       const catLabel = currentCategory;
       let headRow1 = `<tr>`;
       headRow1 += `<th rowspan="2">Student Name</th>`;
-      // items + Total, PS, WS
+      // Category-specific columns (items + Total, PS, WS)
       headRow1 += `<th colspan="${visibleCols + 3}">${catLabel}</th>`;
-      headRow1 += `<th rowspan="2">Initial Grade</th>`;
-      headRow1 += `<th rowspan="2">Quarterly Grade</th>`;
+      // Overall grade columns (computed across all categories)
+      headRow1 += `<th colspan="2">Overall Grade</th>`;
       headRow1 += `<th rowspan="2">Comments</th>`;
       headRow1 += `</tr>`;
 
@@ -278,11 +278,13 @@
         }
       }
       headRow2 += `<th>Total</th><th>PS</th><th>WS</th>`;
+      headRow2 += `<th>Initial</th><th>Quarterly</th>`;
       headRow2 += `</tr>`;
       head.innerHTML = headRow1 + headRow2;
 
       if (!students || students.length === 0){
-        body.innerHTML = '<tr><td colspan="10" class="empty-text">No students enrolled</td></tr>';
+        const totalCols = visibleCols + 7; // Student Name + items + Total/PS/WS + Overall Initial/Quarterly + Comments
+        body.innerHTML = `<tr><td colspan="${totalCols}" class="empty-text">No students enrolled</td></tr>`;
         renderPager();
         return;
       }
@@ -312,6 +314,8 @@
         }catch{return 0;}
       })();
       maxRowHtml += `<td>${totalMaxAll}</td><td>100%</td><td>${catWeight}%</td>`;
+      // Placeholders so this row aligns under the Overall Grade and Comments columns
+      maxRowHtml += `<td></td><td></td><td></td>`;
       maxRow.innerHTML = maxRowHtml;
       body.appendChild(maxRow);
 
