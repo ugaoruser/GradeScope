@@ -587,7 +587,29 @@ window.API_BASE = (function(){
 
   async function loadClasses(){
     const cont = qs('#classroomTabs'); if (!cont) return;
-    cont.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+
+    // 1) Try to render from cache immediately for a fast UI when returning
+    let cacheKey = '';
+    try{
+      const role = getRole() || 'student';
+      const isParent = role === 'parent';
+      const childId = isParent ? (localStorage.getItem('selectedChildId') || '') : '';
+      cacheKey = `classes:${role}${isParent && childId ? ':'+childId : ''}`;
+      const raw = localStorage.getItem(cacheKey);
+      if (raw){
+        const cached = JSON.parse(raw);
+        if (cached && Array.isArray(cached.classes) && cached.classes.length){
+          renderClasses(cached.classes);
+        }
+      }
+    }catch{/* ignore cache errors */}
+
+    // If nothing was rendered, show a loading skeleton
+    if (!cont.children.length){
+      cont.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+    }
+
+    // 2) Always refresh from server in the background to stay up to date
     try{
       const isParent = getRole()==='parent'; const childId = localStorage.getItem('selectedChildId');
       let url = `${window.API_BASE}/api/classes`;
@@ -597,6 +619,10 @@ window.API_BASE = (function(){
       if (!r.ok) throw new Error('Failed to load classes');
       const classes = await r.json();
       renderClasses(classes);
+      // Update cache with fresh data
+      if (cacheKey){
+        try{ localStorage.setItem(cacheKey, JSON.stringify({ classes, ts: Date.now() })); }catch{}
+      }
     }catch(e){ console.error('load classes', e); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px;">Failed to load classes. <button onclick="location.reload()" style="background:none;border:1px solid #ef4444;color:#ef4444;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;">Retry</button></div>'; }
   }
 
@@ -810,7 +836,25 @@ window.API_BASE = (function(){
 
   async function loadTeacherSubjects(){
     const container = qs('#classroomTabs'); if (!container) return;
-    container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+
+    // 1) Try to render from cache immediately so returning to Home is instant
+    const cacheKey = 'teacherSubjects';
+    try{
+      const raw = localStorage.getItem(cacheKey);
+      if (raw){
+        const cached = JSON.parse(raw);
+        if (cached && Array.isArray(cached.subjects) && cached.subjects.length){
+          renderTeacherSubjects(cached.subjects);
+        }
+      }
+    }catch{/* ignore cache errors */}
+
+    // If nothing is rendered yet, show a loading skeleton
+    if (!container.children.length){
+      container.innerHTML = '<div class="loading-placeholder" style="height:140px;border-radius:12px;"></div><div class="loading-placeholder" style="height:140px;border-radius:12px;"></div>';
+    }
+
+    // 2) Refresh from server in the background
     try{
       let res = await fetch(`${window.API_BASE}/api/subjects`, { headers: authHeaders() });
       let list; 
@@ -824,6 +868,7 @@ window.API_BASE = (function(){
       }
       console.log('Loaded classes/subjects:', list);
       renderTeacherSubjects(list);
+      try{ localStorage.setItem(cacheKey, JSON.stringify({ subjects: list, ts: Date.now() })); }catch{}
     }catch(e){ 
       console.error('Error loading classes:', e); 
       container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No classes found. Click "+ Create Class" to create your first class.</div>'; 
