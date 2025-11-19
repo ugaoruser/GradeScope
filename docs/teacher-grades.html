@@ -241,6 +241,8 @@
     let scoresByKey = {}; // key: `${itemId}:${studentId}` -> number
     let commentsByKey = {};
     let scoresLoaded = false;
+    // Track which quarters have had "Check Grades" run so PS/WS become visible
+    let psWsVisibleByQuarter = {};
 
     function switchCategory(name){
       currentCategory = name;
@@ -419,9 +421,12 @@
         });
         const ps = totalMaxAll>0 ? (sumScores/totalMaxAll)*100 : 0;
         const ws = (ps * catWeight) / 100;
+        const showPsWs = !!psWsVisibleByQuarter[currentQuarter];
+        const psText = showPsWs ? `${ps.toFixed(2)}%` : '';
+        const wsText = showPsWs ? `${ws.toFixed(2)}` : '';
         row += `<td>${sumScores} / ${totalMaxAll}</td>`;
-        row += `<td>${ps.toFixed(2)}%</td>`;
-        row += `<td>${ws.toFixed(2)}</td>`;
+        row += `<td>${psText}</td>`;
+        row += `<td>${wsText}</td>`;
 
         const ig =  (function(){ try{ return Number(calculateInitialGrade(stu.grades||{pt:{score:0,max:100},ww:{score:0,max:100},pe:{score:0,max:100}})||0);}catch{return 0;} })();
         const qg = (function(){ try{ return Number(transmuteGrade ? transmuteGrade(ig) : ig)||0;}catch{return ig;} })();
@@ -1465,6 +1470,11 @@
           if (qgCell) qgCell.textContent = quarterlyGrade.toFixed(2);
         }
       });
+
+      // After checking grades for this quarter, reveal PS/WS columns
+      psWsVisibleByQuarter[currentQuarter] = true;
+      // Re-render category table so PS/WS cells are filled in
+      renderCategoryTable();
 
       alert('Grades Updated!');
     }

@@ -56,13 +56,14 @@
         <thead>
           <tr>
             <th>Index No.</th>
+            <th>Task</th>
             <th>Score</th>
             <th>Highest Possible Score</th>
             <th>Comments</th>
           </tr>
         </thead>
         <tbody id="ptTable">
-          <tr><td colspan="6">No data available</td></tr>
+          <tr><td colspan="5">No data available</td></tr>
         </tbody>
       </table>
       
@@ -74,13 +75,14 @@
         <thead>
           <tr>
             <th>Index No.</th>
+            <th>Task</th>
             <th>Score</th>
             <th>Highest Possible Score</th>
             <th>Comments</th>
           </tr>
         </thead>
         <tbody id="wwTable">
-          <tr><td colspan="6">No data available</td></tr>
+          <tr><td colspan="5">No data available</td></tr>
         </tbody>
       </table>
       
@@ -312,7 +314,11 @@
     function populateTable(tableId, items, renderRowFunc) {
       const tableBody = document.getElementById(tableId);
       if (items.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6">No data available</td></tr>';
+        let colspan = 4;
+        if (tableId === 'ptTable' || tableId === 'wwTable') colspan = 5;
+        else if (tableId === 'peTable') colspan = 3;
+        else if (tableId === 'assessmentTable') colspan = 5;
+        tableBody.innerHTML = `<tr><td colspan="${colspan}">No data available</td></tr>`;
         return;
       }
       
@@ -325,33 +331,41 @@
     }
     
     function renderPTRow(item, index) {
+      const task = item.title || item.topic || `Task ${index}`;
+      const score = (item.score != null) ? item.score : 'N/A';
+      const maxScore = (item.max_score != null) ? item.max_score : 'N/A';
+      const comments = item.comments || '';
       return `
         <td>${index}</td>
-        <td>${item.title}</td>
-        <td>${item.topic || 'N/A'}</td>
-        <td>${item.score || 'N/A'}</td>
-        <td>${item.max_score}</td>
-        <td>${item.comments || ''}</td>
+        <td>${task}</td>
+        <td>${score}</td>
+        <td>${maxScore}</td>
+        <td>${comments}</td>
       `;
     }
     
     function renderWWRow(item, index) {
+      const task = item.title || item.topic || `Task ${index}`;
+      const score = (item.score != null) ? item.score : 'N/A';
+      const maxScore = (item.max_score != null) ? item.max_score : 'N/A';
+      const comments = item.comments || '';
       return `
         <td>${index}</td>
-        <td>${item.item_type || 'N/A'}</td>
-        <td>${item.topic || 'N/A'}</td>
-        <td>${item.score || 'N/A'}</td>
-        <td>${item.max_score}</td>
-        <td>${item.comments || ''}</td>
+        <td>${task}</td>
+        <td>${score}</td>
+        <td>${maxScore}</td>
+        <td>${comments}</td>
       `;
     }
     
     function renderPERow(item) {
+      const score = (item.score != null) ? item.score : 'N/A';
+      const maxScore = (item.max_score != null) ? item.max_score : 'N/A';
+      const comments = item.comments || '';
       return `
-        <td>${item.topic || 'N/A'}</td>
-        <td>${item.score || 'N/A'}</td>
-        <td>${item.max_score}</td>
-        <td>${item.comments || ''}</td>
+        <td>${score}</td>
+        <td>${maxScore}</td>
+        <td>${comments}</td>
       `;
     }
     
