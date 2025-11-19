@@ -108,9 +108,6 @@
           <div class="grade-label">Quarterly Grade:</div>
           <div class="grade-value" id="finalGrade">N/A</div>
         </div>
-        <div class="quarterly-grade-summary">
-          <div class="grade-text"><span id="quarterlyGrade">0</span>%</div>
-        </div>
         <div class="grade-disclaimer">
           <div class="disclaimer-icon">⚠️</div>
           <div class="disclaimer-text">
@@ -167,6 +164,10 @@
       const r = Math.round(Math.max(0, Math.min(100, Number(initial)||0)));
       return transmutationTable[r] || 60;
     }
+
+    // Initialize student grades page only after DOM is ready and config.js has run
+    window.addEventListener('DOMContentLoaded', () => {
+
     // Populate account dropdown from cache (fast) and backfill from /api/me if missing
     (async function(){
       try{
@@ -533,6 +534,8 @@
       document.getElementById('studentName').textContent = displayName;
       loadGradeData(1);
     }
+
+    });
   </script>
 </body>
 </html>
