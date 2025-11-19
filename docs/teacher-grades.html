@@ -217,6 +217,11 @@
         const tabName = tab.getAttribute('data-tab');
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(tabName + 'Content').classList.add('active');
+
+        // When switching to Formative Assessment, load its data for the current quarter
+        if (tabName === 'assessment' && typeof loadFormativeAssessments === 'function') {
+          loadFormativeAssessments();
+        }
       });
     });
     
@@ -308,18 +313,17 @@
       const visibleCols = pageItems.length; // actual item columns on this page
       const startIndex = (currentPage-1) * pageSize;
 
-      // Ensure scores are loaded once students and items are available (non-blocking)
+      // Ensure scores are loaded once students and items are available.
+      // If they are not yet loaded for this quarter, load them first and
+      // re-render once done, instead of rendering with empty/default scores.
       if (!scoresLoaded && students && students.length && gradeItems && gradeItems.length){
-        // kick off async load without blocking UI; re-render when done
-        loadAllScores().then(()=>{ 
-          try{ 
-            // Mark that scores are loaded to prevent re-initialization conflicts
-            if (!scoresLoaded) {
-              scoresLoaded = true;
-              renderCategoryTable(); 
-            }
-          }catch{} 
+        loadAllScores().then(()=>{
+          try{
+            renderCategoryTable();
+          }catch{}
         });
+        // Do not render the table yet; wait for scores to load.
+        return;
       }
 
       const catLabel = currentCategory;
@@ -1789,9 +1793,11 @@
       scoresByKey = {};
       commentsByKey = {};
       itemsByCategory = { 'Written Works': [], 'Performance Task': [], 'Periodical Exam': [] };
+      // Force scores to be re-loaded for this quarter the next time the category table renders
+      scoresLoaded = false;
       
-      // Update UI to show loading state
-      const tableBody = document.querySelector('#categoryTable tbody');
+      // Update UI to show loading state in the main category table
+      const tableBody = document.getElementById('categoryTableBody');
       if (tableBody) {
         tableBody.innerHTML = '<tr><td colspan="10" class="loading-text">Loading quarter data...</td></tr>';
       }
