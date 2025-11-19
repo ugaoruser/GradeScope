@@ -302,6 +302,14 @@
       const head = document.getElementById('categoryTableHead');
       const body = document.getElementById('categoryTableBody');
       if (!head || !body) return;
+
+      // If core data for this quarter is not yet ready, show a loading row
+      // and wait until students, items, and scores are loaded before
+      // computing PS/WS to avoid resetting to default values.
+      if (!students || !students.length || !gradeItems || !gradeItems.length) {
+        body.innerHTML = '<tr><td colspan="10" class="loading-text">Loading quarter data...</td></tr>';
+        return;
+      }
       
       // Initialize history if this is the first render
       if (changeHistory.length === 0 && historyIndex === -1) {
