@@ -256,15 +256,12 @@
         const wwItems = lastItems.filter(item => item.category_name === 'Written Works');
         const peItems = lastItems.filter(item => item.category_name === 'Periodical Exam');
 
-        // Populate tables
+        // Populate tables (display-only)
         populateTable('ptTable', ptItems, renderPTRow);
         populateTable('wwTable', wwItems, renderWWRow);
         populateTable('peTable', peItems, renderPERow);
 
-        // Calculate final grade
-        calculateFinalGrade(ptItems, wwItems, peItems);
-        
-
+        // Quarterly Grade: use ONLY backend summary (WS) + DepEd transmutation
         if (summary) updateGradeSummary(summary);
         // Cache fresh payload
         try{ localStorage.setItem(cacheKey(quarter), JSON.stringify({ categories: lastCategories, items: lastItems, summary, ts: Date.now() })); }catch{}
@@ -333,11 +330,11 @@
     function updateGradeSummary(summary) {
       const initial = Number(summary.final || 0);
       const quarterly = transmute(initial);
-      const finalGrade = Number(quarterly).toFixed(2);
+      const finalGradeInt = Math.round(Number(quarterly));
       const completion = Number(summary.completion || 0);
       
-      // Update grade value
-      document.getElementById('finalGrade').textContent = finalGrade;
+      // Update grade value (show transmuted integer grade)
+      document.getElementById('finalGrade').textContent = String(finalGradeInt);
       
       // Update progress bar and text
       const progressFill = document.getElementById('progressFill');
@@ -411,7 +408,8 @@
       if (peMax > 0) initial += (peTotal / peMax) * peWeight * 100;
 
       const quarterly = transmute(initial);
-      document.getElementById('finalGrade').textContent = Number(quarterly).toFixed(2);
+      const quarterlyInt = Math.round(Number(quarterly));
+      document.getElementById('finalGrade').textContent = String(quarterlyInt);
     }
 
     
