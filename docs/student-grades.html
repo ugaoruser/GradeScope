@@ -331,7 +331,9 @@
     
     // Enhanced grade summary update function
     function updateGradeSummary(summary) {
-      const finalGrade = Number(summary.final || 0).toFixed(2);
+      const initial = Number(summary.final || 0);
+      const quarterly = transmute(initial);
+      const finalGrade = Number(quarterly).toFixed(2);
       const completion = Number(summary.completion || 0);
       
       // Update grade value
