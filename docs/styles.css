@@ -1646,32 +1646,6 @@ border-color: rgba(47,128,237,0.22);
   width: 40%;
 }
 
-/* For Formative Assessment table which has an extra column */
-.student-grades-page #assessmentTable th:nth-child(1),
-.student-grades-page #assessmentTable td:nth-child(1) {
-  width: 10%;
-}
-
-.student-grades-page #assessmentTable th:nth-child(2),
-.student-grades-page #assessmentTable td:nth-child(2) {
-  width: 25%;
-}
-
-.student-grades-page #assessmentTable th:nth-child(3),
-.student-grades-page #assessmentTable td:nth-child(3) {
-  width: 15%;
-}
-
-.student-grades-page #assessmentTable th:nth-child(4),
-.student-grades-page #assessmentTable td:nth-child(4) {
-  width: 20%;
-}
-
-.student-grades-page #assessmentTable th:nth-child(5),
-.student-grades-page #assessmentTable td:nth-child(5) {
-  width: 30%;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .student-grades-page .grade-summary {

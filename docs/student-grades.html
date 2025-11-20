@@ -42,11 +42,6 @@
       <div class="quarter-tab" data-quarter="4">Quarter 4</div>
     </div>
     
-    <div class="tabs">
-      <div class="tab active" data-tab="graded">Graded Components</div>
-      <div class="tab" data-tab="assessment">Formative Assessment</div>
-    </div>
-    
     <div id="gradedContent" class="tab-content active">
       <!-- Performance Tasks Section -->
       <div class="category-header">
@@ -117,23 +112,6 @@
       </div>
       
     </div>
-    
-    <div id="assessmentContent" class="tab-content">
-      <table>
-        <thead>
-          <tr>
-            <th>Index No.</th>
-            <th>Topic(s) of Task</th>
-            <th>Score</th>
-            <th>Highest Possible Score</th>
-            <th>Comments</th>
-          </tr>
-        </thead>
-        <tbody id="assessmentTable">
-          <tr><td colspan="5">No data available</td></tr>
-        </tbody>
-      </table>
-    </div> 
   </div>
 
   <script>
@@ -207,21 +185,6 @@
     
     document.getElementById('subjectTitle').textContent = subjectTitle || 'Subject Grades';
     
-    // Tab switching
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabContents.forEach(content => content.classList.remove('active'));
-        
-        const tabName = tab.getAttribute('data-tab');
-        document.getElementById(tabName + 'Content').classList.add('active');
-      });
-    });
-    
     // Quarter switching
     const quarterTabs = document.querySelectorAll('.quarter-tab');
     let currentQuarter = 1;
@@ -257,11 +220,9 @@
         const ptItems = items.filter(i=> i.category_name === 'Performance Task');
         const wwItems = items.filter(i=> i.category_name === 'Written Works');
         const peItems = items.filter(i=> i.category_name === 'Periodical Exam');
-        const assessmentItems = items.filter(i=> !i.included_in_final);
         populateTable('ptTable', ptItems, renderPTRow);
         populateTable('wwTable', wwItems, renderWWRow);
         populateTable('peTable', peItems, renderPERow);
-        populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
         if (cached.summary){
           updateGradeSummary(cached.summary);
         }
@@ -294,13 +255,11 @@
         const ptItems = lastItems.filter(item => item.category_name === 'Performance Task');
         const wwItems = lastItems.filter(item => item.category_name === 'Written Works');
         const peItems = lastItems.filter(item => item.category_name === 'Periodical Exam');
-        const assessmentItems = lastItems.filter(item => !item.included_in_final);
 
         // Populate tables
         populateTable('ptTable', ptItems, renderPTRow);
         populateTable('wwTable', wwItems, renderWWRow);
         populateTable('peTable', peItems, renderPERow);
-        populateTable('assessmentTable', assessmentItems, renderAssessmentRow);
 
         // Calculate final grade
         calculateFinalGrade(ptItems, wwItems, peItems);
@@ -318,7 +277,6 @@
         let colspan = 4;
         if (tableId === 'ptTable' || tableId === 'wwTable') colspan = 5;
         else if (tableId === 'peTable') colspan = 3;
-        else if (tableId === 'assessmentTable') colspan = 5;
         tableBody.innerHTML = `<tr><td colspan="${colspan}">No data available</td></tr>`;
         return;
       }
@@ -370,15 +328,6 @@
       `;
     }
     
-    function renderAssessmentRow(item, index) {
-      return `
-        <td>${index}</td>
-        <td>${item.topic || 'N/A'}</td>
-        <td>${item.score || 'N/A'}</td>
-        <td>${item.max_score}</td>
-        <td>${item.comments || ''}</td>
-      `;
-    }
     
     // Enhanced grade summary update function
     function updateGradeSummary(summary) {

@@ -104,12 +104,7 @@
       </div>
     </div>
     
-    <!-- Tabs for Graded Components and Formative Assessment -->
-    <div class="tabs" style="margin: 20px 0;">
-      <div class="tab active" data-tab="graded">Graded Components</div>
-      <div class="tab" data-tab="assessment">Formative Assessment</div>
-    </div>
-    
+    <!-- Graded Components Content -->
     <div id="gradedContent" class="tab-content active">
       <!-- Grade Category Weights Section -->
     <div class="grade-weights-card">
@@ -172,58 +167,9 @@
         <button class="btn-primary save-category" onclick="saveAllCategoryGrades()">Check Grades</button>
       </div>
     </div>
-    
-    <!-- Formative Assessment Tab Content -->
-    <div id="assessmentContent" class="tab-content">
-      <div class="category-entry-container">
-        <div class="category-header">
-          <h2>Formative Assessment</h2>
-        </div>
-        
-        <div class="table-wrapper">
-          <table class="category-record-table">
-            <thead>
-              <tr>
-                <th>Index No.</th>
-                <th>Topic(s) of Task</th>
-                <th>Score</th>
-                <th>Highest Possible Score</th>
-                <th>Comments</th>
-              </tr>
-            </thead>
-            <tbody id="formativeAssessmentTable">
-              <tr><td colspan="5" class="loading-text">Loading formative assessments...</td></tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div class="category-pager" id="formativePager">
-          <!-- Will be populated dynamically -->
-        </div>
-      </div>
-    </div>
   </div>
   
   <script>
-    // Tab switching functionality
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Update active tab
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        // Show corresponding content
-        const tabName = tab.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(tabName + 'Content').classList.add('active');
-
-        // When switching to Formative Assessment, load its data for the current quarter
-        if (tabName === 'assessment' && typeof loadFormativeAssessments === 'function') {
-          loadFormativeAssessments();
-        }
-      });
-    });
-    
     // --- Student Record System ---
     let currentQuarter = 1;
     let subjectId = '';
@@ -1647,7 +1593,7 @@
           <td class="percentage">${student.grades.pe.max > 0 ? ((student.grades.pe.score / student.grades.pe.max) * 100).toFixed(1) : '0.0'}%</td>
           <td class="initial-grade">${initialGrade.toFixed(2)}</td>
           <td class="quarterly-grade">${quarterlyGrade.toFixed(2)}</td>
-          <td><input type="text" maxlength="25" class="comment-input" data-student="${student.id}" value="${(student.comment || '').toString().slice(0,25)}" placeholder="Add comment..." onchange="updateComment(${student.id}, this.value)"></td>
+          <td><input type="text" maxlength="25" class="comment-input" data-student="${student.id}" value="${(student.comment||'').toString().slice(0,25)}" placeholder="Add comment..." onchange="updateComment(${student.id}, this.value)"></td>
           <td class="actions">
             <button class="btn-delete" onclick="removeStudent(${student.id})">Remove</button>
           </td>
@@ -1824,8 +1770,7 @@
         loadStudents(),
         loadGradeWeights(),
         loadGradeCategories(),
-        loadGradeItems(),
-        loadFormativeAssessments()
+        loadGradeItems()
       ]).then(() => {
         // Re-render the table after all data is loaded
         renderCategoryTable();
@@ -1913,45 +1858,6 @@
       .catch(err => {
         console.error('Error loading grade categories:', err);
       });
-    }
-
-    function loadFormativeAssessments() {
-      const tbody = document.getElementById('formativeAssessmentTable');
-      if (!tbody || !window.API_BASE || !subjectId) return;
-
-      tbody.innerHTML = '<tr><td colspan="5" class="loading-text">Loading formative assessments...</td></tr>';
-
-      const url = `${window.API_BASE}/api/subjects/${subjectId}/items?quarter=${currentQuarter}`;
-      fetch(url, { headers: (typeof authHeaders==='function' ? authHeaders() : {}) })
-        .then(res => res.ok ? res.json() : [])
-        .then(items => {
-          const formative = (items || []).filter(it => !it.included_in_final);
-          if (!formative.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-text">No formative assessments for this quarter.</td></tr>';
-            return;
-          }
-
-          tbody.innerHTML = '';
-          formative.forEach((it, index) => {
-            const tr = document.createElement('tr');
-            const topic = it.topic || it.title || `Task ${index + 1}`;
-            const score = (it.score != null) ? it.score : '';
-            const maxScore = (it.max_score != null) ? it.max_score : '';
-            const comments = it.comments || '';
-            tr.innerHTML = `
-              <td>${index + 1}</td>
-              <td>${topic}</td>
-              <td>${score}</td>
-              <td>${maxScore}</td>
-              <td>${comments}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        })
-        .catch(err => {
-          console.error('Error loading formative assessments:', err);
-          tbody.innerHTML = '<tr><td colspan="5" class="error-text">Failed to load formative assessments.</td></tr>';
-        });
     }
 
     function loadGradeItems() {
