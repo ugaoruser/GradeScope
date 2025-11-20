@@ -77,29 +77,162 @@
       function ensureApiBase(){
         try{
           if (location.protocol === 'file:' && !window.ENV_API_BASE) {
-            window.ENV_API_BASE = 'https://gradescope-a4hw.onrender.com'
+            window.ENV_API_BASE = 'https://gradescope-a4hw.onrender.com';
           }
-        }catch{}
+        }catch(e){}
       }
-      async function fallbackLogin(e){
+
+      // Function to handle child selection
+      function showChildSelection(children) {
+        const modal = document.getElementById('parent-modal');
+        const childSelector = document.getElementById('child-selector');
+        const continueBtn = document.getElementById('continue-btn');
+        
+        // Clear previous children
+        childSelector.innerHTML = '';
+        
+        // Add each child as a selectable option
+        children.forEach(child => {
+          const childEl = document.createElement('div');
+          childEl.className = 'child-option';
+          childEl.innerHTML = `
+            <input type="radio" name="child" id="child-${child.id}" value="${child.id}">
+            <label for="child-${child.id}">${child.name} (${child.email})</label>
+          `;
+          childEl.addEventListener('click', () => {
+            childEl.querySelector('input').checked = true;
+            continueBtn.disabled = false;
+          });
+          childSelector.appendChild(childEl);
+        });
+        
+        // Show the modal
+        modal.style.display = 'flex';
+        
+        // Handle continue button
+        continueBtn.onclick = () => {
+          const selectedChild = document.querySelector('input[name="child"]:checked');
+          if (selectedChild) {
+            const child = children.find(c => c.id === selectedChild.value);
+            if (child) {
+              localStorage.setItem('selectedChildId', child.id);
+              localStorage.setItem('selectedChildName', child.name);
+              modal.style.display = 'none';
+              window.location.href = 'homepage1.html';
+            }
+          }
+        };
+      }
+
+      // Function to handle linking a new child
+      function setupLinkChildModal() {
+        const linkModal = document.getElementById('link-child-modal');
+        const linkBtn = document.getElementById('link-child-btn');
+        const cancelLink = document.getElementById('cancel-link');
+        const confirmLink = document.getElementById('confirm-link');
+        
+        linkBtn?.addEventListener('click', () => {
+          linkModal.style.display = 'flex';
+        });
+        
+        cancelLink?.addEventListener('click', () => {
+          linkModal.style.display = 'none';
+        });
+        
+        confirmLink?.addEventListener('click', async () => {
+          const childEmail = document.getElementById('child-email').value.trim();
+          if (!childEmail) {
+            alert('Please enter a valid email address');
+            return;
+          }
+          
+          try {
+            const base = (window.API_BASE || window.ENV_API_BASE || `${location.protocol}//${location.host}`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${base}/api/parent/link-child`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ childEmail })
+            });
+            
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to link child account');
+            
+            // Refresh the child list
+            const childrenRes = await fetch(`${base}/api/parent/children`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const childrenData = await childrenRes.json();
+            
+            if (childrenRes.ok) {
+              showChildSelection(childrenData);
+              linkModal.style.display = 'none';
+              document.getElementById('child-email').value = '';
+            } else {
+              throw new Error('Failed to fetch updated child list');
+            }
+          } catch (error) {
+            alert(error.message || 'An error occurred while linking child account');
+          }
+        });
+      }
+
+      async function fallbackLogin(e) {
         e && e.preventDefault();
-        try{
+        try {
           const email = document.getElementById('email')?.value?.trim();
           const password = document.getElementById('password')?.value;
-          if (!email || !password){ alert('Please fill in all fields'); return; }
+          if (!email || !password) { 
+            alert('Please fill in all fields'); 
+            return; 
+          }
+          
           const base = (window.API_BASE || window.ENV_API_BASE || `${location.protocol}//${location.host}`);
           const res = await fetch(`${base}/api/login`, {
-            method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ email, password })
           });
-          const data = await res.json().catch(()=>({}));
+          
+          const data = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error(data.message || `Login failed (${res.status})`);
-          // Persist minimal session
-          localStorage.setItem('token', data.token||'');
-          localStorage.setItem('role', data.role||'');
-          localStorage.setItem('userId', data.userId||'');
-          localStorage.setItem('user', JSON.stringify({ name: data.name, userId: data.userId, role: data.role }));
-          location.replace(data.role==='teacher' ? 'homepage2.html' : 'homepage1.html');
+          
+          // Persist session data
+          localStorage.setItem('token', data.token || '');
+          localStorage.setItem('role', data.role || '');
+          localStorage.setItem('userId', data.userId || '');
+          localStorage.setItem('fullName', data.fullName || '');
+          localStorage.setItem('email', email);
+          
+          // If parent, fetch and show children
+          if (data.role === 'parent') {
+            try {
+              const childrenRes = await fetch(`${base}/api/parent/children`, {
+                headers: { 'Authorization': `Bearer ${data.token}` }
+              });
+              const childrenData = await childrenRes.json();
+              
+              if (childrenRes.ok && childrenData.length > 0) {
+                setupLinkChildModal();
+                showChildSelection(childrenData);
+                return; // Don't redirect yet, wait for child selection
+              } else if (childrenRes.ok) {
+                // No children linked yet, show option to link one
+                setupLinkChildModal();
+                document.getElementById('parent-modal').style.display = 'flex';
+                return;
+              }
+            } catch (error) {
+              console.error('Error fetching children:', error);
+              // Continue to homepage even if there's an error
+            }
+          }
+          
+          // For non-parents or if there was an error, redirect to appropriate page
+          window.location.href = data.role === 'teacher' ? 'homepage2.html' : 'homepage1.html';
         }catch(err){ alert(err.message || 'Login error'); }
       }
       document.addEventListener('DOMContentLoaded', function(){

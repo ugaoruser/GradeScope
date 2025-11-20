@@ -108,8 +108,104 @@
   </div>
   
 <script>
-// Ensure user data is loaded immediately on homepage1
-document.addEventListener('DOMContentLoaded', function() {
+    // Function to handle child switching
+    async function setupChildSwitching() {
+      const parentContext = document.getElementById('parentContext');
+      const childNameDisplay = document.getElementById('childNameDisplay');
+      const switchChildBtn = document.getElementById('switchChildBtn');
+      const role = localStorage.getItem('role');
+      
+      // Only show parent context for parent accounts
+      if (role !== 'parent') {
+        parentContext.style.display = 'none';
+        return;
+      }
+      
+      // Show current child's name if available
+      const currentChildName = localStorage.getItem('selectedChildName');
+      if (currentChildName) {
+        childNameDisplay.textContent = currentChildName;
+        parentContext.style.display = 'block';
+      } else {
+        // If no child selected, redirect to child selection
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Handle switch child button
+      switchChildBtn.addEventListener('click', async () => {
+        try {
+          const base = window.API_BASE || window.ENV_API_BASE || `${window.location.protocol}//${window.location.host}`;
+          const token = localStorage.getItem('token');
+          
+          const res = await fetch(`${base}/api/parent/children`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (res.ok) {
+            const children = await res.json();
+            
+            // Create and show a modal for child selection
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background:#fff;border-radius:12px;padding:2rem;max-width:500px;width:90%;';
+            
+            modalContent.innerHTML = `
+              <h2 style="text-align:center;margin-bottom:1rem;">👨‍👩‍👧‍👦 Switch Child</h2>
+              <p style="text-align:center;color:#666;margin-bottom:1.5rem;">Select which child's grades you'd like to view:</p>
+              <div id="child-selector" style="display:grid;gap:1rem;margin:1rem 0 2rem;"></div>
+              <div style="display:flex;justify-content:flex-end;gap:1rem;">
+                <button id="cancel-switch" style="background:#e5e7eb;color:#374151;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button>
+              </div>
+            `;
+            
+            const childSelector = modalContent.querySelector('#child-selector');
+            
+            // Add children to selector
+            children.forEach(child => {
+              const childEl = document.createElement('div');
+              childEl.className = 'child-option';
+              childEl.style.cssText = 'padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;';
+              childEl.innerHTML = `
+                <div style="font-weight:600;">${child.name}</div>
+                <div style="font-size:0.875em;color:#6b7280;">${child.email}</div>
+              `;
+              
+              childEl.addEventListener('click', () => {
+                localStorage.setItem('selectedChildId', child.id);
+                localStorage.setItem('selectedChildName', child.name);
+                document.body.removeChild(modal);
+                window.location.reload();
+              });
+              
+              childSelector.appendChild(childEl);
+            });
+            
+            // Add cancel button handler
+            const cancelBtn = modalContent.querySelector('#cancel-switch');
+            cancelBtn.addEventListener('click', () => {
+              document.body.removeChild(modal);
+            });
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+          } else {
+            throw new Error('Failed to fetch children');
+          }
+        } catch (error) {
+          console.error('Error switching child:', error);
+          alert('Failed to load child accounts. Please try again.');
+        }
+      });
+    }
+
+    // Ensure user data is loaded immediately on homepage1
+    document.addEventListener('DOMContentLoaded', function() {
+      // Setup child switching for parent accounts
+      setupChildSwitching();
   async function loadUserData() {
     try {
       const response = await fetch(`${window.API_BASE}/api/me`);
