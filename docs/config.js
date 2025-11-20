@@ -165,7 +165,7 @@ window.API_BASE = (function(){
 
   function showParentSelection(children){
     const modal = qs('#parent-modal'); const selector = qs('#child-selector'); const btn = qs('#continue-btn');
-    if (!modal || !selector || !btn) { redirectByRole('parent'); return; }
+    if (!modal || !selector || !btn) { return; }
     renderChildSelector(children);
     // Setup link child functionality
     const linkBtn = qs('#link-child-btn');
@@ -203,7 +203,7 @@ window.API_BASE = (function(){
       selectedId = children[0].id; btn.disabled = false;
       const first = selector.firstElementChild; if (first) first.classList.add('selected');
     }
-    btn.onclick = ()=>{ if (!selectedId) return; const c = children.find(x=> x.id === selectedId); localStorage.setItem('selectedChildId', String(selectedId)); localStorage.setItem('selectedChildName', c?.full_name || 'Student'); qs('#parent-modal').style.display='none'; redirectByRole('parent'); };
+    btn.onclick = ()=>{ if (!selectedId) return; const c = children.find(x=> x.id === selectedId); localStorage.setItem('selectedChildId', String(selectedId)); localStorage.setItem('selectedChildName', c?.full_name || 'Student'); qs('#parent-modal').style.display='none'; };
   }
 
   function showLinkChildModal() {
@@ -517,8 +517,6 @@ window.API_BASE = (function(){
     const selectedChildName = localStorage.getItem('selectedChildName');
     const user = JSON.parse(localStorage.getItem('user')||'{}');
     const display = isParent && selectedChildName ? selectedChildName : (localStorage.getItem('fullName') || user.name || 'User');
-    const init = display?.charAt(0)?.toUpperCase() || 'A';
-    const initialEl = qs('#accountInitial'); if (initialEl) initialEl.textContent = init;
     const userNameEl = qs('#userFullName'); const emailEl = qs('#userEmail');
     if (userNameEl){
       if (isParent && selectedChildName){
@@ -530,7 +528,6 @@ window.API_BASE = (function(){
     // Force update localStorage for cross-page consistency
     localStorage.setItem('displayName', display);
     localStorage.setItem('displayEmail', localStorage.getItem('email') || '');
-    localStorage.setItem('displayInitial', init);
     if (isParent && selectedChildName){
       const pc = qs('#parentContext'); if (pc){ pc.style.display='block'; qs('#childNameDisplay').textContent = selectedChildName; qs('#classesHeader').textContent = `${selectedChildName}'s Classes`; }
     }

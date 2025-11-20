@@ -33,7 +33,7 @@
 
       <div class="account-menu">
         <button class="account-btn" id="accountBtn">
-          <span id="accountInitial">A</span>
+          <span id="accountInitial"><i class="ri-user-3-fill"></i></span>
         </button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
@@ -127,12 +127,10 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('email', email);
         localStorage.setItem('fullName', fullName);
         
-        // Update UI elements
-        const initialEl = document.getElementById('accountInitial');
+        // Update UI elements (profile icon is static; only name/email change)
         const nameEl = document.getElementById('userFullName');
         const emailEl = document.getElementById('userEmail');
         
-        if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
         if (nameEl) nameEl.textContent = fullName;
         if (emailEl) emailEl.textContent = email;
       } else {
@@ -146,11 +144,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const email = localStorage.getItem('email') || '';
       const fullName = localStorage.getItem('fullName') || `${firstName} ${lastName}`.trim() || 'User';
       
-      const initialEl = document.getElementById('accountInitial');
       const nameEl = document.getElementById('userFullName');
       const emailEl = document.getElementById('userEmail');
       
-      if (initialEl) initialEl.textContent = (fullName.charAt(0) || 'U').toUpperCase();
       if (nameEl) nameEl.textContent = fullName;
       if (emailEl) emailEl.textContent = email;
     }

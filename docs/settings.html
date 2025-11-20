@@ -27,7 +27,7 @@
     <header class="header" data-shared="header">
       <div class="header-title" style="color: white;">Settings</div>
       <div class="account-menu">
-        <button class="account-btn" id="accountBtn"><span id="accountInitial">A</span></button>
+        <button class="account-btn" id="accountBtn"><span id="accountInitial"><i class="ri-user-3-fill"></i></span></button>
         <div class="account-dropdown" id="accountDropdown" aria-hidden="true">
           <div class="account-info">
             <div id="userFullName">Loading...</div>
@@ -127,13 +127,10 @@
           
           // Update account dropdown
           const fullName = userData.fullName || `${firstName} ${lastName}`.replace(/N\/A/g, '').trim() || 'User';
-          const initial = (fullName.charAt(0) || 'U').toUpperCase();
           
-          const initialEl = document.getElementById('accountInitial');
           const nameEl = document.getElementById('userFullName');
           const emailEl = document.getElementById('userEmail');
           
-          if (initialEl) initialEl.textContent = initial;
           if (nameEl) nameEl.textContent = fullName;
           if (emailEl) emailEl.textContent = email;
           
@@ -257,8 +254,7 @@
           localStorage.setItem('email', email);
           localStorage.setItem('fullName', fullName);
           
-          // Update account dropdown elements
-          const initialEl = document.getElementById('accountInitial');
+          // Update account dropdown elements (icon is static)
           const nameEl = document.getElementById('userFullName');
           const emailEl = document.getElementById('userEmail');
           
@@ -274,7 +270,6 @@
         const email = localStorage.getItem('email') || '';
         const fullName = localStorage.getItem('fullName') || `${firstName} ${lastName}`.trim() || 'User';
         
-        const initialEl = document.getElementById('accountInitial');
         const nameEl = document.getElementById('userFullName');
         const emailEl = document.getElementById('userEmail');
         
